@@ -1,0 +1,18 @@
+
+> nextjs@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+✓ Ready in 1869ms
+ GET / 200 in 1146ms (compile: 587ms, render: 560ms)
+ GET /philosophy 200 in 200ms (compile: 30ms, render: 170ms)
+✓ Compiled in 240ms
+ GET / 200 in 1695ms (compile: 520ms, render: 1175ms)
+ GET /philosophy 200 in 117ms (compile: 27ms, render: 90ms)
+✓ Compiled in 267ms
+ GET / 200 in 205ms (compile: 88ms, render: 117ms)
+ GET /philosophy 200 in 219ms (compile: 93ms, render: 125ms)
