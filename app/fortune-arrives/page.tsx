@@ -121,19 +121,16 @@ export default function PsychologyLectureMuseumPage() {
   const featuredLecture = useMemo(() => lectures[0], []);
 
   return (
-    <div className="min-h-screen bg-[#F6F1E8] text-[#1E1E1A]">
-      <main className="mx-auto max-w-[1440px] px-6 pb-16 pt-6 md:px-10 lg:px-14">
-        <header className="border-b border-[#D8D2C8] pb-5">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#F6F1E8] text-[#1E1E1A]">
+      <main className="w-full px-6 pb-16 pt-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
+        <header className="border-b border-[#D8D2C8] pb-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs tracking-[0.18em] text-[#8A844C] uppercase">
-                Psychology Lecture Series
-              </p>
-              <h1 className="mt-2 text-2xl font-black tracking-tight md:text-3xl">
+              <h1 className="text-3xl font-black tracking-tight md:text-5xl">
                 親密關係心理講座計畫
               </h1>
             </div>
-            <div className="text-sm leading-7 text-[#5C5A52]">
+            <div className="text-base leading-8 text-[#5C5A52] md:text-right">
               <p>2026 春季系列</p>
               <p>Love, Attachment, Ethics, Music</p>
             </div>
@@ -142,10 +139,7 @@ export default function PsychologyLectureMuseumPage() {
 
         <section className="grid gap-8 border-b border-[#D8D2C8] py-10 md:grid-cols-12 md:gap-10 lg:py-14">
           <div className="md:col-span-8">
-            <p className="text-xs tracking-[0.18em] text-[#8A844C] uppercase">
-              Featured Programme
-            </p>
-            <h2 className="mt-4 max-w-5xl text-5xl font-black leading-[0.98] tracking-tight md:text-7xl lg:text-[5.5rem]">
+            <h2 className="max-w-6xl text-5xl font-black leading-[0.98] tracking-tight md:text-7xl xl:text-[6.25rem]">
               從愛、依附與失落，
               <br />
               重新觀看親密關係
@@ -153,7 +147,7 @@ export default function PsychologyLectureMuseumPage() {
           </div>
 
           <div className="md:col-span-4 md:pt-2">
-            <p className="text-base leading-8 text-[#4F4C45]">
+            <p className="text-base leading-8 text-[#4F4C45] md:text-lg">
               這是一組以心理學觀看愛情與關係的講座企劃。從迴避、自責、焦慮、亞斯伴侶、網路愛情到音樂經驗，將親密關係作為一個可被閱讀、可被理解、可被再次經驗的心理現場。
             </p>
 
@@ -189,7 +183,7 @@ export default function PsychologyLectureMuseumPage() {
           </div>
 
           <div className="md:col-span-9">
-            <div className="max-w-4xl space-y-6 text-lg leading-9 text-[#38352F]">
+            <div className="max-w-5xl space-y-6 text-lg leading-9 text-[#38352F]">
               <p>
                 這個系列不把親密關係處理成單一的幸福敘事。它把愛情視為一個混合距離、依賴、羞愧、追趕、理想化、誤解與修復的場域。
               </p>
@@ -280,7 +274,7 @@ export default function PsychologyLectureMuseumPage() {
       {activeLecture && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/45">
           <div className="min-h-screen px-4 py-6 md:px-8 md:py-10">
-            <div className="mx-auto max-w-6xl bg-[#F6F1E8] shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
+            <div className="mx-auto w-full max-w-[1400px] bg-[#F6F1E8] shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between border-b border-[#D8D2C8] px-6 py-4 md:px-8">
                 <p className="text-xs tracking-[0.18em] text-[#8A844C] uppercase">
                   Lecture Detail

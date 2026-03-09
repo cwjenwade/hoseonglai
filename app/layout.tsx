@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Noto_Serif_TC,
+  Playfair_Display,
+} from "next/font/google";
 import Link from "next/link";
 import NewsletterSubscription from "./NewsletterSubscription";
 import "./globals.css";
@@ -12,6 +17,18 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const notoSerif = Noto_Serif_TC({
+  variable: "--font-noto-serif",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -31,100 +48,138 @@ export default function RootLayout({
   const links = [
     { href: "/", zh: "首頁", en: "Home" },
     { href: "/brand-philosophy", zh: "品牌理念", en: "Identity" },
-    { href: "/heartfelt-momentum", zh: "有心好勢", en: "Researches" },
-    { href: "/fortune-arrives", zh: "有運旺來", en: "Courses" },
-    { href: "/togetherness", zh: "團團圓圓", en: "Group" },
+    { href: "/heartfelt-momentum", zh: "有心好勢", en: "Research" },
+    { href: "/fortune-arrives", zh: "有運旺來", en: "Programs" },
+    { href: "/togetherness", zh: "團團圓圓", en: "Gatherings" },
     { href: "/collaborative-prosperity", zh: "協力招來", en: "Collaborations" },
   ];
 
   return (
     <html lang="zh-Hant">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-stone-50 text-zinc-900 antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSerif.variable} bg-[#f6f3ee] text-zinc-900 antialiased`}
       >
         <div className="min-h-screen">
-          <header className="border-b border-zinc-200 bg-stone-50/90 backdrop-blur">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-6 lg:px-10">
-              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
-                  <Link href="/" className="group block max-w-2xl">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                        <span className="text-[1.7rem] font-semibold tracking-[-0.04em] text-zinc-950 sm:text-[2rem]">
-                          Ho-Se 好勢
-                        </span>
-                        <span className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-500">
+          <header className="border-b border-zinc-200/80">
+            <div className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
+              <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
+                <div className="min-w-0">
+                  <Link href="/" className="block">
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <p
+                          className="text-[0.72rem] uppercase tracking-[0.28em] text-zinc-500"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
                           Brand Platform
-                        </span>
+                        </p>
+
+                        <div className="space-y-0.5">
+                          <h1
+                            className="text-[2.5rem] leading-none tracking-[-0.04em] text-zinc-950 sm:text-[3.4rem] lg:text-[4.25rem]"
+                            style={{ fontFamily: "var(--font-playfair)" }}
+                          >
+                            Ho-Se 好勢
+                          </h1>
+                          <h2
+                            className="text-[2.5rem] leading-none tracking-[-0.04em] text-zinc-950 sm:text-[3.4rem] lg:text-[4.25rem]"
+                            style={{ fontFamily: "var(--font-playfair)" }}
+                          >
+                            Ong-Lai 旺來
+                          </h2>
+                        </div>
                       </div>
 
-                      <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                        <span className="text-[1.7rem] font-semibold tracking-[-0.04em] text-zinc-950 sm:text-[2rem]">
-                          Ong-Lai 旺來
-                        </span>
-                      </div>
-
-                      <div className="grid gap-1 pt-1">
-                        <p className="text-sm tracking-[0.08em] text-zinc-600 sm:text-[0.95rem]">
+                      <div className="max-w-2xl space-y-2 pt-2">
+                        <p
+                          className="text-[0.98rem] tracking-[0.08em] text-zinc-700 sm:text-[1.05rem]"
+                          style={{ fontFamily: "var(--font-noto-serif)" }}
+                        >
                           以心聚勢，以運旺來，團圓共好
                         </p>
-                        <p className="text-xs uppercase tracking-[0.2em] text-zinc-400 sm:text-[0.78rem]">
-                          Research, Creative Content, Community, and Collaborative Practice
+                        <p
+                          className="max-w-xl text-[0.76rem] uppercase tracking-[0.22em] text-zinc-400"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
+                          Research, creative content, community, and collaborative practice
                         </p>
                       </div>
                     </div>
                   </Link>
+                </div>
 
-                  <Link
-                    href="/admin"
-                    className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-xs font-semibold text-zinc-700 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white"
-                    title="管理後台"
-                  >
-                    A
-                  </Link>
+                <div className="flex flex-col justify-between gap-8 lg:items-end">
+                  <div className="flex w-full items-start justify-between lg:justify-end">
+                    <Link
+                      href="/admin"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-300 text-[0.68rem] font-medium uppercase tracking-[0.18em] text-zinc-700 transition hover:border-zinc-900 hover:text-zinc-950"
+                      title="管理後台"
+                    >
+                      A
+                    </Link>
+                  </div>
+
+                  <nav className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                    {links.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="group border-b border-transparent pb-2 transition hover:border-zinc-300"
+                      >
+                        <div
+                          className="text-[1rem] tracking-[0.04em] text-zinc-900 transition group-hover:opacity-70"
+                          style={{ fontFamily: "var(--font-noto-serif)" }}
+                        >
+                          {link.zh}
+                        </div>
+                        <div
+                          className="mt-1 text-[0.68rem] uppercase tracking-[0.24em] text-zinc-400 transition group-hover:text-zinc-700"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
+                          {link.en}
+                        </div>
+                      </Link>
+                    ))}
+                  </nav>
                 </div>
               </div>
-
-              <nav className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-zinc-200 pt-4 md:grid-cols-3 xl:grid-cols-6">
-                {links.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="group rounded-xl px-1 py-2 transition hover:bg-white"
-                  >
-                    <div className="text-[0.98rem] font-medium tracking-[0.02em] text-zinc-900">
-                      {link.zh}
-                    </div>
-                    <div className="mt-1 text-[0.68rem] uppercase tracking-[0.18em] text-zinc-400 transition group-hover:text-zinc-700">
-                      {link.en}
-                    </div>
-                  </Link>
-                ))}
-              </nav>
             </div>
           </header>
 
-          <main className="mx-auto w-full max-w-7xl px-6 py-12 lg:px-10 lg:py-16">
+          <main className="mx-auto w-full max-w-7xl px-6 py-14 lg:px-10 lg:py-20">
             {children}
           </main>
 
-          <footer className="border-t border-zinc-200 px-6 py-10 lg:px-10">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-10">
-              <NewsletterSubscription />
-
-              <div className="flex flex-col gap-4 border-t border-zinc-200 pt-6 md:flex-row md:items-end md:justify-between">
-                <div className="space-y-2">
-                  <p className="text-base font-medium tracking-[0.01em] text-zinc-900">
-                    Ho-Se 好勢 ｜ Ong-Lai 旺來
-                  </p>
-                  <p className="text-sm text-zinc-600">
-                    以心聚勢，以運旺來，團圓共好
-                  </p>
+          <footer className="border-t border-zinc-200/80">
+            <div className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-10 lg:py-14">
+              <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
+                <div>
+                  <NewsletterSubscription />
                 </div>
 
-                <p className="text-[0.68rem] uppercase tracking-[0.18em] text-zinc-400">
-                  Research, Creative Content, Community, and Collaborative Practice
-                </p>
+                <div className="flex flex-col justify-end gap-4 border-t border-zinc-200 pt-6 lg:border-none lg:pt-0">
+                  <div className="space-y-2">
+                    <p
+                      className="text-[1.1rem] tracking-[0.01em] text-zinc-900"
+                      style={{ fontFamily: "var(--font-playfair)" }}
+                    >
+                      Ho-Se 好勢 ｜ Ong-Lai 旺來
+                    </p>
+                    <p
+                      className="text-[0.92rem] tracking-[0.06em] text-zinc-600"
+                      style={{ fontFamily: "var(--font-noto-serif)" }}
+                    >
+                      以心聚勢，以運旺來，團圓共好
+                    </p>
+                  </div>
+
+                  <p
+                    className="text-[0.66rem] uppercase tracking-[0.2em] text-zinc-400"
+                    style={{ fontFamily: "var(--font-geist-sans)" }}
+                  >
+                    Research, creative content, community, and collaborative practice
+                  </p>
+                </div>
               </div>
             </div>
           </footer>
