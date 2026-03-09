@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 type LectureRegistrationProps = {
   lectureId: string;
@@ -31,6 +31,8 @@ export default function LectureRegistrationForm({
     setLoading(true);
 
     try {
+      const supabase = getSupabaseClient();
+
       const { error } = await supabase.from("lecture_registrations").insert({
         lecture_id: lectureId,
         lecture_title: lectureTitle,

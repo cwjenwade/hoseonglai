@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 type Test = {
   id: string;
@@ -82,6 +82,8 @@ export default function PsychTestList() {
     }
 
     try {
+      const supabase = getSupabaseClient();
+
       const { error } = await supabase.from("psych_test_results").insert({
         test_id: activeTest.id,
         test_title: activeTest.title,

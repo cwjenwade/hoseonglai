@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export default function NewsletterSubscription() {
   const [email, setEmail] = useState("");
@@ -20,6 +20,8 @@ export default function NewsletterSubscription() {
     setLoading(true);
 
     try {
+      const supabase = getSupabaseClient();
+
       const { error } = await supabase.from("newsletter_subscribers").insert({
         email: email,
         name: name.trim() || null,

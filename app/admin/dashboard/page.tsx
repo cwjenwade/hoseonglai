@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 type RegistrationData = {
   id: string;
@@ -46,6 +46,8 @@ export default function AdminDashboardPage() {
           tableName = "newsletter_subscribers";
           break;
       }
+
+      const supabase = getSupabaseClient();
 
       const { data: results, error } = await supabase
         .from(tableName)

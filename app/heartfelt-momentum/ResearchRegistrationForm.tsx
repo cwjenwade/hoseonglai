@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 type ResearchRegistrationProps = {
   videoUrl: string;
@@ -31,6 +31,8 @@ export default function ResearchRegistrationForm({
     setLoading(true);
 
     try {
+      const supabase = getSupabaseClient();
+
       const { error } = await supabase.from("research_registrations").insert({
         video_url: videoUrl,
         video_title: videoTitle,
