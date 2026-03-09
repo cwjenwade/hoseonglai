@@ -1,507 +1,343 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import LectureRegistrationForm from "./LectureRegistrationForm";
+import Link from "next/link";
+import {
+  Playfair_Display,
+  Noto_Serif_TC,
+  Geist,
+  Noto_Sans_TC,
+} from "next/font/google";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-playfair",
+});
+
+const notoSerifTC = Noto_Serif_TC({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-noto-serif-tc",
+});
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
+});
+
+const notoSansTC = Noto_Sans_TC({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-noto-sans-tc",
+});
+
+type LectureCategory = "All" | "Upcoming" | "Past" | "Research" | "Public Talk";
 
 type Lecture = {
   id: string;
-  title: string;
-  subtitle?: string;
-  speaker: string;
-  speakerTitle?: string;
-  speakerBio?: string;
+  type: "LECTURE" | "WORKSHOP" | "PUBLIC TALK";
+  category: Exclude<LectureCategory, "All">[];
+  date: string;
+  dateLabel: string;
   time: string;
-  intro: string;
-  highlights: string[];
-  tag: string;
-  coverImage: string;
-  speakerImage: string;
+  titleZh: string;
+  subtitleEn: string;
+  speaker: string;
+  summary: string;
+  href: string;
 };
 
 const lectures: Lecture[] = [
   {
-    id: "lecture-1",
-    title: "「愛你卻不能夠給你我全部」談迴避型人格及其伴侶自處",
-    subtitle: "在靠近與退後之間，理解親密關係中的抽離、失落與界線節奏",
-    speaker: "待補",
-    speakerTitle: "Speaker",
-    speakerBio:
-      "本場講座聚焦親密關係中的距離感、退縮與情感保留，討論當事人如何維持心理安全，也討論伴侶如何在不過度逼近的情況下維持連結與理解。",
-    time: "2026/04/10 19:30 - 21:00",
-    intro:
-      "從親密關係中的退縮、抽離、降低回應與保持距離出發，整理迴避型人格在關係中的互動樣態，也討論伴侶如何理解界線、失落與靠近的節奏。",
-    highlights: ["Avoidant personality", "Relationship withdrawal", "Emotional distance"],
-    tag: "依附與距離",
-    coverImage: "/lectures/lecture-1-cover.jpg",
-    speakerImage: "/speakers/lecture-1.jpg",
+    id: "1",
+    type: "LECTURE",
+    category: ["Upcoming", "Research"],
+    date: "2026-04-10",
+    dateLabel: "10 Apr 2026",
+    time: "19:00–20:30",
+    titleZh: "情緒、圖像與觀看的倫理",
+    subtitleEn: "Image, affect, and the public conditions of attention",
+    speaker: "Dr. Lin Yu-Han",
+    summary:
+      "本場講座處理影像展示、情緒召喚與公共觀看之間的關係，聚焦藝術場域中感受如何被安排、延遲與命名。",
+    href: "/lectures/emotion-image-ethics",
   },
   {
-    id: "lecture-2",
-    title: "「一定是我不夠好 所以你才想要逃」談那些在愛情中責怪自己的人及伴侶",
-    subtitle: "自責、羞愧與關係中的內在歸因",
-    speaker: "宥語",
-    speakerTitle: "Speaker",
-    speakerBio:
-      "本場講座處理自責、自我貶抑與低自我價值感如何進入親密關係，並討論伴侶如何理解脆弱與不安，而非只回應表面的黏附或退縮。",
-    time: "2026/04/17 19:30 - 21:00",
-    intro:
-      "聚焦自責、自我貶抑與關係中的內在歸因，討論個體如何把關係困難收進自己身上，也思考伴侶能如何回應這樣的脆弱與不安。",
-    highlights: ["Self-blame", "Shame and worth", "Partner response"],
-    tag: "自我與親密",
-    coverImage: "/lectures/lecture-2-cover.jpg",
-    speakerImage: "/speakers/lecture-2.jpg",
+    id: "2",
+    type: "PUBLIC TALK",
+    category: ["Upcoming", "Public Talk"],
+    date: "2026-04-24",
+    dateLabel: "24 Apr 2026",
+    time: "14:30–16:00",
+    titleZh: "博物館作為城市中的閱讀空間",
+    subtitleEn: "Public program, civic tempo, and the architecture of pause",
+    speaker: "Mei Chen",
+    summary:
+      "講座從城市文化機構的日常使用出發，討論博物館如何透過空間節奏、節目設計與文字編排形成新的公共閱讀經驗。",
+    href: "/lectures/museum-as-reading-space",
   },
   {
-    id: "lecture-3",
-    title: "「他要我我就不能走，得堅守不放手」傲嬌仔及其伴侶的攻防守備",
-    subtitle: "嘴硬、試探與期待被懂的情感配置",
-    speaker: "待補",
-    speakerTitle: "Speaker",
-    speakerBio:
-      "本場講座從拉扯、試探與等待被理解的互動場景切入，討論強硬外表下的依戀需求，以及伴侶在靠近時常感到的疲累與困惑。",
-    time: "2026/04/24 19:30 - 21:00",
-    intro:
-      "從嘴硬、拉扯、試探與期待被懂的情境切入，討論傲嬌式互動背後的情感需求，以及伴侶在靠近與回應時常見的耗損。",
-    highlights: ["Testing and defence", "Need to be wanted", "Relational tension"],
-    tag: "互動樣態",
-    coverImage: "/lectures/lecture-3-cover.jpg",
-    speakerImage: "/speakers/lecture-3.jpg",
+    id: "3",
+    type: "WORKSHOP",
+    category: ["Upcoming", "Research"],
+    date: "2026-05-08",
+    dateLabel: "08 May 2026",
+    time: "10:00–12:00",
+    titleZh: "展覽文字與知識轉譯工作坊",
+    subtitleEn: "Writing for audiences without reducing conceptual density",
+    speaker: "Chao Wen-Hsu",
+    summary:
+      "工作坊聚焦展覽文本、教育材料與研究摘要的語言處理，處理知識密度、閱讀節奏與觀眾可及性之間的平衡。",
+    href: "/lectures/exhibition-writing-workshop",
   },
   {
-    id: "lecture-4",
-    title: "「一個人撐傘、一個人擦淚、一個人好累」焦慮型人格的追趕跑跳碰",
-    subtitle: "高需求、高不安與失去恐懼的關係經驗",
-    speaker: "待補",
-    speakerTitle: "Speaker",
-    speakerBio:
-      "本場講座整理焦慮型人格在關係中的追趕、確認與耗竭，並討論伴侶如何維持支持，同時不失去自身界線與穩定度。",
-    time: "2026/05/01 19:30 - 21:00",
-    intro:
-      "整理焦慮型人格在關係中的追趕、確認、害怕失去與情緒耗竭，也討論伴侶如何在不失去自己之下維持連結。",
-    highlights: ["Fear of loss", "High need and insecurity", "Staying connected"],
-    tag: "依附與焦慮",
-    coverImage: "/lectures/lecture-4-cover.jpg",
-    speakerImage: "/speakers/lecture-4.jpg",
+    id: "4",
+    type: "LECTURE",
+    category: ["Past", "Research"],
+    date: "2025-11-15",
+    dateLabel: "15 Nov 2025",
+    time: "16:00–17:30",
+    titleZh: "檔案、策展與機構記憶",
+    subtitleEn: "Archival order and the afterlife of curatorial decisions",
+    speaker: "Prof. Claire Hsu",
+    summary:
+      "本講座回到檔案與制度實作，討論策展決策如何在資料保存、再描述與再展示之中持續發生作用。",
+    href: "/lectures/archive-curation-memory",
   },
   {
-    id: "lecture-5",
-    title: "「平凡之中製造一些些浪漫」這樣談感情更幸福",
-    subtitle: "從日常互動累積穩定而可持續的親密感",
-    speaker: "待補",
-    speakerTitle: "Speaker",
-    speakerBio:
-      "本場講座討論伴侶如何透過日常細節、語言與小型儀式維持關係溫度，將幸福感理解為累積性的互動實作。",
-    time: "2026/05/08 19:30 - 21:00",
-    intro:
-      "從日常互動、語言表達與小型儀式切入，討論伴侶如何在生活裡維持溫度，累積穩定而可持續的親密感。",
-    highlights: ["Everyday romance", "Small rituals", "Sustainable intimacy"],
-    tag: "關係實作",
-    coverImage: "/lectures/lecture-5-cover.jpg",
-    speakerImage: "/speakers/lecture-5.jpg",
+    id: "5",
+    type: "PUBLIC TALK",
+    category: ["Past", "Public Talk"],
+    date: "2025-10-03",
+    dateLabel: "03 Oct 2025",
+    time: "19:30–21:00",
+    titleZh: "當代藝術與觀眾的距離",
+    subtitleEn: "On proximity, refusal, and the pace of interpretation",
+    speaker: "Yao Ting",
+    summary:
+      "講者從展場經驗切入，處理作品理解、觀看停留與觀眾不確定感，討論距離如何成為公共節目的條件。",
+    href: "/lectures/art-and-distance",
   },
   {
-    id: "lecture-6",
-    title: "「歌詞」亞斯伴侶的支持",
-    subtitle: "在理解方式與生活節奏差異中建立支持",
-    speaker: "待補",
-    speakerTitle: "Speaker",
-    speakerBio:
-      "本場講座處理神經多樣性進入伴侶關係後，雙方在溝通、情緒表達與生活安排上可能經驗到的差異，以及支持彼此的方法。",
-    time: "2026/05/15 19:30 - 21:00",
-    intro:
-      "討論亞斯特質進入親密關係後，雙方在情緒表達、理解方式、生活安排與溝通節奏上可能出現的差異，以及支持彼此的方法。",
-    highlights: ["Neurodiversity", "Communication differences", "Support in partnership"],
-    tag: "神經多樣性",
-    coverImage: "/lectures/lecture-6-cover.jpg",
-    speakerImage: "/speakers/lecture-6.jpg",
-  },
-  {
-    id: "lecture-7",
-    title: "諮商倫理",
-    subtitle: "界線、保密、知情同意與風險處理",
-    speaker: "宥語、雅婷、祈蔚",
-    speakerTitle: "Speakers",
-    speakerBio:
-      "本場講座從實務情境出發，整理助人工作中的界線、保密、雙重關係、知情同意與風險處理，理解倫理判準如何落在工作現場。",
-    time: "2026/05/22 19:30 - 21:00",
-    intro:
-      "整理助人工作中的界線、保密、雙重關係、知情同意與風險處理，從實務情境理解倫理判準如何落在工作現場。",
-    highlights: ["Professional boundaries", "Confidentiality", "Ethical judgement"],
-    tag: "專業實務",
-    coverImage: "/lectures/lecture-7-cover.jpg",
-    speakerImage: "/speakers/lecture-7.jpg",
-  },
-  {
-    id: "lecture-8",
-    title: "「網路愛情，撲朔迷離，似幻似真，猶夢未醒」網路愛情的白皮書",
-    subtitle: "線上親密、投射與真實感的判讀",
-    speaker: "待補",
-    speakerTitle: "Speaker",
-    speakerBio:
-      "本場講座討論線上互動中的投射、親密感生成、失落與不確定，並整理人如何在虛擬關係中判讀真實性與期待落差。",
-    time: "2026/05/29 19:30 - 21:00",
-    intro:
-      "從線上互動、投射、親密感生成到失落與不確定，整理網路愛情中的心理現象，也討論如何辨識關係中的真實感。",
-    highlights: ["Digital intimacy", "Projection", "Reading reality"],
-    tag: "數位親密",
-    coverImage: "/lectures/lecture-8-cover.jpg",
-    speakerImage: "/speakers/lecture-8.jpg",
-  },
-  {
-    id: "lecture-9",
-    title: "「兩顆心都迷惑，怎麼說，怎麼說都沒有救」從音樂中再一次經驗愛",
-    subtitle: "在歌詞與旋律中重新接觸愛的記憶",
-    speaker: "待補",
-    speakerTitle: "Speaker",
-    speakerBio:
-      "本場講座從音樂與歌詞的情感經驗切入，討論人如何透過聲音重新接觸關係中的失落、渴望、誤解與依戀記憶。",
-    time: "2026/06/05 19:30 - 21:00",
-    intro:
-      "透過音樂與歌詞經驗親密關係中的失落、渴望、誤解與牽掛，討論人如何在聽歌時重新接觸自己對愛的感受與記憶。",
-    highlights: ["Music and affect", "Lyrics and projection", "Memory of love"],
-    tag: "音樂與情感",
-    coverImage: "/lectures/lecture-9-cover.jpg",
-    speakerImage: "/speakers/lecture-9.jpg",
+    id: "6",
+    type: "LECTURE",
+    category: ["Past", "Research"],
+    date: "2025-08-21",
+    dateLabel: "21 Aug 2025",
+    time: "18:30–20:00",
+    titleZh: "聲音、敘事與場館中的時間",
+    subtitleEn: "Listening practices across lecture, gallery, and archive",
+    speaker: "Dr. Wang Yi-Chieh",
+    summary:
+      "此場講座探討聲音如何改變觀眾對時間的感受，並檢視演講、展覽與檔案空間之間的敘事差異。",
+    href: "/lectures/sound-narrative-time",
   },
 ];
 
-const artFallbacks = [
-  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1501612780327-45045538702b?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1459908676235-d5f02a50184b?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1494253109108-2e30c049369b?auto=format&fit=crop&w=1600&q=80",
-];
+const filters: LectureCategory[] = ["All", "Upcoming", "Past", "Research", "Public Talk"];
 
-function getFallbackImage(seed: string) {
-  const index =
-    seed.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
-    artFallbacks.length;
-  return artFallbacks[index];
-}
+export default function LectureIndexPage() {
+  const [activeFilter, setActiveFilter] = useState<LectureCategory>("All");
 
-function parseLectureTime(time: string) {
-  const [datePart = "", timePart = ""] = time.split(" ");
-  const date = datePart.replaceAll("/", ".");
-  const range = timePart.includes("-") ? timePart.split("-") : ["", ""];
-  return {
-    date,
-    start: range[0]?.trim() || "",
-    end: range[1]?.trim() || "",
-  };
-}
-
-function MuseumImage({
-  src,
-  alt,
-  ratio = "aspect-[3/2]",
-  caption,
-  seed,
-}: {
-  src?: string;
-  alt: string;
-  ratio?: string;
-  caption?: string;
-  seed: string;
-}) {
-  const [hasError, setHasError] = useState(false);
-  const displaySrc = !src || hasError ? getFallbackImage(seed) : src;
+  const filteredLectures = useMemo(() => {
+    if (activeFilter === "All") return lectures;
+    return lectures.filter((lecture) => lecture.category.includes(activeFilter));
+  }, [activeFilter]);
 
   return (
-    <figure className="w-full">
-      <div
-        className={`relative w-full overflow-hidden border border-[rgba(0,0,0,0.08)] bg-[#f5f4f1] ${ratio}`}
-      >
-        <img
-          src={displaySrc}
-          alt={alt}
-          className="h-full w-full object-cover"
-          onError={() => setHasError(true)}
-        />
-      </div>
-      {caption ? (
-        <figcaption
-          className="mt-4 text-[12px] leading-[1.4] tracking-[0.04em] text-[#6b6b6b]"
-          style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-        >
-          {caption}
-        </figcaption>
-      ) : null}
-    </figure>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      className="text-[11px] uppercase leading-[1.2] tracking-[0.22em] text-[#9c9c9c]"
-      style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
+    <main
+      className={[
+        playfair.variable,
+        notoSerifTC.variable,
+        geist.variable,
+        notoSansTC.variable,
+        "min-h-screen bg-[#f6f3ee] text-[#1a1a1a]",
+      ].join(" ")}
     >
-      {children}
-    </p>
-  );
-}
+      <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+        <section className="border-b border-black/10 py-20 md:py-24 lg:py-28">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
+            <div className="lg:col-span-7">
+              <p
+                className="mb-6 text-[11px] uppercase tracking-[0.28em] text-[#9c9c9c]"
+                style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
+              >
+                Programs / Lectures / Talk Series
+              </p>
 
-export default function PsychologyLectureMuseumPage() {
-  const [activeLectureId, setActiveLectureId] = useState(lectures[0].id);
-  const [showRegistration, setShowRegistration] = useState(false);
-
-  const activeLecture = useMemo(
-    () => lectures.find((lecture) => lecture.id === activeLectureId) ?? lectures[0],
-    [activeLectureId]
-  );
-
-  const meta = parseLectureTime(activeLecture.time);
-
-  return (
-    <div className="min-h-screen w-full bg-[#f6f3ee] text-[#1a1a1a]">
-      <main className="mx-auto w-full max-w-[1680px] px-[clamp(20px,4vw,72px)] pb-[120px] pt-8">
-        <section className="border-b border-[rgba(0,0,0,0.08)] pb-[120px] pt-[72px] md:pt-[96px]">
-          <div className="grid gap-12 md:grid-cols-12 md:gap-16">
-            <div className="md:col-span-7">
-              <Label>Lecture / Talk / Event</Label>
               <h1
-                className="mt-5 max-w-[12ch] text-[clamp(56px,7vw,72px)] font-semibold leading-[1] tracking-[-0.03em] text-[#1a1a1a]"
-                style={{ fontFamily: "var(--font-playfair), var(--font-noto-serif-tc), serif" }}
+                className="max-w-[10ch] text-[3.5rem] leading-none tracking-[-0.035em] text-[#1a1a1a] sm:text-[4.25rem] lg:text-[4.5rem]"
+                style={{
+                  fontFamily:
+                    "var(--font-playfair), var(--font-noto-serif-tc), serif",
+                }}
               >
-                {activeLecture.title}
+                講座系列
               </h1>
-              <p
-                className="mt-8 max-w-[30ch] text-[22px] leading-[1.35] tracking-[0.02em] text-[#4a4a4a]"
-                style={{ fontFamily: "var(--font-playfair), var(--font-noto-serif-tc), serif" }}
-              >
-                {activeLecture.subtitle || activeLecture.tag}
-              </p>
             </div>
 
-            <div className="md:col-span-5 md:pt-2">
-              <MuseumImage
-                src={activeLecture.coverImage}
-                alt={activeLecture.title}
-                ratio="aspect-[3/2]"
-                seed={`${activeLecture.id}-cover`}
-                caption="Lecture image"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="border-b border-[rgba(0,0,0,0.08)] py-[120px]">
-          <div className="grid gap-10 md:grid-cols-3 md:gap-12">
-            <div>
-              <Label>Date</Label>
+            <div className="lg:col-span-4 lg:col-start-9">
               <p
-                className="mt-4 text-[18px] font-medium leading-[1.5] tracking-[0.01em] text-[#1a1a1a]"
-                style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
+                className="max-w-[34ch] text-[16px] leading-[1.75] text-[#6b6b6b] md:text-[17px]"
+                style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
               >
-                {meta.date}
-              </p>
-            </div>
-
-            <div>
-              <Label>Time</Label>
-              <p
-                className="mt-4 text-[18px] font-medium leading-[1.5] tracking-[0.01em] text-[#1a1a1a]"
-                style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-              >
-                {meta.start}
-                {meta.end ? `–${meta.end}` : ""}
-              </p>
-            </div>
-
-            <div>
-              <Label>Speaker</Label>
-              <p
-                className="mt-4 text-[18px] font-medium leading-[1.5] tracking-[0.01em] text-[#1a1a1a]"
-                style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-              >
-                {activeLecture.speaker}
+                Public programs devoted to research, writing, curation, and the
+                civic life of art. Lectures, workshops, and conversations are
+                presented as part of an ongoing archive of public study.
               </p>
             </div>
           </div>
         </section>
 
-        <section className="border-b border-[rgba(0,0,0,0.08)] py-[120px]">
-          <div className="grid gap-16 md:grid-cols-12 md:gap-20">
-            <div className="md:col-span-3">
-              <Label>Introduction</Label>
-            </div>
+        <section className="py-8 md:py-10">
+          <nav aria-label="Lecture filters" className="flex flex-wrap gap-x-8 gap-y-3">
+            {filters.map((filter) => {
+              const isActive = activeFilter === filter;
 
-            <div className="md:col-span-9">
-              <div className="max-w-[680px]">
-                <p
-                  className="text-[18px] leading-[1.6] tracking-[0.01em] text-[#1a1a1a]"
-                  style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
+              return (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setActiveFilter(filter)}
+                  className={[
+                    "border-b pb-1 text-[14px] transition-[color,border-color,opacity] duration-200",
+                    isActive
+                      ? "border-black/70 text-[#1a1a1a]"
+                      : "border-transparent text-[#9c9c9c] hover:text-[#6b6b6b]",
+                  ].join(" ")}
+                  style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
                 >
-                  {activeLecture.intro}
-                </p>
+                  {filter}
+                </button>
+              );
+            })}
+          </nav>
+        </section>
 
-                <div className="mt-8">
-                  <Label>Topics</Label>
-                  <div className="mt-6 space-y-3">
-                    {activeLecture.highlights.map((item) => (
-                      <p
-                        key={item}
-                        className="text-[16px] leading-[1.5] tracking-[0.01em] text-[#1a1a1a]"
-                        style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
+        <section aria-label="Lecture archive" className="pb-20 md:pb-24 lg:pb-28">
+          <div className="border-t border-black/10">
+            {filteredLectures.map((lecture) => (
+              <article
+                key={lecture.id}
+                className="border-b border-black/10 py-10 md:py-12"
+              >
+                <div className="grid grid-cols-1 gap-8 md:gap-10 lg:grid-cols-12">
+                  <div className="lg:col-span-2">
+                    <p
+                      className="mb-4 text-[11px] uppercase tracking-[0.24em] text-[#9c9c9c]"
+                      style={{
+                        fontFamily:
+                          "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                      }}
+                    >
+                      {lecture.type}
+                    </p>
+
+                    <div
+                      className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b] md:text-[15px]"
+                      style={{
+                        fontFamily:
+                          "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                      }}
+                    >
+                      <p>{lecture.dateLabel}</p>
+                      <p>{lecture.time}</p>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-7">
+                    <div className="max-w-[42rem]">
+                      <h2
+                        className="text-[1.9rem] leading-[1.08] tracking-[-0.03em] text-[#1a1a1a] sm:text-[2.15rem] lg:text-[2.3rem]"
+                        style={{
+                          fontFamily:
+                            "var(--font-playfair), var(--font-noto-serif-tc), serif",
+                        }}
                       >
-                        {item}
+                        {lecture.titleZh}
+                      </h2>
+
+                      <p
+                        className="mt-3 text-[14px] leading-[1.7] text-[#6b6b6b] md:text-[15px]"
+                        style={{
+                          fontFamily:
+                            "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                        }}
+                      >
+                        {lecture.subtitleEn}
                       </p>
-                    ))}
+
+                      <p
+                        className="mt-6 max-w-[42ch] text-[16px] leading-[1.65] text-[#1a1a1a]"
+                        style={{
+                          fontFamily:
+                            "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                        }}
+                      >
+                        {lecture.summary}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-3 lg:pl-4">
+                    <div
+                      className="flex h-full flex-col justify-between"
+                      style={{
+                        fontFamily:
+                          "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                      }}
+                    >
+                      <div className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b] md:text-[15px]">
+                        <p className="text-[#1a1a1a]">{lecture.speaker}</p>
+                        <p>{lecture.dateLabel}</p>
+                        <p>{lecture.time}</p>
+                      </div>
+
+                      <div className="pt-8">
+                        <Link
+                          href={lecture.href}
+                          className="group inline-flex items-center gap-2 text-[14px] text-[#1a1a1a] transition-opacity duration-200 hover:opacity-70"
+                        >
+                          <span>View details</span>
+                          <span className="inline-block transition-transform duration-200 group-hover:translate-x-[2px]">
+                            →
+                          </span>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section className="border-b border-[rgba(0,0,0,0.08)] py-[120px]">
-          <div className="grid gap-16 md:grid-cols-12 md:gap-20">
-            <div className="md:col-span-5">
-              <MuseumImage
-                src={activeLecture.speakerImage}
-                alt={activeLecture.speaker}
-                ratio="aspect-[4/5]"
-                seed={`${activeLecture.id}-speaker`}
-                caption="Speaker portrait"
-              />
-            </div>
-
-            <div className="md:col-span-7">
-              <Label>Speaker</Label>
-
-              <h2
-                className="mt-5 text-[28px] leading-[1.2] tracking-[-0.01em] text-[#1a1a1a]"
-                style={{ fontFamily: "var(--font-playfair), var(--font-noto-serif-tc), serif" }}
-              >
-                {activeLecture.speaker}
-              </h2>
-
+        <footer className="border-t border-black/10 py-10 md:py-12">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-8">
               <p
-                className="mt-4 text-[14px] uppercase leading-[1.3] tracking-[0.18em] text-[#6b6b6b]"
-                style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
+                className="max-w-[48ch] text-[15px] leading-[1.75] text-[#6b6b6b]"
+                style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
               >
-                {activeLecture.speakerTitle || "Speaker"}
+                For registration updates, research collaboration, and program
+                notices, please refer to each lecture page or subscribe to the
+                public programs newsletter.
               </p>
+            </div>
 
-              <div className="mt-8 max-w-[640px]">
-                <p
-                  className="text-[16px] leading-[1.5] tracking-[0.01em] text-[#1a1a1a]"
-                  style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-                >
-                  {activeLecture.speakerBio || activeLecture.intro}
-                </p>
-              </div>
-
-              <div className="mt-12">
-                {!showRegistration ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowRegistration(true)}
-                    className="inline-flex items-center justify-center border border-[#1a1a1a] bg-[#f6f3ee] px-6 py-[14px] text-[14px] uppercase leading-none tracking-[0.12em] text-[#1a1a1a] transition-colors duration-200 hover:bg-[#f1eee7]"
-                    style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-                  >
-                    Register
-                  </button>
-                ) : (
-                  <div className="max-w-[720px] border border-[rgba(0,0,0,0.08)] p-6">
-                    <div className="mb-6 flex items-center justify-between gap-6">
-                      <Label>Registration</Label>
-                      <button
-                        type="button"
-                        onClick={() => setShowRegistration(false)}
-                        className="border border-[rgba(0,0,0,0.08)] px-4 py-3 text-[12px] uppercase tracking-[0.16em] text-[#6b6b6b] transition-colors duration-200 hover:bg-[#f1eee7]"
-                        style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-                      >
-                        Close
-                      </button>
-                    </div>
-
-                    <LectureRegistrationForm
-                      lectureId={activeLecture.id}
-                      lectureTitle={activeLecture.title}
-                      onClose={() => setShowRegistration(false)}
-                    />
-                  </div>
-                )}
-              </div>
+            <div className="lg:col-span-4 lg:text-right">
+              <Link
+                href="/programs/subscribe"
+                className="inline-flex items-center border border-black/10 px-5 py-3 text-[14px] text-[#1a1a1a] transition-colors duration-200 hover:border-black/20"
+                style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
+              >
+                Subscribe
+              </Link>
             </div>
           </div>
-        </section>
-
-        <section className="py-[120px]">
-          <div className="grid gap-16 md:grid-cols-12 md:gap-20">
-            <div className="md:col-span-3">
-              <Label>Programme</Label>
-            </div>
-
-            <div className="md:col-span-9">
-              <div className="border-t border-[rgba(0,0,0,0.08)]">
-                {lectures.map((lecture) => {
-                  const parsed = parseLectureTime(lecture.time);
-                  const isActive = lecture.id === activeLecture.id;
-
-                  return (
-                    <button
-                      key={lecture.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveLectureId(lecture.id);
-                        setShowRegistration(false);
-                      }}
-                      className="grid w-full grid-cols-12 gap-6 border-b border-[rgba(0,0,0,0.08)] py-10 text-left transition-colors duration-200 hover:bg-[rgba(0,0,0,0.015)]"
-                    >
-                      <div className="col-span-12 md:col-span-2">
-                        <p
-                          className="text-[12px] leading-[1.4] tracking-[0.04em] text-[#6b6b6b]"
-                          style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-                        >
-                          {parsed.date}
-                        </p>
-                      </div>
-
-                      <div className="col-span-12 md:col-span-7">
-                        <p
-                          className="text-[11px] uppercase leading-[1.2] tracking-[0.22em] text-[#9c9c9c]"
-                          style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-                        >
-                          {lecture.tag}
-                        </p>
-
-                        <h3
-                          className={`mt-3 max-w-[18ch] text-[clamp(28px,4vw,36px)] leading-[1.08] tracking-[-0.01em] ${
-                            isActive ? "text-[#1a1a1a]" : "text-[#2e2e2e]"
-                          }`}
-                          style={{ fontFamily: "var(--font-playfair), var(--font-noto-serif-tc), serif" }}
-                        >
-                          {lecture.title}
-                        </h3>
-                      </div>
-
-                      <div className="col-span-12 md:col-span-3">
-                        <p
-                          className="text-[16px] leading-[1.5] tracking-[0.01em] text-[#1a1a1a]"
-                          style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-                        >
-                          {lecture.speaker}
-                        </p>
-                        <p
-                          className="mt-2 text-[12px] leading-[1.4] tracking-[0.04em] text-[#6b6b6b]"
-                          style={{ fontFamily: "var(--font-geist-sans), var(--font-noto-sans-tc), sans-serif" }}
-                        >
-                          {parsed.start}
-                          {parsed.end ? `–${parsed.end}` : ""}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+        </footer>
+      </div>
+    </main>
   );
 }
