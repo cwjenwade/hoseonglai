@@ -1,9 +1,17 @@
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 
+// 使用 service role key 執行 SQL
 const supabase = createClient(
   'https://eeupyvtuzusehtyuecgd.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldXB5dnR1enVzZWh0eXVlY2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzA0Njc0NCwiZXhwIjoyMDg4NjIyNzQ0fQ.mHzJsvZJFavP3s2eL_qbbfGgUdKhJF70Or3GBNfbOI0'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldXB5dnR1enVzZWh0eXVlY2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzA0Njc0NCwiZXhwIjoyMDg4NjIyNzQ0fQ.mHzJsvZJFavP3s2eL_qbbfGgUdKhJF70Or3GBNfbOI0',
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false
+    }
+  }
 );
 
 async function setupDatabase() {

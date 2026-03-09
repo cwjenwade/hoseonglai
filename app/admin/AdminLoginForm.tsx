@@ -21,9 +21,8 @@ export default function AdminLoginForm() {
 
     setLoading(true);
 
-    // 這裡暫時用簡單驗證，實際應該連到 Supabase Auth 或後端 API
-    // 預設帳號：admin / 密碼：admin123
-    if (username === "admin" && password === "admin123") {
+    // 檢查帳號密碼
+    if (username === "Admin" && password === "98761234AAAA") {
       // 儲存登入狀態到 localStorage
       localStorage.setItem("admin_logged_in", "true");
       
@@ -82,7 +81,7 @@ export default function AdminLoginForm() {
       </button>
 
       <p className="text-center text-xs text-zinc-500">
-        預設帳號：admin / 密碼：admin123
+        帳號：Admin / 密碼：98761234AAAA
       </p>
     </form>
   );
