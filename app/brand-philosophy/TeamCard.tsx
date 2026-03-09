@@ -2,11 +2,13 @@ import Image from "next/image";
 
 type Member = {
   id: string | number;
-  name: string;
-  englishName?: string;
+  nameZh: string;
+  nameEn?: string;
+  profession?: string;
   role?: string;
   bio?: string;
-  image?: string;
+  photo?: string;
+  color?: string;
 };
 
 export default function TeamCard({ member }: { member: Member }) {
@@ -14,10 +16,10 @@ export default function TeamCard({ member }: { member: Member }) {
     <article className="group h-full w-full bg-transparent">
       <div className="flex h-full flex-col">
         <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#ece7dd]">
-          {member.image ? (
+          {member.photo ? (
             <Image
-              src={member.image}
-              alt={member.name}
+              src={member.photo}
+              alt={member.nameZh}
               fill
               className="object-cover grayscale-[8%] transition duration-700 group-hover:scale-[1.015]"
             />
@@ -48,15 +50,15 @@ export default function TeamCard({ member }: { member: Member }) {
               className="text-[1.55rem] leading-none tracking-[-0.045em] text-zinc-950"
               style={{ fontFamily: "var(--font-noto-serif)" }}
             >
-              {member.name}
+              {member.nameZh}
             </h3>
 
-            {member.englishName ? (
+            {member.nameEn ? (
               <p
                 className="text-[0.98rem] tracking-[-0.01em] text-zinc-600"
                 style={{ fontFamily: "var(--font-playfair)" }}
               >
-                {member.englishName}
+                {member.nameEn}
               </p>
             ) : null}
           </div>

@@ -58,7 +58,7 @@ export const TEAM_MEMBERS: TeamMember[] = [
     profession: "社群管理",
     role: "社群主任",
     bio: "經營品牌社群與活動連結，讓使用者在參與中感受到團圓與歸屬。用心聆聽社群聲音，串聯每份熱情與支持。",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+    photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop",
     color: "from-violet-500 to-violet-600",
   },
   {
@@ -68,7 +68,7 @@ export const TEAM_MEMBERS: TeamMember[] = [
     profession: "營運管理",
     role: "營運總監",
     bio: "以系統化流程支持團隊執行，讓每項品牌承諾都能穩定落地。透過流程優化與團隊協調，確保品牌承諾的實現。",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
     color: "from-orange-500 to-orange-600",
   },
   {
@@ -78,7 +78,7 @@ export const TEAM_MEMBERS: TeamMember[] = [
     profession: "數據分析",
     role: "數據分析師",
     bio: "透過數據洞察驗證策略成效，協助品牌在變化中持續優化與成長。用數據說話，為決策提供有力支持。",
-    photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
+    photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop",
     color: "from-teal-500 to-teal-600",
   },
 ];
