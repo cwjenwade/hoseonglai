@@ -108,9 +108,7 @@ export default function HeartfeltMomentumPage() {
                 ))}
               </div>
 
-              <a
-                href={video.url}
-               div className="mt-4 flex gap-2">
+              <div className="mt-4 flex gap-2">
                 <a
                   href={video.url}
                   target="_blank"
@@ -136,6 +134,8 @@ export default function HeartfeltMomentumPage() {
                   />
                 </div>
               )}
+            </article>
+          ))}
         </div>
       </section>
     </div>

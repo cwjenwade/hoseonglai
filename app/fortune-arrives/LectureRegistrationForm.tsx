@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type LectureRegistrationProps = {
@@ -19,10 +19,10 @@ export default function LectureRegistrationForm({
   const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [autoSaved, setAutoSaved] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const submitForm = async () => {
+    if (loading || submitted) return;
     if (!name.trim() || !email.trim() || !phone.trim()) {
       alert("請填寫所有欄位");
       return;
@@ -42,12 +42,28 @@ export default function LectureRegistrationForm({
       if (error) throw error;
 
       setSubmitted(true);
+      setAutoSaved(true);
     } catch (error) {
       console.error("報名失敗：", error);
       alert("報名失敗，請稍後再試");
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (!name.trim() || !email.trim() || !phone.trim() || submitted) return;
+
+    const timer = setTimeout(() => {
+      void submitForm();
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [name, email, phone, submitted]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitForm();
   };
 
   if (submitted) {
@@ -70,6 +86,9 @@ export default function LectureRegistrationForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <h5 className="text-lg font-semibold text-zinc-900">填寫報名資訊</h5>
+      {autoSaved && !submitted && (
+        <p className="text-xs text-emerald-700">已自動保存草稿，稍後會自動送出。</p>
+      )}
 
       <input
         type="text"

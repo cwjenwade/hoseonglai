@@ -108,6 +108,7 @@ export default function FortuneArrivesPage() {
                   {lecture.highlights.map((highlight) => (
                     <li key={highlight}>{highlight}</li>
                   ))}
+                </ul>
                 {showRegistration === lecture.id ? (
                   <div className="mt-6">
                     <LectureRegistrationForm
@@ -131,9 +132,7 @@ export default function FortuneArrivesPage() {
                       稍後再看
                     </label>
                   </div>
-                )}再看
-                  </label>
-                </div>
+                )}
               </div>
             </div>
           </div>
