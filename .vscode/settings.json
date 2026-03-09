@@ -1,0 +1,40 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": true
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "db.eeupyvtuzusehtyuecgd.supabase.co",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "supabase",
+            "database": "postgres",
+            "username": "postgres"
+        },
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "sshOptions": {
+                "port": 5432,
+                "host": "aws-1-ap-southeast-1.pooler.supabase.com",
+                "username": "postgres.eeupyvtuzusehtyuecgd",
+                "password": "HoseOngLai0902!"
+            },
+            "server": "db.eeupyvtuzusehtyuecgd.supabase.co",
+            "driver": "CockroachDB",
+            "connectString": "postgresql://postgres.eeupyvtuzusehtyuecgd:HoseOngLai0902!@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres",
+            "name": "Jen",
+            "database": "postgres",
+            "username": "postgres"
+        }
+    ]
+}
