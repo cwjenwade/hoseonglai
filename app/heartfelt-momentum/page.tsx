@@ -70,74 +70,79 @@ export default function HeartfeltMomentumPage() {
         <p className="mt-2 text-zinc-600">可用搜尋欄與分類選單快速查找，並直接前往 YouTube。</p>
 
         <div className="mt-5 grid gap-3 md:grid-cols-[1fr_220px]">
-          <input
-            placeholder="搜尋影片標題、歌手或 hashtag..."
-            className="h-11 rounded-xl border border-zinc-300 px-4 text-sm outline-none transition focus:border-amber-400"
-            aria-label="搜尋影片"
-          />
+    export default function HeartfeltMomentumPage() {
+      return (
+        <div className="space-y-6">
+          <section className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
+            <h2 className="text-3xl font-bold text-zinc-900">有心好勢｜影片研究</h2>
+            <p className="mt-4 leading-8 text-zinc-700">
+              這頁精選了 4 支具代表性的 MV，透過影片鑑賞與分析，
+              幫助團隊汲取視覺、節奏與敘事靈感，應用於品牌內容創意。
+            </p>
+          </section>
 
-          <select
-            className="h-11 rounded-xl border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-amber-400"
-            aria-label="選擇影片分類"
-          >
-            <option>All</option>
-            <option>K-POP</option>
-            <option>Mandopop</option>
-            <option>Pop</option>
-          </select>
-        </div>
+          <section className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
+            <h3 className="text-2xl font-bold text-zinc-900">MV 影片庫</h3>
+            <p className="mt-2 text-zinc-600">點擊影片卡片直接前往 YouTube 觀看</p>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {videos.map((video) => (
-            <article key={video.url} className="rounded-2xl border border-zinc-200 p-5">
-              <p className="text-xs font-semibold tracking-wide text-amber-700">5 mins research</p>
-              <h4 className="mt-2 text-lg font-semibold text-zinc-900">{video.title}</h4>
-              <p className="text-sm text-zinc-500">
-                {video.artist} · {video.category}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-zinc-600">{video.researchNote}</p>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {video.hashtags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-zinc-300 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-600"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-4 flex gap-2">
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              {videos.map((video) => (
                 <a
+                  key={video.url}
                   href={video.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700"
+                  className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:shadow-lg hover:border-amber-200"
                 >
-                  前往 YouTube
-                </a>
-                <button
-                  onClick={() => setShowRegistration(video.url)}
-                  className="rounded-full border border-sky-600 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-100"
-                >
-                  登記研究興趣
-                </button>
-              </div>
+                  {/* 影片縮圖 */}
+                  <div className="relative h-48 w-full overflow-hidden bg-zinc-100">
+                    <img
+                      src={video.thumbnail}
+                      alt={`${video.title} by ${video.artist}`}
+                      className="h-full w-full object-cover transition group-hover:scale-105"
+                    />
+                    {/* YouTube 播放按鈕覆蓋 */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 opacity-0 transition group-hover:opacity-100">
+                        <svg className="h-7 w-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
 
-              {showRegistration === video.url && (
-                <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                  <ResearchRegistrationForm
-                    videoUrl={video.url}
-                    videoTitle={video.title}
-                    onClose={() => setShowRegistration(null)}
-                  />
-                </div>
-              )}
-            </article>
-          ))}
+                  {/* 影片資訊 */}
+                  <div className="space-y-3 p-5">
+                    <div>
+                      <h4 className="text-lg font-semibold text-zinc-900">{video.title}</h4>
+                      <p className="text-sm text-zinc-600">
+                        {video.artist} · <span className="font-medium text-amber-700">{video.category}</span>
+                      </p>
+                    </div>
+
+                    <p className="text-sm leading-7 text-zinc-700">{video.researchNote}</p>
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {video.hashtags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-zinc-300 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-600"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="inline-flex gap-2 pt-2">
+                      <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
+                        前往 YouTube
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
         </div>
-      </section>
-    </div>
-  );
-}
+      );
+    }
