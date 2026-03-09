@@ -1,4 +1,8 @@
+"use client";
+
 import type { Metadata } from "next";
+import { useState } from "react";
+import ResearchRegistrationForm from "./ResearchRegistrationForm";
 
 type VideoItem = {
   title: string;
@@ -48,11 +52,9 @@ const videos: VideoItem[] = [
   },
 ];
 
-export const metadata: Metadata = {
-  title: "有心好勢",
-};
-
 export default function HeartfeltMomentumPage() {
+  const [showRegistration, setShowRegistration] = useState<string | null>(null);
+
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
@@ -108,14 +110,32 @@ export default function HeartfeltMomentumPage() {
 
               <a
                 href={video.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700"
-              >
-                前往 YouTube
-              </a>
-            </article>
-          ))}
+               div className="mt-4 flex gap-2">
+                <a
+                  href={video.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700"
+                >
+                  前往 YouTube
+                </a>
+                <button
+                  onClick={() => setShowRegistration(video.url)}
+                  className="rounded-full border border-sky-600 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-100"
+                >
+                  登記研究興趣
+                </button>
+              </div>
+
+              {showRegistration === video.url && (
+                <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                  <ResearchRegistrationForm
+                    videoUrl={video.url}
+                    videoTitle={video.title}
+                    onClose={() => setShowRegistration(null)}
+                  />
+                </div>
+              )}
         </div>
       </section>
     </div>

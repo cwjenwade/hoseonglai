@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import NewsletterSubscription from "./NewsletterSubscription";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,7 +44,16 @@ export default function RootLayout({
         <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white text-zinc-800">
           <header className="border-b border-amber-100 bg-white/80 backdrop-blur">
             <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4">
-              <h1 className="text-xl font-bold tracking-wide text-amber-700">旺來品牌</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-bold tracking-wide text-amber-700">旺來品牌</h1>
+                <Link
+                  href="/admin"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-xs font-bold text-white transition hover:bg-zinc-700"
+                  title="管理後台"
+                >
+                  A
+                </Link>
+              </div>
               <nav className="flex flex-wrap items-center gap-2 text-sm font-medium">
                 {links.map((link) => (
                   <Link
@@ -60,8 +70,13 @@ export default function RootLayout({
 
           <main className="mx-auto w-full max-w-5xl px-6 py-10">{children}</main>
 
-          <footer className="border-t border-amber-100 px-6 py-6 text-center text-sm text-zinc-500">
-            以心聚勢，以運旺來，團圓共好。
+          <footer className="border-t border-amber-100 px-6 py-8">
+            <div className="mx-auto w-full max-w-5xl">
+              <NewsletterSubscription />
+              <p className="mt-6 text-center text-sm text-zinc-500">
+                以心聚勢，以運旺來，團圓共好。
+              </p>
+            </div>
           </footer>
         </div>
       </body>

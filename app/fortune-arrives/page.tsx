@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "有運旺來",
-};
+import type { Metadata } from "next";
+import { useState } from "react";
+import LectureRegistrationForm from "./LectureRegistrationForm";
 
 type Lecture = {
   id: string;
@@ -58,6 +58,8 @@ const lectures: Lecture[] = [
 ];
 
 export default function FortuneArrivesPage() {
+  const [showRegistration, setShowRegistration] = useState<string | null>(null);
+
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
@@ -106,22 +108,30 @@ export default function FortuneArrivesPage() {
                   {lecture.highlights.map((highlight) => (
                     <li key={highlight}>{highlight}</li>
                   ))}
-                </ul>
-
-                <div className="mt-6 flex items-center gap-3">
-                  <a
-                    href={lecture.registerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
-                  >
-                    立即報名
-                  </a>
-                  <label
-                    htmlFor={lecture.id}
-                    className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
-                  >
-                    稍後再看
+                {showRegistration === lecture.id ? (
+                  <div className="mt-6">
+                    <LectureRegistrationForm
+                      lectureId={lecture.id}
+                      lectureTitle={lecture.title}
+                      onClose={() => setShowRegistration(null)}
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-6 flex items-center gap-3">
+                    <button
+                      onClick={() => setShowRegistration(lecture.id)}
+                      className="inline-flex rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                    >
+                      立即報名
+                    </button>
+                    <label
+                      htmlFor={lecture.id}
+                      className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+                    >
+                      稍後再看
+                    </label>
+                  </div>
+                )}再看
                   </label>
                 </div>
               </div>
