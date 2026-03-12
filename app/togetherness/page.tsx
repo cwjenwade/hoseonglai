@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "團團圓圓 | Group Therapy",
@@ -6,46 +7,31 @@ export const metadata: Metadata = {
 
 const groups = [
   {
+    slug: "group-counseling",
     title: "團體諮商",
     subtitle: "Group Counseling",
     image:
       "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1600&auto=format&fit=crop",
     description:
-      "在安全且保密的團體中，透過傾聽與回饋，探索情緒、人際與自我。",
-    detail: `
-在團體中，你會發現自己並不孤單。
-透過他人的經驗與回饋，我們逐漸理解自己的情緒與關係模式。
-
-團體提供一個安全空間，讓成員練習表達與被理解，
-並學習新的互動方式。
-
-8 週一期
-每週一次
-每次 90 分鐘
-6–10 人
-`,
+      "在安全且保密的團體中探索情緒與關係。透過傾聽與回饋逐漸理解自己。",
   },
   {
+    slug: "group-psychotherapy",
     title: "團體心理治療",
     subtitle: "Group Psychotherapy",
     image:
       "https://images.unsplash.com/photo-1511988617509-a57c8a288659?q=80&w=1600&auto=format&fit=crop",
     description:
-      "深入探索情緒、依附與關係模式，建立新的心理經驗。",
-    detail: `
-此團體由心理師帶領，
-適合希望更深入理解自己的人。
-
-團體互動會逐漸呈現
-情緒模式與關係模式。
-
-透過新的心理經驗
-逐步建立更穩定的內在。
-
-雙心理師帶領
-團體前評估
-保密倫理
-`,
+      "深入探索依附、情緒與關係模式。在互動中建立新的心理經驗。",
+  },
+  {
+    slug: "interpersonal-group",
+    title: "人際歷程團體",
+    subtitle: "Interpersonal Process Group",
+    image:
+      "https://images.unsplash.com/photo-1529336953121-a0ce2d6a5c6d?q=80&w=1600&auto=format&fit=crop",
+    description:
+      "透過即時互動理解人際模式。練習新的表達與關係方式。",
   },
 ];
 
@@ -53,109 +39,71 @@ export default function TogethernessPage() {
   return (
     <main className="bg-[#f6f3ee] text-[#1a1a1a] min-h-screen">
 
-      <div className="mx-auto max-w-[1600px] px-12 py-32">
+      <div className="mx-auto max-w-[1500px] px-12 py-28">
 
-        {/* TITLE */}
+        {/* PAGE TITLE */}
 
-        <header className="mb-48 grid grid-cols-12">
+        <header className="mb-24">
 
-          <div className="col-span-8">
+          <h1 className="text-[52px] font-medium">
+            團團圓圓
+          </h1>
 
-            <p className="text-[11px] tracking-[0.35em] uppercase text-neutral-500">
-              Group Therapy Programme
-            </p>
-
-            <h1 className="mt-8 text-[72px] leading-[1.05] font-light tracking-[-0.02em]">
-              團團圓圓
-            </h1>
-
-          </div>
-
-          <div className="col-span-4">
-
-            <p className="text-[18px] leading-[1.9] text-neutral-600">
-              團體是一種心理空間。
-              在他人的故事之中，
-              我們逐漸看見自己的情緒、
-              關係與內在模式。
-            </p>
-
-          </div>
+          <p className="text-neutral-500 mt-3 text-[15px]">
+            Group Therapy Programme
+          </p>
 
         </header>
 
-        {/* PROGRAMMES */}
+        {/* EXHIBITION GRID */}
 
-        <div className="space-y-52">
+        <div className="grid grid-cols-3 gap-x-16 gap-y-24">
 
-          {groups.map((group, index) => (
-            <section
-              key={index}
-              className="grid grid-cols-12 gap-16 items-start"
+          {groups.map((group) => (
+
+            <Link
+              key={group.slug}
+              href={`/groups/${group.slug}`}
+              className="group block"
             >
 
               {/* IMAGE */}
 
-              <div className="col-span-7">
+              <div className="aspect-[4/5] overflow-hidden bg-neutral-200">
 
-                <div className="aspect-[4/5] overflow-hidden bg-neutral-200">
-
-                  <img
-                    src={group.image}
-                    className="w-full h-full object-cover"
-                  />
-
-                </div>
+                <img
+                  src={group.image}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                />
 
               </div>
 
-              {/* TEXT */}
+              {/* LABEL */}
 
-              <div className="col-span-5">
+              <p className="mt-6 text-[11px] tracking-wide text-neutral-400 uppercase">
+                Exhibition
+              </p>
 
-                <p className="text-[11px] tracking-[0.35em] uppercase text-neutral-500">
-                  Programme
-                </p>
+              {/* TITLE */}
 
-                <h2 className="mt-6 text-[36px] leading-[1.2] font-medium">
-                  {group.title}
-                </h2>
+              <h2 className="mt-2 text-[22px] font-medium">
+                {group.title}
+              </h2>
 
-                <p className="text-neutral-500 text-[15px] mt-2">
-                  {group.subtitle}
-                </p>
+              {/* SUBTITLE */}
 
-                <p className="mt-10 text-[18px] leading-[2] text-neutral-700 max-w-[480px]">
-                  {group.description}
-                </p>
+              <p className="text-[14px] text-neutral-500">
+                {group.subtitle}
+              </p>
 
-                {/* EXPAND */}
+              {/* DESCRIPTION (2 lines only) */}
 
-                <details className="mt-12 border-t border-neutral-300 pt-6">
+              <p className="mt-4 text-[15px] leading-[1.7] text-neutral-700 line-clamp-2">
+                {group.description}
+              </p>
 
-                  <summary className="cursor-pointer text-[13px] tracking-[0.2em] uppercase">
-                    Introduction
-                  </summary>
+            </Link>
 
-                  <div className="mt-6 whitespace-pre-line text-[17px] leading-[2] text-neutral-700 max-w-[520px]">
-                    {group.detail}
-                  </div>
-
-                </details>
-
-                {/* LINK */}
-
-                <a
-                  href="https://forms.gle/"
-                  target="_blank"
-                  className="inline-block mt-14 text-[13px] tracking-[0.3em] uppercase border-b border-neutral-800 pb-1 hover:opacity-60"
-                >
-                  Join Group
-                </a>
-
-              </div>
-
-            </section>
           ))}
 
         </div>
