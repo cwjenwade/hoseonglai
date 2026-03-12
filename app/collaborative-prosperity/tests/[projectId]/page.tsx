@@ -219,22 +219,33 @@ export default function TestProjectPage() {
                 >
                   {String(index + 1).padStart(3, "0")}. {q}
                 </label>
-                <select
-                  value={answers[index]}
-                  onChange={(e) => {
-                    const next = [...answers];
-                    next[index] = Number(e.target.value);
-                    setAnswers(next);
-                  }}
-                  className="w-full max-w-md border border-neutral-300 bg-transparent px-4 py-3 outline-none"
-                >
-                  <option value={-1}>請選擇</option>
-                  {OPTIONS.map((opt, optIdx) => (
-                    <option key={opt} value={optIdx}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap gap-2">
+                  {OPTIONS.map((opt, optIdx) => {
+                    const selected = answers[index] === optIdx;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          const next = [...answers];
+                          next[index] = optIdx;
+                          setAnswers(next);
+                        }}
+                        className={
+                          "inline-flex items-center gap-2 border px-3 py-2 text-sm transition " +
+                          (selected
+                            ? "border-neutral-900 bg-neutral-900 text-[#f3f3f2]"
+                            : "border-neutral-300 bg-transparent text-neutral-800 hover:border-neutral-500")
+                        }
+                        style={{ fontFamily: "var(--font-sans)" }}
+                        aria-pressed={selected}
+                      >
+                        <span className="text-xs font-semibold">{optIdx + 1}</span>
+                        <span>{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ))}
 
