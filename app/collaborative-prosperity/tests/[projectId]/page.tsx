@@ -214,7 +214,7 @@ export default function TestProjectPage() {
             {questions.map((q: string, index: number) => (
               <div key={q} className="space-y-4">
                 <label
-                  className="block text-neutral-700"
+                  className="block text-[1rem] text-neutral-700"
                   style={{ fontFamily: "var(--font-serif)" }}
                 >
                   {String(index + 1).padStart(3, "0")}. {q}
@@ -232,7 +232,7 @@ export default function TestProjectPage() {
                           setAnswers(next);
                         }}
                         className={
-                          "inline-flex items-center gap-2 border px-3 py-2 text-sm transition " +
+                          "inline-flex items-center gap-2 border px-3.5 py-2.5 text-[0.95rem] transition " +
                           (selected
                             ? "border-neutral-900 bg-neutral-900 text-[#f3f3f2]"
                             : "border-neutral-300 bg-transparent text-neutral-800 hover:border-neutral-500")
