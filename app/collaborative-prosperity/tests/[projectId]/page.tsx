@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
+import { getTestQuestions } from "../../test-questions";
 
 type SessionPayload = {
   participantCode: string;
@@ -10,14 +11,6 @@ type SessionPayload = {
   projectId: string;
   projectTitle: string;
 };
-
-const QUESTIONS = [
-  "過去兩週，我經常感到壓力難以調節。",
-  "我能夠辨識自己當下的情緒狀態。",
-  "面對衝突時，我能保持穩定並有效溝通。",
-  "我通常能在生活中找到支持資源。",
-  "整體而言，我近期的心理狀態是穩定的。",
-];
 
 const OPTIONS = ["非常不同意", "不同意", "普通", "同意", "非常同意"];
 
@@ -31,9 +24,8 @@ export default function TestProjectPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [session, setSession] = useState<SessionPayload | null>(null);
-  const [answers, setAnswers] = useState<number[]>(
-    new Array(QUESTIONS.length).fill(-1)
-  );
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submittedCode, setSubmittedCode] = useState("");
 
@@ -62,6 +54,11 @@ export default function TestProjectPage() {
         }
 
         setSession(data.payload as SessionPayload);
+        
+        // 載入該專案的題目
+        const projectQuestions = getTestQuestions(projectId);
+        setQuestions(projectQuestions);
+        setAnswers(new Array(projectQuestions.length).fill(-1));
       } catch (err) {
         setError(err instanceof Error ? err.message : "驗證失敗");
       } finally {
@@ -209,7 +206,7 @@ export default function TestProjectPage() {
           </p>
 
           <div className="mt-12 space-y-8 border-t border-neutral-300/60 pt-10">
-            {QUESTIONS.map((q, index) => (
+            {questions.map((q: string, index: number) => (
               <div key={q} className="space-y-4">
                 <label
                   className="block text-neutral-700"
