@@ -37,7 +37,7 @@ const groups = [
 
 export default function TogethernessPage() {
   return (
-    <main className="min-h-screen bg-[#faf9f6] text-[#171717]">
+    <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
       <div className="mx-auto max-w-[1520px] px-8 py-16 md:px-12 md:py-20">
         <header className="mb-16 md:mb-20">
           <p className="text-[11px] uppercase tracking-[0.08em] text-neutral-400">
