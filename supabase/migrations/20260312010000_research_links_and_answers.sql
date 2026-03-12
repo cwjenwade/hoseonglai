@@ -18,8 +18,10 @@ BEGIN
     FROM pg_policies
     WHERE tablename = 'url_shortcuts' AND policyname = 'Allow public insert'
   ) THEN
-    CREATE POLICY "Allow public insert" ON url_shortcuts
-      FOR INSERT TO anon WITH CHECK (true);
+    -- Writes should NOT be public. url_shortcuts is used for redirects,
+    -- so we keep it publicly readable only.
+    -- (Writes should be performed via service role or admin-only policies.)
+    NULL;
   END IF;
 
   IF NOT EXISTS (
@@ -27,8 +29,8 @@ BEGIN
     FROM pg_policies
     WHERE tablename = 'url_shortcuts' AND policyname = 'Allow public update'
   ) THEN
-    CREATE POLICY "Allow public update" ON url_shortcuts
-      FOR UPDATE TO anon USING (true) WITH CHECK (true);
+    -- Writes should NOT be public.
+    NULL;
   END IF;
 
   IF NOT EXISTS (
@@ -40,6 +42,10 @@ BEGIN
       FOR SELECT TO anon USING (true);
   END IF;
 END $$;
+
+-- If older versions of this migration were applied, ensure public write policies are removed.
+DROP POLICY IF EXISTS "Allow public insert" ON url_shortcuts;
+DROP POLICY IF EXISTS "Allow public update" ON url_shortcuts;
 
 -- Numbered answer columns storage by project & participant code
 CREATE TABLE IF NOT EXISTS psych_test_answer_columns (

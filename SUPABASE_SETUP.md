@@ -12,6 +12,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_Na8YOzbo2uwM22Nxf9u7Sw_MrbiTDCQ
 SUPABASE_SERVICE_ROLE_KEY=你的_SUPABASE_SERVICE_ROLE_KEY
 
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# 研究測驗 token 簽章用（server-only；正式環境必填）
+# macOS 產生方式：openssl rand -base64 32
+RESEARCH_TOKEN_SECRET=請填入隨機字串
 ```
 
 **如何找到 Project URL？**
@@ -141,9 +145,12 @@ node scripts/grant-admin.mjs <auth.users.id> <admin-email>
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`（server-only，用於寫入 `url_shortcuts` 以產生短連結）
+- `RESEARCH_TOKEN_SECRET`（server-only，用於簽章/驗證研究測驗 token；正式環境必填）
 - `NEXT_PUBLIC_SITE_URL`
 
 提醒：`SUPABASE_SERVICE_ROLE_KEY` 不能加 `NEXT_PUBLIC_`，也不能出現在前端程式碼或瀏覽器環境。
+
+提醒：如果正式環境未設定 `RESEARCH_TOKEN_SECRET`，API 會拒絕啟動（避免 token 可被偽造）。
 
 ---
 

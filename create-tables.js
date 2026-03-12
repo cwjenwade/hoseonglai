@@ -1,5 +1,45 @@
-const SUPABASE_URL = 'https://eeupyvtuzusehtyuecgd.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldXB5dnR1enVzZWh0eXVlY2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzA0Njc0NCwiZXhwIjoyMDg4NjIyNzQ0fQ.mHzJsvZJFavP3s2eL_qbbfGgUdKhJF70Or3GBNfbOI0';
+const fs = require('fs');
+const path = require('path');
+
+function loadEnvFromFile(filename) {
+  const filePath = path.join(process.cwd(), filename);
+  if (!fs.existsSync(filePath)) return;
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+
+    const eqIndex = line.indexOf('=');
+    if (eqIndex <= 0) continue;
+
+    const key = line.slice(0, eqIndex).trim();
+    let value = line.slice(eqIndex + 1).trim();
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+loadEnvFromFile('.env.local');
+loadEnvFromFile('.env');
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error(
+    'Missing env. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (server-only).'
+  );
+  process.exit(1);
+}
 
 const SQL_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS lecture_registrations (
@@ -103,10 +143,14 @@ async function setupDatabase() {
   
   // 驗證表是否建立成功
   console.log('\n🔍 驗證資料庫連接...');
+  if (!ANON_KEY) {
+    console.log('⚠️  未設定 NEXT_PUBLIC_SUPABASE_ANON_KEY，略過連線驗證。');
+    return;
+  }
   const { createClient } = require('@supabase/supabase-js');
   const supabase = createClient(
     SUPABASE_URL,
-    'sb_publishable_Na8YOzbo2uwM22Nxf9u7Sw_MrbiTDCQ'
+    ANON_KEY
   );
   
   try {

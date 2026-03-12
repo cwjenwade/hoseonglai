@@ -12,7 +12,18 @@ type ResearchTokenPayload = {
 
 type ResearchInput = Omit<ResearchTokenPayload, "exp">;
 
-const secret = process.env.RESEARCH_TOKEN_SECRET || "dev-secret-change-me";
+function getSecretOrThrow(): string {
+  const secret = process.env.RESEARCH_TOKEN_SECRET;
+  if (secret) return secret;
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Missing RESEARCH_TOKEN_SECRET. Set it in production to prevent forged research tokens.",
+    );
+  }
+
+  return "dev-secret-change-me";
+}
 
 function base64UrlEncode(input: string) {
   return Buffer.from(input)
@@ -29,7 +40,10 @@ function base64UrlDecode(input: string) {
 }
 
 function sign(data: string) {
-  return crypto.createHmac("sha256", secret).update(data).digest("hex");
+  return crypto
+    .createHmac("sha256", getSecretOrThrow())
+    .update(data)
+    .digest("hex");
 }
 
 export function signResearchToken(input: ResearchInput) {

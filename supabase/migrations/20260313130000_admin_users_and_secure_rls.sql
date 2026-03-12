@@ -31,13 +31,13 @@ DROP POLICY IF EXISTS "allow_all" ON public.psych_test_results;
 DROP POLICY IF EXISTS "allow_all" ON public.newsletter_subscribers;
 
 -- 3) Ensure RLS enabled (idempotent)
-ALTER TABLE public.lecture_registrations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.research_registrations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.psych_test_results ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.psych_test_answer_columns ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.group_registrations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.url_shortcuts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.lecture_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.research_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.psych_test_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.psych_test_answer_columns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.group_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.url_shortcuts ENABLE ROW LEVEL SECURITY;
 
 -- 4) Public insert policies (forms)
 DO $$
@@ -144,8 +144,13 @@ BEGIN
 END $$;
 
 -- 6) url_shortcuts should be publicly readable for redirect, but writes should be admin-only
-DROP POLICY IF EXISTS "Allow public insert" ON public.url_shortcuts;
-DROP POLICY IF EXISTS "Allow public update" ON public.url_shortcuts;
+DO $$
+BEGIN
+  IF to_regclass('public.url_shortcuts') IS NOT NULL THEN
+    DROP POLICY IF EXISTS "Allow public insert" ON public.url_shortcuts;
+    DROP POLICY IF EXISTS "Allow public update" ON public.url_shortcuts;
+  END IF;
+END $$;
 
 DO $$
 BEGIN

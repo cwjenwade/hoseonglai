@@ -1,18 +1,54 @@
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
+const path = require('path');
+
+function loadEnvFromFile(filename) {
+  const filePath = path.join(process.cwd(), filename);
+  if (!fs.existsSync(filePath)) return;
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+
+    const eqIndex = line.indexOf('=');
+    if (eqIndex <= 0) continue;
+
+    const key = line.slice(0, eqIndex).trim();
+    let value = line.slice(eqIndex + 1).trim();
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+loadEnvFromFile('.env.local');
+loadEnvFromFile('.env');
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error(
+    'Missing env. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (server-only).'
+  );
+  process.exit(1);
+}
 
 // 使用 service role key 執行 SQL
-const supabase = createClient(
-  'https://eeupyvtuzusehtyuecgd.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldXB5dnR1enVzZWh0eXVlY2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzA0Njc0NCwiZXhwIjoyMDg4NjIyNzQ0fQ.mHzJsvZJFavP3s2eL_qbbfGgUdKhJF70Or3GBNfbOI0',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-      detectSessionInUrl: false
-    }
-  }
-);
+const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+    detectSessionInUrl: false,
+  },
+});
 
 async function setupDatabase() {
   const sqlStatements = [
@@ -90,11 +126,11 @@ async function setupDatabase() {
       
       if (error) {
         // 嘗試用 query 參數
-        const response = await fetch('https://eeupyvtuzusehtyuecgd.supabase.co/rest/v1/', {
+        const response = await fetch(`${supabaseUrl}/rest/v1/`, {
           method: 'POST',
           headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldXB5dnR1enVzZWh0eXVlY2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzA0Njc0NCwiZXhwIjoyMDg4NjIyNzQ0fQ.mHzJsvZJFavP3s2eL_qbbfGgUdKhJF70Or3GBNfbOI0',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVldXB5dnR1enVzZWh0eXVlY2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzA0Njc0NCwiZXhwIjoyMDg4NjIyNzQ0fQ.mHzJsvZJFavP3s2eL_qbbfGgUdKhJF70Or3GBNfbOI0',
+            'apikey': serviceRoleKey,
+            'Authorization': `Bearer ${serviceRoleKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ query: stmt })
