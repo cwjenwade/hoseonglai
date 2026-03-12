@@ -14,7 +14,15 @@ export async function sendResearchJoinEmail({
   name,
   projectTitle,
   startUrl,
-}: SendResearchJoinEmailParams) {
+}: SendResearchJoinEmailParams): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.info("EMAIL_NOT_CONFIGURED", {
+      to,
+      projectTitle,
+      startUrl,
+    });
+    return;
+  }
 
   const subject = `研究參與連結｜${projectTitle}`;
 
@@ -28,4 +36,11 @@ export async function sendResearchJoinEmail({
       <p>請點擊以下連結開始心理測驗：</p>
       <p><a href="${startUrl}">${startUrl}</a></p>
       <br/>
-      <p>Ho
+      <p>Ho-Se 團隊 敬上</p>
+    `,
+  });
+
+  if (error) {
+    throw new Error(`Resend send failed: ${error.message}`);
+  }
+}
