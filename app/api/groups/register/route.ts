@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendGroupRegistrationEmail } from "@/lib/email";
 
 type GroupRegisterPayload = {
   groupSlug: string;
@@ -56,7 +57,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "無法儲存報名資料" }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true });
+    try {
+      await sendGroupRegistrationEmail({
+        to: email.trim().toLowerCase(),
+        name: name.trim(),
+        groupTitle,
+        availabilitySlots,
+      });
+    } catch (emailError) {
+      console.error("GROUP_REGISTRATION_EMAIL_ERROR", emailError);
+      return NextResponse.json({
+        ok: true,
+        emailSent: false,
+        message: "報名成功，但確認信寄送失敗。",
+      });
+    }
+
+    return NextResponse.json({ ok: true, emailSent: true });
   } catch (error) {
     console.error("GROUP_REGISTRATION_ERROR", error);
     return NextResponse.json({ message: "系統錯誤" }, { status: 500 });

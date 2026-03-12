@@ -109,7 +109,10 @@ export default function LectureDetailPage() {
       <main className="min-h-screen bg-[#f6f3ee] px-6 py-20 text-[#1a1a1a] sm:px-8 lg:px-12">
         <p className="text-sm uppercase tracking-[0.22em] text-[#9c9c9c]">Lecture</p>
         <h1 className="mt-6 text-[2rem] tracking-[-0.02em]">找不到此講座</h1>
-        <Link href="/fortune-arrives" className="mt-8 inline-flex border border-black/20 px-5 py-3 text-sm">
+        <Link
+          href="/fortune-arrives"
+          className="mt-8 inline-flex border border-black/20 px-5 py-3 text-sm"
+        >
           Back to lectures
         </Link>
       </main>
@@ -119,7 +122,10 @@ export default function LectureDetailPage() {
   return (
     <main className="min-h-screen bg-[#f6f3ee] text-[#1a1a1a]">
       <div className="mx-auto w-full max-w-[1280px] px-6 py-14 sm:px-8 lg:px-12 lg:py-20">
-        <Link href="/fortune-arrives" className="text-[12px] uppercase tracking-[0.24em] text-[#8d8d8d]">
+        <Link
+          href="/fortune-arrives"
+          className="text-[12px] uppercase tracking-[0.24em] text-[#8d8d8d]"
+        >
           ← Back to lectures
         </Link>
 
@@ -128,7 +134,10 @@ export default function LectureDetailPage() {
             <p className="text-[12px] uppercase tracking-[0.24em] text-[#8d8d8d]">Lecture Detail</p>
             <h1
               className="mt-5 text-[2.2rem] leading-[1.16] tracking-[-0.02em] sm:text-[2.6rem]"
-              style={{ fontFamily: "var(--font-noto-serif), var(--font-playfair), serif" }}
+              style={{
+                fontFamily:
+                  "var(--font-noto-serif), var(--font-playfair), serif",
+              }}
             >
               {lecture.titleZh}
             </h1>

@@ -60,7 +60,7 @@ const lectures: Lecture[] = [
     subtitleEn: "Hsinchu",
     speaker: "王涵羽 心理師",
     summary: "地點：新竹 光合",
-    href: "/lectures/avoidant-attachment",
+    href: "/fortune-arrives/avoidant-attachment",
   },
   {
     id: "2",
@@ -73,7 +73,7 @@ const lectures: Lecture[] = [
     subtitleEn: "Chiayi",
     speaker: "陳宥語 心理師",
     summary: "地點：嘉義",
-    href: "/lectures/self-blame-in-love",
+    href: "/fortune-arrives/self-blame-in-love",
   },
   {
     id: "3",
@@ -86,7 +86,7 @@ const lectures: Lecture[] = [
     subtitleEn: "Hsinchu",
     speaker: "任祈蔚 心理師",
     summary: "地點：新竹 光合",
-    href: "/lectures/tsundere-dynamics",
+    href: "/fortune-arrives/tsundere-dynamics",
   },
   {
     id: "4",
@@ -99,7 +99,7 @@ const lectures: Lecture[] = [
     subtitleEn: "Hsinchu",
     speaker: "任祈蔚 心理師",
     summary: "地點：新竹 光合",
-    href: "/lectures/anxious-attachment",
+    href: "/fortune-arrives/anxious-attachment",
   },
   {
     id: "5",
@@ -112,7 +112,7 @@ const lectures: Lecture[] = [
     subtitleEn: "",
     speaker: "",
     summary: "",
-    href: "/lectures/romance-in-ordinary",
+    href: "/fortune-arrives/romance-in-ordinary",
   },
   {
     id: "6",
@@ -125,7 +125,7 @@ const lectures: Lecture[] = [
     subtitleEn: "Online",
     speaker: "甘雅婷 心理師",
     summary: "地點：線上",
-    href: "/lectures/asperger-partner-support",
+    href: "/fortune-arrives/asperger-partner-support",
   },
   {
     id: "7",
@@ -138,7 +138,7 @@ const lectures: Lecture[] = [
     subtitleEn: "Online",
     speaker: "陳宥語、甘雅婷、任祈蔚 心理師",
     summary: "地點：線上",
-    href: "/lectures/counseling-ethics",
+    href: "/fortune-arrives/counseling-ethics",
   },
   {
     id: "8",
@@ -151,7 +151,7 @@ const lectures: Lecture[] = [
     subtitleEn: "Hsinchu",
     speaker: "王涵羽 心理師",
     summary: "地點：新竹 光合",
-    href: "/lectures/online-dating",
+    href: "/fortune-arrives/online-dating",
   },
   {
     id: "9",
@@ -164,7 +164,7 @@ const lectures: Lecture[] = [
     subtitleEn: "Hsinchu",
     speaker: "李昀儒 音樂治療師",
     summary: "地點：新竹 光合",
-    href: "/lectures/music-therapy-love",
+    href: "/fortune-arrives/music-therapy-love",
   }
 ];
 

@@ -145,13 +145,6 @@ export default function PsychologyArtworkPage() {
               </div>
 
               <div className="mt-4">
-                <div
-                  className="inline-flex border border-black/10 px-2.5 py-1 text-[0.66rem] uppercase tracking-[0.18em] text-black/42"
-                  style={{ fontFamily: "var(--font-geist)" }}
-                >
-                  {video.category}
-                </div>
-
                 <h2
                   className="mt-4 text-[2.02rem] leading-[1.04] tracking-[-0.045em] text-black/92"
                   style={{ fontFamily: "var(--font-noto-serif)" }}
@@ -179,12 +172,6 @@ export default function PsychologyArtworkPage() {
                     style={{ fontFamily: "var(--font-geist)" }}
                   >
                     {video.tag}
-                  </p>
-                  <p
-                    className="text-[0.72rem] uppercase tracking-[0.2em] text-black/36"
-                    style={{ fontFamily: "var(--font-geist)" }}
-                  >
-                    {video.duration}
                   </p>
                 </div>
               </div>

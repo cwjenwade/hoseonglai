@@ -102,3 +102,54 @@ export async function sendLectureRegistrationEmail({
     `,
   });
 }
+
+type SendGroupRegistrationEmailParams = {
+  to: string;
+  name: string;
+  groupTitle: string;
+  availabilitySlots: string[];
+};
+
+export async function sendGroupRegistrationEmail({
+  to,
+  name,
+  groupTitle,
+  availabilitySlots,
+}: SendGroupRegistrationEmailParams): Promise<void> {
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+
+  if (!gmailUser || !gmailAppPassword) {
+    console.info("EMAIL_NOT_CONFIGURED", { to, groupTitle });
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: gmailUser,
+      pass: gmailAppPassword,
+    },
+  });
+
+  const subject = `團體報名確認｜${groupTitle}`;
+  const slotHtml = availabilitySlots
+    .map((slot) => `<li style="margin: 4px 0;">${slot}</li>`)
+    .join("");
+
+  await transporter.sendMail({
+    from: `Ho-Se Groups <${gmailUser}>`,
+    to,
+    subject,
+    html: `
+      <p>${name} 您好：</p>
+      <p>我們已收到你對以下團體的報名：</p>
+      <p><strong>${groupTitle}</strong></p>
+      <p>你提供的可訪談時段如下：</p>
+      <ul style="padding-left: 20px;">${slotHtml}</ul>
+      <br/>
+      <p>我們會評估後與你聯繫，安排合適的訪談時間。</p>
+      <p>Ho-Se 團隊 敬上</p>
+    `,
+  });
+}

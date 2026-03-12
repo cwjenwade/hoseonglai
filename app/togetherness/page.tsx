@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { GROUPS } from "../groups/group-data";
+import { GROUPS } from "./group-data";
 
 export const metadata: Metadata = {
   title: "團團圓圓 | Group Therapy",
@@ -11,16 +11,25 @@ export default function TogethernessPage() {
     <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
       <div className="mx-auto max-w-[1520px] px-8 py-16 md:px-12 md:py-20">
         <header className="mb-16 md:mb-20">
-          <p className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400">
+          <p
+            className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400"
+            style={{ fontFamily: "var(--font-geist-sans)" }}
+          >
             Group Therapy Programme
           </p>
 
-          <h1 className="mt-8 text-center text-[2.6rem] leading-none uppercase tracking-[0.16em] text-neutral-900 sm:text-[4rem] xl:text-[5.2rem]">
-            TOGETHERNESS
+          <h1
+            className="mt-8 text-center text-[2.6rem] leading-none uppercase tracking-[0.16em] text-neutral-900 sm:text-[4rem] xl:text-[5.2rem]"
+            style={{ fontFamily: "var(--font-geist-sans)" }}
+          >
+            GROUP
           </h1>
 
           <div className="mx-auto mt-10 grid max-w-[980px] gap-10 md:grid-cols-2">
-            <div className="space-y-3 text-[1rem] leading-[1.85] text-neutral-700">
+            <div
+              className="space-y-3 text-right text-[1rem] leading-[1.85] text-neutral-700"
+              style={{ fontFamily: "var(--font-noto-serif)" }}
+            >
               <p>
                 我們不是為了把話說完，
                 <br />
@@ -44,7 +53,10 @@ export default function TogethernessPage() {
               </p>
             </div>
 
-            <div className="space-y-3 text-[0.96rem] leading-[1.85] text-neutral-600">
+            <div
+              className="space-y-3 text-[0.96rem] leading-[1.85] text-neutral-600"
+              style={{ fontFamily: "var(--font-geist-sans)" }}
+            >
               <p>
                 We are not here
                 <br />
@@ -85,7 +97,7 @@ export default function TogethernessPage() {
         <section className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-10 xl:gap-y-20">
           {GROUPS.map((group) => (
             <article key={group.slug} className="group">
-              <Link href={`/groups/${group.slug}`} className="block">
+              <Link href={`/togetherness/${group.slug}`} className="block">
                 <div className="aspect-[4/5] overflow-hidden bg-neutral-200">
                   <img
                     src={group.image}
@@ -95,19 +107,31 @@ export default function TogethernessPage() {
                 </div>
 
                 <div className="mt-5">
-                  <h2 className="mt-1 text-[24px] leading-[1.25] font-medium text-neutral-900">
+                  <h2
+                    className="mt-1 text-[24px] leading-[1.25] font-medium text-neutral-900"
+                    style={{ fontFamily: "var(--font-noto-serif)" }}
+                  >
                     {group.title}
                   </h2>
 
-                  <p className="mt-1 text-[13px] leading-[1.5] text-neutral-500">
+                  <p
+                    className="mt-1 text-[13px] leading-[1.5] text-neutral-500"
+                    style={{ fontFamily: "var(--font-geist-sans)" }}
+                  >
                     {group.subtitle}
                   </p>
 
-                  <p className="mt-4 max-w-[32ch] text-[15px] leading-[1.75] text-neutral-700 line-clamp-2">
+                  <p
+                    className="mt-4 max-w-[32ch] text-[15px] leading-[1.75] text-neutral-700 line-clamp-2"
+                    style={{ fontFamily: "var(--font-noto-serif)" }}
+                  >
                     {group.description}
                   </p>
 
-                  <span className="mt-5 inline-block border-b border-neutral-700 pb-[2px] text-[13px] text-neutral-700 transition-opacity duration-200 group-hover:opacity-60">
+                  <span
+                    className="mt-5 inline-block border-b border-neutral-700 pb-[2px] text-[13px] text-neutral-700 transition-opacity duration-200 group-hover:opacity-60"
+                    style={{ fontFamily: "var(--font-geist-sans)" }}
+                  >
                     View detail / Register
                   </span>
                 </div>

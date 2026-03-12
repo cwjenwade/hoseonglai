@@ -3,22 +3,15 @@ import { RESEARCH_PROJECTS } from "./projects";
 
 export default function PsychTestList() {
   return (
-    <div className="grid gap-8 xl:grid-cols-3">
+    <div className="grid gap-x-7 gap-y-14 xl:grid-cols-3 xl:gap-y-16">
       {RESEARCH_PROJECTS.map((project) => (
         <article
           key={project.id}
           className="border border-neutral-300/60 bg-transparent"
         >
           <div className="p-8">
-            <p
-              className="text-[0.62rem] uppercase tracking-[0.34em] text-neutral-400"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Research Project
-            </p>
-
             <h3
-              className="mt-4 text-[2rem] leading-[1.02] tracking-[-0.02em] text-neutral-900"
+              className="text-[2rem] leading-[1.02] tracking-[-0.02em] text-neutral-900"
               style={{ fontFamily: "var(--font-serif)" }}
             >
               {project.title}

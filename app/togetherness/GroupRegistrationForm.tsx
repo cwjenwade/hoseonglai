@@ -8,23 +8,26 @@ type GroupRegistrationFormProps = {
 };
 
 function buildInterviewSlots(): string[] {
-  return [
-    "週一 10:00–11:00",
-    "週一 14:00–15:00",
-    "週一 19:00–20:00",
-    "週二 10:00–11:00",
-    "週二 14:00–15:00",
-    "週二 19:00–20:00",
-    "週三 10:00–11:00",
-    "週三 14:00–15:00",
-    "週三 19:00–20:00",
-    "週四 10:00–11:00",
-    "週四 14:00–15:00",
-    "週四 19:00–20:00",
-    "週五 10:00–11:00",
-    "週五 14:00–15:00",
-    "週五 19:00–20:00",
+  const days = ["週一", "週二", "週三", "週四", "週五"];
+  const ranges: Array<[number, number]> = [
+    [10, 12],
+    [13, 17],
+    [19, 21],
   ];
+
+  const slots: string[] = [];
+
+  for (const day of days) {
+    for (const [start, end] of ranges) {
+      for (let hour = start; hour < end; hour += 1) {
+        const from = `${String(hour).padStart(2, "0")}:00`;
+        const to = `${String(hour + 1).padStart(2, "0")}:00`;
+        slots.push(`${day} ${from}–${to}`);
+      }
+    }
+  }
+
+  return slots;
 }
 
 export default function GroupRegistrationForm({
@@ -40,6 +43,13 @@ export default function GroupRegistrationForm({
   const [submitted, setSubmitted] = useState(false);
 
   const slots = useMemo(() => buildInterviewSlots(), []);
+  const dayColumns = useMemo(() => {
+    const days = ["週一", "週二", "週三", "週四", "週五"];
+    return days.map((day) => ({
+      day,
+      slots: slots.filter((slot) => slot.startsWith(`${day} `)),
+    }));
+  }, [slots]);
 
   const toggleSlot = (slot: string) => {
     setSelectedSlots((prev) => {
@@ -87,6 +97,12 @@ export default function GroupRegistrationForm({
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.message || "報名失敗");
+      }
+
+      if (data?.emailSent === false) {
+        alert(
+          "報名成功，但確認信寄送失敗，請稍後查看。\n" + (data?.message || ""),
+        );
       }
 
       setSubmitted(true);
@@ -143,28 +159,45 @@ export default function GroupRegistrationForm({
         <p className="text-sm font-medium text-zinc-900">
           可訪談時段（1 小時為單位，至少 3 個，最多 5 個）
         </p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {slots.map((slot) => {
-            const checked = selectedSlots.includes(slot);
-            return (
-              <label
-                key={slot}
-                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
-                  checked
-                    ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-                    : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400"
-                }`}
+        <div className="mt-3 overflow-x-auto pb-1">
+          <div className="grid min-w-[760px] grid-cols-5 gap-3">
+            {dayColumns.map((column) => (
+              <div
+                key={column.day}
+                className="rounded-xl border border-zinc-200 bg-white p-2.5"
               >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleSlot(slot)}
-                  className="h-4 w-4 accent-emerald-600"
-                />
-                <span>{slot}</span>
-              </label>
-            );
-          })}
+                <p className="mb-2 px-1 text-xs font-semibold tracking-[0.06em] text-zinc-500">
+                  {column.day}
+                </p>
+
+                <div className="space-y-2">
+                  {column.slots.map((slot) => {
+                    const checked = selectedSlots.includes(slot);
+                    const timeLabel = slot.replace(`${column.day} `, "");
+
+                    return (
+                      <label
+                        key={slot}
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition ${
+                          checked
+                            ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+                            : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleSlot(slot)}
+                          className="h-4 w-4 accent-emerald-600"
+                        />
+                        <span className="whitespace-nowrap">{timeLabel}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <p className="mt-2 text-xs text-zinc-500">目前已選 {selectedSlots.length} / 5</p>
       </div>
