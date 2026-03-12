@@ -170,6 +170,16 @@ const lectures: Lecture[] = [
 
 const filters: LectureCategory[] = ["All", "Upcoming", "Past", "Research", "Public Talk"];
 
+function formatZhDate(date: string): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function extractLocationZh(summary: string): string {
+  return summary.replace(/^地點：\s*/, "").trim();
+}
+
 export default function LectureIndexPage() {
   const [activeFilter, setActiveFilter] = useState<LectureCategory>("All");
 
@@ -190,8 +200,8 @@ export default function LectureIndexPage() {
     >
       <div className="w-full px-6 sm:px-8 lg:px-12">
         <section className="border-b border-black/10 py-20 md:py-24 lg:py-28">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
-            <div className="lg:col-span-7">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-start lg:gap-10">
+            <div className="lg:col-span-5">
               <p
                 className="mb-6 text-[11px] uppercase tracking-[0.28em] text-[#9c9c9c]"
                 style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
@@ -210,15 +220,31 @@ export default function LectureIndexPage() {
               </h1>
             </div>
 
-            <div className="lg:col-span-4 lg:col-start-9">
-              <p
-                className="max-w-[34ch] text-[16px] leading-[1.75] text-[#6b6b6b] md:text-[17px]"
-                style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
-              >
-                Public programs devoted to research, writing, curation, and the
-                civic life of art. Lectures, workshops, and conversations are
-                presented as part of an ongoing archive of public study.
-              </p>
+            <div className="lg:col-span-4">
+              <div className="mx-auto mt-2 max-w-[28ch] space-y-5">
+                <p
+                  className="text-center text-[18px] leading-[1.8] text-[#3f3f3f]"
+                  style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
+                >
+                  致力於藝術研究、書寫、策展與公民生活的公共計畫。
+                  <br />
+                  講座、工作坊與對話在此展開，
+                  <br />
+                  一場一場，累積成持續生成的公共學知。
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-3">
+              <div className="ml-auto mt-2 max-w-[26ch]">
+                <p
+                  className="text-right text-[14px] leading-[1.8] text-[#8a8a8a]"
+                  style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
+                >
+                  Public programs devoted to research, writing, curation, and the civic life of art.
+                  Lectures, workshops, and conversations are presented as part of an ongoing archive of public study.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -274,6 +300,7 @@ export default function LectureIndexPage() {
                           "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
                       }}
                     >
+                      <p>{formatZhDate(lecture.date)}</p>
                       <p>{lecture.dateLabel}</p>
                       <p>{lecture.time}</p>
                     </div>
@@ -282,7 +309,7 @@ export default function LectureIndexPage() {
                   <div className="lg:col-span-7">
                     <div className="max-w-[42rem]">
                       <h2
-                        className="text-[1.9rem] leading-[1.08] tracking-[-0.03em] text-[#1a1a1a] sm:text-[2.15rem] lg:text-[2.3rem]"
+                        className="text-[1.9rem] leading-[1.08] tracking-[-0.03em] text-[#1a1a1a] sm:text-[2.15rem] lg:text-[33px]"
                         style={{
                           fontFamily:
                             "var(--font-playfair), var(--font-noto-serif-tc), serif",
@@ -292,23 +319,13 @@ export default function LectureIndexPage() {
                       </h2>
 
                       <p
-                        className="mt-3 text-[14px] leading-[1.7] text-[#6b6b6b] md:text-[15px]"
-                        style={{
-                          fontFamily:
-                            "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
-                        }}
-                      >
-                        {lecture.subtitleEn}
-                      </p>
-
-                      <p
                         className="mt-6 max-w-[42ch] text-[16px] leading-[1.65] text-[#1a1a1a]"
                         style={{
                           fontFamily:
                             "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
                         }}
                       >
-                        {lecture.summary}
+                        {lecture.speaker ? `講者：${lecture.speaker}` : ""}
                       </p>
                     </div>
                   </div>
@@ -322,9 +339,8 @@ export default function LectureIndexPage() {
                       }}
                     >
                       <div className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b] md:text-[15px]">
-                        <p className="text-[#1a1a1a]">{lecture.speaker}</p>
-                        <p>{lecture.dateLabel}</p>
-                        <p>{lecture.time}</p>
+                        <p className="text-[#1a1a1a]">地點｜{extractLocationZh(lecture.summary)}</p>
+                        {lecture.subtitleEn ? <p>Location｜{lecture.subtitleEn}</p> : null}
                       </div>
 
                       <div className="pt-8">
@@ -332,10 +348,7 @@ export default function LectureIndexPage() {
                           href={lecture.href}
                           className="group inline-flex items-center gap-2 text-[14px] text-[#1a1a1a] transition-opacity duration-200 hover:opacity-70"
                         >
-                          <span>View details</span>
-                          <span className="inline-block transition-transform duration-200 group-hover:translate-x-[2px]">
-                            →
-                          </span>
+                          <span>View detail</span>
                         </Link>
                       </div>
                     </div>

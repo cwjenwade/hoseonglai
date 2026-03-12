@@ -1,45 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GROUPS } from "../groups/group-data";
 
 export const metadata: Metadata = {
   title: "團團圓圓 | Group Therapy",
 };
 
-const groups = [
-  {
-    slug: "group-counseling",
-    title: "團體諮商",
-    subtitle: "Group Counseling",
-    image:
-      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1600&auto=format&fit=crop",
-    description:
-      "在安全且保密的團體中探索情緒與關係。透過傾聽與回饋逐漸理解自己。",
-  },
-  {
-    slug: "group-psychotherapy",
-    title: "團體心理治療",
-    subtitle: "Group Psychotherapy",
-    image:
-      "https://images.unsplash.com/photo-1511988617509-a57c8a288659?q=80&w=1600&auto=format&fit=crop",
-    description:
-      "深入探索依附、情緒與關係模式。在互動中建立新的心理經驗。",
-  },
-  {
-    slug: "interpersonal-group",
-    title: "人際歷程團體",
-    subtitle: "Interpersonal Process Group",
-    image:
-      "https://images.unsplash.com/photo-1529336953121-a0ce2d6a5c6d?q=80&w=1600&auto=format&fit=crop",
-    description:
-      "透過即時互動理解人際模式。練習新的表達與關係方式。",
-  },
-];
-
 export default function TogethernessPage() {
   return (
     <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
       <div className="mx-auto max-w-[1520px] px-8 py-16 md:px-12 md:py-20">
-        <header className="mb-16 border-b border-neutral-300/60 pb-10 md:mb-20 md:pb-12">
+        <header className="mb-16 md:mb-20">
           <p className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400">
             Group Therapy Programme
           </p>
@@ -48,13 +19,71 @@ export default function TogethernessPage() {
             TOGETHERNESS
           </h1>
 
-          <p className="mx-auto mt-10 max-w-[520px] text-center text-[1rem] leading-[1.85] text-neutral-600">
-            以展品的方式呈現不同團體。進入各團體頁面可查看完整說明與報名諮詢。
-          </p>
+          <div className="mx-auto mt-10 grid max-w-[980px] gap-10 md:grid-cols-2">
+            <div className="space-y-3 text-[1rem] leading-[1.85] text-neutral-700">
+              <p>
+                我們不是為了把話說完，
+                <br />
+                只是把那些說不出的，先放在這裡。
+                <br />
+                一張椅子挨著一張椅子，
+                <br />
+                像夜裡還亮著的幾扇窗。
+              </p>
+
+              <p>
+                有人開口，聲音很輕。
+                <br />
+                有人不說，呼吸也是回應。
+                <br />
+                後來才知道，療癒
+                <br />
+                有時只是終於有人，
+                <br />
+                在心裡陪你坐到天亮。
+              </p>
+            </div>
+
+            <div className="space-y-3 text-[0.96rem] leading-[1.85] text-neutral-600">
+              <p>
+                We are not here
+                <br />
+                to finish speaking.
+              </p>
+
+              <p>
+                We place what cannot be said
+                <br />
+                between us.
+              </p>
+
+              <p>
+                Chairs touching chairs,
+                <br />
+                like windows lit in the night.
+              </p>
+
+              <p>
+                Someone speaks.
+                <br />
+                Someone breathes.
+              </p>
+
+              <p>
+                Later we understand:
+                <br />
+                healing can be this—
+                <br />
+                someone staying with you
+                <br />
+                until morning.
+              </p>
+            </div>
+          </div>
         </header>
 
         <section className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-10 xl:gap-y-20">
-          {groups.map((group) => (
+          {GROUPS.map((group) => (
             <article key={group.slug} className="group">
               <Link href={`/groups/${group.slug}`} className="block">
                 <div className="aspect-[4/5] overflow-hidden bg-neutral-200">
@@ -66,11 +95,7 @@ export default function TogethernessPage() {
                 </div>
 
                 <div className="mt-5">
-                  <p className="inline-block border border-neutral-300 px-2 py-1 text-[10px] uppercase tracking-[0.08em] text-neutral-500">
-                    Exhibition
-                  </p>
-
-                  <h2 className="mt-4 text-[24px] leading-[1.25] font-medium text-neutral-900">
+                  <h2 className="mt-1 text-[24px] leading-[1.25] font-medium text-neutral-900">
                     {group.title}
                   </h2>
 
@@ -83,7 +108,7 @@ export default function TogethernessPage() {
                   </p>
 
                   <span className="mt-5 inline-block border-b border-neutral-700 pb-[2px] text-[13px] text-neutral-700 transition-opacity duration-200 group-hover:opacity-60">
-                    View details
+                    View detail / Register
                   </span>
                 </div>
               </Link>

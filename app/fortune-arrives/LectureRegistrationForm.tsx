@@ -1,17 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabase";
 
 type LectureRegistrationProps = {
   lectureId: string;
   lectureTitle: string;
+  dateLabel?: string;
+  time?: string;
+  location?: string;
   onClose: () => void;
 };
 
 export default function LectureRegistrationForm({
   lectureId,
   lectureTitle,
+  dateLabel,
+  time,
+  location,
   onClose,
 }: LectureRegistrationProps) {
   const [name, setName] = useState("");
@@ -31,17 +36,27 @@ export default function LectureRegistrationForm({
     setLoading(true);
 
     try {
-      const supabase = getSupabaseClient();
-
-      const { error } = await supabase.from("lecture_registrations").insert({
-        lecture_id: lectureId,
-        lecture_title: lectureTitle,
-        user_name: name,
-        user_email: email,
-        user_phone: phone,
+      const res = await fetch("/api/lectures/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lectureId,
+          lectureTitle,
+          name,
+          email,
+          phone,
+          dateLabel,
+          time,
+          location,
+        }),
       });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "報名失敗");
+
+      if (data?.emailSent === false) {
+        alert("報名成功，但確認信寄送失敗，請稍後查看。\n" + (data?.message || ""));
+      }
 
       setSubmitted(true);
       setAutoSaved(true);
