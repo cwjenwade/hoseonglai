@@ -57,41 +57,42 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSerif.variable} bg-[#f3f3f2] text-zinc-900 antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSerif.variable} text-zinc-900 antialiased`}
+        style={{ backgroundColor: "#f8f6f2" }}
       >
         <div className="min-h-screen flex flex-col">
 
-          {/* HEADER */}
-          <header className="border-b border-zinc-200/80">
+          {/* HEADER / HERO */}
+          <header className="border-b border-[#e6e2da]">
             <div className="w-full px-6 py-8 lg:px-12 lg:py-10">
               <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
 
+                {/* BRAND */}
                 <div className="min-w-0">
                   <Link href="/" className="block">
                     <div className="space-y-4">
+
+                      <p
+                        className="text-[0.72rem] uppercase tracking-[0.28em] text-zinc-500"
+                        style={{ fontFamily: "var(--font-geist-sans)" }}
+                      >
+                        Brand Platform
+                      </p>
+
                       <div className="space-y-1">
-                        <p
-                          className="text-[0.72rem] uppercase tracking-[0.28em] text-zinc-500"
-                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        <h1
+                          className="text-[2.6rem] leading-none tracking-[-0.04em] text-zinc-950 sm:text-[3.4rem] lg:text-[4.3rem]"
+                          style={{ fontFamily: "var(--font-playfair)" }}
                         >
-                          Brand Platform
-                        </p>
+                          Ho-Se 好勢
+                        </h1>
 
-                        <div className="space-y-0.5">
-                          <h1
-                            className="text-[2.5rem] leading-none tracking-[-0.04em] text-zinc-950 sm:text-[3.4rem] lg:text-[4.25rem]"
-                            style={{ fontFamily: "var(--font-playfair)" }}
-                          >
-                            Ho-Se 好勢
-                          </h1>
-
-                          <h2
-                            className="text-[2.5rem] leading-none tracking-[-0.04em] text-zinc-950 sm:text-[3.4rem] lg:text-[4.25rem]"
-                            style={{ fontFamily: "var(--font-playfair)" }}
-                          >
-                            Ong-Lai 旺來
-                          </h2>
-                        </div>
+                        <h2
+                          className="text-[2.6rem] leading-none tracking-[-0.04em] text-zinc-950 sm:text-[3.4rem] lg:text-[4.3rem]"
+                          style={{ fontFamily: "var(--font-playfair)" }}
+                        >
+                          Ong-Lai 旺來
+                        </h2>
                       </div>
 
                       <div className="max-w-2xl space-y-2 pt-2">
@@ -109,16 +110,18 @@ export default function RootLayout({
                           Research, creative content, community, and collaborative practice
                         </p>
                       </div>
+
                     </div>
                   </Link>
                 </div>
 
+                {/* NAVIGATION */}
                 <div className="flex flex-col justify-between gap-8 lg:items-end">
 
                   <div className="flex w-full justify-end">
                     <Link
                       href="/admin"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-300 text-[0.68rem] uppercase tracking-[0.18em] text-zinc-700 hover:border-zinc-900 hover:text-zinc-950"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#e6e2da] text-[0.68rem] uppercase tracking-[0.18em] text-zinc-700 transition hover:border-zinc-900 hover:text-zinc-950"
                       title="管理後台"
                     >
                       A
@@ -130,17 +133,17 @@ export default function RootLayout({
                       <Link
                         key={link.href}
                         href={link.href}
-                        className="group border-b border-transparent pb-2 hover:border-zinc-300"
+                        className="group border-b border-transparent pb-2 transition hover:border-[#e6e2da]"
                       >
                         <div
-                          className="text-[1rem] tracking-[0.04em] text-zinc-900 group-hover:opacity-70"
+                          className="text-[1rem] tracking-[0.04em] text-zinc-900 transition group-hover:opacity-70"
                           style={{ fontFamily: "var(--font-noto-serif)" }}
                         >
                           {link.zh}
                         </div>
 
                         <div
-                          className="mt-1 text-[0.68rem] uppercase tracking-[0.24em] text-zinc-400 group-hover:text-zinc-700"
+                          className="mt-1 text-[0.68rem] uppercase tracking-[0.24em] text-zinc-400 transition group-hover:text-zinc-700"
                           style={{ fontFamily: "var(--font-geist-sans)" }}
                         >
                           {link.en}
@@ -148,18 +151,19 @@ export default function RootLayout({
                       </Link>
                     ))}
                   </nav>
+
                 </div>
               </div>
             </div>
           </header>
 
-          {/* MAIN */}
+          {/* MAIN CONTENT */}
           <main className="flex-1 w-full">
             {children}
           </main>
 
           {/* FOOTER */}
-          <footer className="border-t border-zinc-200/80">
+          <footer className="border-t border-[#e6e2da]">
             <div className="w-full px-6 py-10 lg:px-12 lg:py-14">
               <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
 
@@ -167,7 +171,7 @@ export default function RootLayout({
                   <NewsletterSubscription />
                 </div>
 
-                <div className="flex flex-col justify-end gap-4 border-t border-zinc-200 pt-6 lg:border-none lg:pt-0">
+                <div className="flex flex-col justify-end gap-4 border-t border-[#e6e2da] pt-6 lg:border-none lg:pt-0">
 
                   <div className="space-y-2">
                     <p
