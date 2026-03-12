@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-geist: var(--font-geist-sans);
   --font-sans: var(--font-geist-sans);
   --font-display: var(--font-playfair);
   --font-serif: var(--font-noto-serif);

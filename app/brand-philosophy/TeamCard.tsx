@@ -55,8 +55,8 @@ export default function TeamCard({ member }: { member: Member }) {
 
             {member.nameEn ? (
               <p
-                className="text-[0.98rem] tracking-[-0.01em] text-zinc-600"
-                style={{ fontFamily: "var(--font-playfair)" }}
+                className="text-[0.9rem] uppercase tracking-[0.2em] text-zinc-500"
+                style={{ fontFamily: "var(--font-geist-sans)" }}
               >
                 {member.nameEn}
               </p>
@@ -65,8 +65,8 @@ export default function TeamCard({ member }: { member: Member }) {
 
           {member.bio ? (
             <p
-              className="mt-5 text-[0.94rem] leading-8 text-zinc-600"
-              style={{ fontFamily: "var(--font-geist-sans)" }}
+              className="mt-5 text-[0.98rem] leading-[1.85] text-zinc-600"
+              style={{ fontFamily: "var(--font-noto-serif)" }}
             >
               {member.bio}
             </p>
