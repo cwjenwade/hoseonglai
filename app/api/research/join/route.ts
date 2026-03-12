@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 import { sendResearchJoinEmail } from "@/lib/email";
 import { signResearchToken } from "@/lib/research-token";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 type JoinPayload = {
   projectId: string;
@@ -120,6 +121,13 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    let supabaseAdmin: SupabaseClient | null = null;
+
+    try {
+      supabaseAdmin = getSupabaseAdminClient();
+    } catch (adminClientError) {
+      console.warn("SUPABASE_ADMIN_CLIENT_NOT_CONFIGURED", adminClientError);
+    }
 
     const normalizedEmail = email.trim().toLowerCase();
     const participantCode = generateParticipantCode(normalizedEmail);
@@ -211,7 +219,7 @@ export async function POST(req: NextRequest) {
     )}`;
 
     const linkCode = generateLinkCode(normalizedEmail, projectId);
-    const shortUrl = await shortenUrl(startUrl, linkCode, supabase);
+    const shortUrl = await shortenUrl(startUrl, linkCode, supabaseAdmin ?? supabase);
 
     await sendResearchJoinEmail({
       to: normalizedEmail,

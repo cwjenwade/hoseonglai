@@ -14,7 +14,7 @@ export default function AdminPage() {
             A
           </div>
           <h2 className="mt-4 text-2xl font-bold text-zinc-900">管理後台登入</h2>
-          <p className="mt-2 text-sm text-zinc-600">請輸入帳號與密碼以繼續</p>
+          <p className="mt-2 text-sm text-zinc-600">請輸入 Email 與密碼以繼續</p>
         </div>
 
         <AdminLoginForm />

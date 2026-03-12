@@ -1,59 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState } from "react";
+import type { AdminLoginState } from "./actions";
+import { adminLogin } from "./actions";
+
+const initialState: AdminLoginState = { ok: true };
 
 export default function AdminLoginForm() {
-  const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!username.trim() || !password.trim()) {
-      setError("請輸入帳號與密碼");
-      return;
-    }
-
-    setLoading(true);
-
-    // 檢查帳號密碼
-    if (username === "Admin" && password === "98761234AAAA") {
-      // 儲存登入狀態到 localStorage
-      localStorage.setItem("admin_logged_in", "true");
-      
-      // 導向管理儀表板
-      router.push("/admin/dashboard");
-    } else {
-      setError("帳號或密碼錯誤");
-      setLoading(false);
-    }
-  };
+  const [state, formAction, pending] = useActionState(
+    adminLogin,
+    initialState,
+  );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
+    <form action={formAction} className="space-y-4">
+      {!state.ok && state.message ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
-          {error}
+          {state.message}
         </div>
-      )}
+      ) : null}
 
       <div>
-        <label htmlFor="username" className="block text-sm font-medium text-zinc-700">
-          帳號
+        <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
+          Email
         </label>
         <input
-          id="username"
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          id="email"
+          name="email"
+          type="email"
           className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-4 text-sm outline-none transition focus:border-amber-400"
-          placeholder="請輸入帳號"
+          placeholder="admin@example.com"
           autoComplete="username"
+          required
         />
       </div>
 
@@ -63,26 +41,22 @@ export default function AdminLoginForm() {
         </label>
         <input
           id="password"
+          name="password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
           className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-4 text-sm outline-none transition focus:border-amber-400"
-          placeholder="請輸入密碼"
+          placeholder="輸入密碼"
           autoComplete="current-password"
+          required
         />
       </div>
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={pending}
         className="h-11 w-full rounded-xl bg-zinc-800 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50"
       >
-        {loading ? "登入中..." : "登入"}
+        {pending ? "登入中..." : "登入"}
       </button>
-
-      <p className="text-center text-xs text-zinc-500">
-        帳號：Admin / 密碼：98761234AAAA
-      </p>
     </form>
   );
 }
