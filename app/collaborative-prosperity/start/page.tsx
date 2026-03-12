@@ -14,7 +14,7 @@ export default async function ResearchStartPage({ searchParams }: PageProps) {
 
   if (!payload) {
     return (
-      <div className="w-full bg-[#f3f3f2] px-6 py-24 text-neutral-900 lg:px-20">
+      <div className="w-full bg-[#faf9f6] px-6 py-24 text-neutral-900 lg:px-20">
         <p
           className="text-[0.68rem] uppercase tracking-[0.34em] text-neutral-400"
           style={{ fontFamily: "var(--font-sans)" }}

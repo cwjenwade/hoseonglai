@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function BrandPhilosophyPage() {
   return (
-    <div className="w-full bg-[#f3f3f2] text-neutral-900">
+    <div className="w-full bg-[#faf9f6] text-neutral-900">
 
       {/* PHILOSOPHY */}
       <section id="philosophy" className="border-b border-neutral-300/60">

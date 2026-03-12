@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CollaborativeProsperityPage() {
   return (
-    <div className="w-full bg-[#f3f3f2] text-neutral-900">
+    <div className="w-full bg-[#faf9f6] text-neutral-900">
       <section className="border-b border-neutral-300/60">
         <div className="px-6 py-24 lg:px-20">
           <div className="grid gap-16 lg:grid-cols-[0.32fr_1.68fr]">
