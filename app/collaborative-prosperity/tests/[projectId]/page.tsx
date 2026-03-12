@@ -34,23 +34,26 @@ export default function TestProjectPage() {
   useEffect(() => {
     async function loadSession() {
       if (!token) {
-        setError("缺少驗證連結");
+        setError("缺少驗證連結，請回到研究頁面重新申請");
         setLoading(false);
         return;
       }
 
       try {
         const res = await fetch(
-          `/api/research/session?token=${encodeURIComponent(token)}`
+          `/api/research/session?token=${encodeURIComponent(token)}`,
+          { cache: "no-store" }
         );
         const data = await res.json();
 
         if (!res.ok || !data?.payload) {
-          throw new Error(data?.message || "連結無效");
+          throw new Error(
+            data?.message || "驗證失敗，請回到研究頁面重新申請"
+          );
         }
 
         if (data.payload.projectId !== projectId) {
-          throw new Error("連結與此研究專案不符");
+          throw new Error("此連結與目前的研究專案不符");
         }
 
         setSession(data.payload as SessionPayload);
@@ -60,7 +63,9 @@ export default function TestProjectPage() {
         setQuestions(projectQuestions);
         setAnswers(new Array(projectQuestions.length).fill(-1));
       } catch (err) {
-        setError(err instanceof Error ? err.message : "驗證失敗");
+        const message = err instanceof Error ? err.message : "驗證失敗";
+        console.error("SESSION_LOAD_ERROR", message);
+        setError(message);
       } finally {
         setLoading(false);
       }

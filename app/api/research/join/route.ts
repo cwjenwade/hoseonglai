@@ -32,6 +32,20 @@ function getTaipeiDayStartISO() {
   return taipeiDate.toISOString();
 }
 
+async function shortenUrl(longUrl: string): Promise<string> {
+  try {
+    const response = await fetch("https://tinyurl.com/api/create.php", {
+      method: "POST",
+      body: new URLSearchParams({ url: longUrl }),
+    });
+    const shortUrl = await response.text();
+    return shortUrl.startsWith("https://") ? shortUrl : longUrl;
+  } catch (error) {
+    console.warn("URL_SHORTEN_FAILED", error);
+    return longUrl;
+  }
+}
+
 function generateParticipantCode(email: string): string {
   const normalized = email.trim().toLowerCase();
   const digest = crypto.createHash("sha256").update(normalized).digest("hex");
@@ -164,15 +178,18 @@ export async function POST(req: NextRequest) {
     });
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const startUrl = `${siteUrl}/research/start?token=${encodeURIComponent(
+    const startUrl = `${siteUrl}/collaborative-prosperity/start?token=${encodeURIComponent(
       token
     )}`;
+
+    // 縮短 URL
+    const shortUrl = await shortenUrl(startUrl);
 
     await sendResearchJoinEmail({
       to: normalizedEmail,
       name: nickname,
       projectTitle,
-      startUrl,
+      startUrl: shortUrl,
     });
 
     return NextResponse.json({
@@ -180,6 +197,7 @@ export async function POST(req: NextRequest) {
       participantCode,
       sentToday: (todaySentCount || 0) + 1,
       dailyLimit,
+      shortUrl,
     });
   } catch (error) {
     console.error("JOIN_RESEARCH_ERROR", error);

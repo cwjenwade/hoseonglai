@@ -35,7 +35,7 @@ function sign(data: string) {
 export function signResearchToken(input: ResearchInput) {
   const payload: ResearchTokenPayload = {
     ...input,
-    exp: Date.now() + 1000 * 60 * 60 * 24, // 24 小時
+    exp: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 天有效期
   };
 
   const encoded = base64UrlEncode(JSON.stringify(payload));
