@@ -2,13 +2,14 @@ import Link from "next/link";
 import { verifyResearchToken } from "@/lib/research-token";
 
 type PageProps = {
-  searchParams: {
+  searchParams: Promise<{
     token?: string;
-  };
+  }>;
 };
 
-export default function ResearchStartPage({ searchParams }: PageProps) {
-  const token = searchParams.token || "";
+export default async function ResearchStartPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const token = resolvedSearchParams.token || "";
   const payload = verifyResearchToken(token);
 
   if (!payload) {

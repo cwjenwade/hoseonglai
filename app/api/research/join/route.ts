@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 import { sendResearchJoinEmail } from "@/lib/email";
 import { signResearchToken } from "@/lib/research-token";
@@ -32,16 +32,44 @@ function getTaipeiDayStartISO() {
   return taipeiDate.toISOString();
 }
 
-async function shortenUrl(longUrl: string): Promise<string> {
+function generateLinkCode(email: string, projectId: string): string {
+  const normalized = `${email.trim().toLowerCase()}::${projectId}`;
+  const digest = crypto.createHash("sha256").update(normalized).digest("hex");
+  return `r${digest.slice(0, 11)}`;
+}
+
+async function shortenUrl(
+  longUrl: string,
+  shortCode: string,
+  supabase: SupabaseClient
+): Promise<string> {
   try {
-    const response = await fetch("https://tinyurl.com/api/create.php", {
-      method: "POST",
-      body: new URLSearchParams({ url: longUrl }),
+    const { error } = await supabase.from("url_shortcuts").upsert({
+      short_code: shortCode,
+      long_url: longUrl,
+      expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
+    }, {
+      onConflict: "short_code",
     });
-    const shortUrl = await response.text();
-    return shortUrl.startsWith("https://") ? shortUrl : longUrl;
+
+    if (error) {
+      console.warn("SHORTEN_URL_DB_ERROR", error);
+      try {
+        const fallbackRes = await fetch(
+          `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`
+        );
+        const fallbackShortUrl = (await fallbackRes.text()).trim();
+        if (fallbackShortUrl.startsWith("http")) return fallbackShortUrl;
+      } catch (fallbackError) {
+        console.warn("SHORTEN_URL_FALLBACK_ERROR", fallbackError);
+      }
+      return longUrl;
+    }
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    return `${siteUrl}/r/${shortCode}`;
   } catch (error) {
-    console.warn("URL_SHORTEN_FAILED", error);
+    console.warn("URL_SHORTEN_ERROR", error);
     return longUrl;
   }
 }
@@ -96,7 +124,7 @@ export async function POST(req: NextRequest) {
     const normalizedEmail = email.trim().toLowerCase();
     const participantCode = generateParticipantCode(normalizedEmail);
 
-    const dailyLimit = Number(process.env.RESEARCH_DAILY_EMAIL_LIMIT || 80);
+    const dailyLimit = Number(process.env.RESEARCH_DAILY_EMAIL_LIMIT || 400);
     const todayStart = getTaipeiDayStartISO();
     const { count: todaySentCount, error: countError } = await supabase
       .from("research_registrations")
@@ -182,8 +210,8 @@ export async function POST(req: NextRequest) {
       token
     )}`;
 
-    // 縮短 URL
-    const shortUrl = await shortenUrl(startUrl);
+    const linkCode = generateLinkCode(normalizedEmail, projectId);
+    const shortUrl = await shortenUrl(startUrl, linkCode, supabase);
 
     await sendResearchJoinEmail({
       to: normalizedEmail,

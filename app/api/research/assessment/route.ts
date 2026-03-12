@@ -55,6 +55,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { error: answerMapError } = await supabase
+      .from("psych_test_answer_columns")
+      .insert({
+        test_id: payload.projectId,
+        participant_code: payload.participantCode,
+        answer_map: answerColumns,
+      });
+
+    if (answerMapError) {
+      console.error("ASSESSMENT_ANSWER_MAP_INSERT_ERROR", answerMapError);
+    }
+
     return NextResponse.json({
       ok: true,
       participantCode: payload.participantCode,
