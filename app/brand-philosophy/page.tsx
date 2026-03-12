@@ -12,6 +12,25 @@ export default function BrandPhilosophyPage() {
   return (
     <div className="w-full bg-[#FDFDFD] text-neutral-900">
 
+      {/* HERO */}
+      <section className="border-b border-neutral-300/60">
+        <div className="px-6 py-20 lg:px-20 lg:py-24">
+          <p
+            className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            Brand Platform
+          </p>
+
+          <h1
+            className="mt-8 text-center text-[3rem] leading-none uppercase tracking-[0.16em] text-neutral-900 sm:text-[4.3rem] xl:text-[5.6rem]"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            BRAND
+          </h1>
+        </div>
+      </section>
+
       {/* PHILOSOPHY */}
       <section id="philosophy" className="border-b border-neutral-300/60">
         <div className="px-6 py-24 lg:px-20">

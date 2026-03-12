@@ -39,28 +39,18 @@ export default function TogethernessPage() {
   return (
     <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
       <div className="mx-auto max-w-[1520px] px-8 py-16 md:px-12 md:py-20">
-        <header className="mb-16 md:mb-20">
-          <p className="text-[11px] uppercase tracking-[0.08em] text-neutral-400">
-            What&apos;s On
+        <header className="mb-16 border-b border-neutral-300/60 pb-10 md:mb-20 md:pb-12">
+          <p className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400">
+            Group Therapy Programme
           </p>
 
-          <div className="mt-4 grid grid-cols-1 gap-8 md:grid-cols-12 md:items-end">
-            <div className="md:col-span-7">
-              <h1 className="text-[44px] leading-[1.12] font-medium text-neutral-900 md:text-[52px]">
-                團團圓圓
-              </h1>
+          <h1 className="mt-8 text-center text-[2.6rem] leading-none uppercase tracking-[0.16em] text-neutral-900 sm:text-[4rem] xl:text-[5.2rem]">
+            TOGETHERNESS
+          </h1>
 
-              <p className="mt-3 text-[14px] text-neutral-500">
-                Group Therapy Programme
-              </p>
-            </div>
-
-            <div className="md:col-span-4 md:col-start-9">
-              <p className="max-w-[360px] text-[15px] leading-[1.75] text-neutral-600">
-                以展品的方式呈現不同團體。進入各團體頁面可查看完整說明與報名諮詢。
-              </p>
-            </div>
-          </div>
+          <p className="mx-auto mt-10 max-w-[520px] text-center text-[1rem] leading-[1.85] text-neutral-600">
+            以展品的方式呈現不同團體。進入各團體頁面可查看完整說明與報名諮詢。
+          </p>
         </header>
 
         <section className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-10 xl:gap-y-20">
