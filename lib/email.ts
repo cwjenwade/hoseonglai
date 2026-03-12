@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 type SendResearchJoinEmailParams = {
   to: string;
@@ -13,23 +13,26 @@ export async function sendResearchJoinEmail({
   projectTitle,
   startUrl,
 }: SendResearchJoinEmailParams): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
 
-  if (!apiKey) {
-    console.info("EMAIL_NOT_CONFIGURED", {
-      to,
-      projectTitle,
-      startUrl,
-    });
+  if (!gmailUser || !gmailAppPassword) {
+    console.info("EMAIL_NOT_CONFIGURED", { to, projectTitle, startUrl });
     return;
   }
 
-  const resend = new Resend(apiKey);
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: gmailUser,
+      pass: gmailAppPassword,
+    },
+  });
 
   const subject = `研究同意書確認｜${projectTitle}`;
 
-  const { error } = await resend.emails.send({
-    from: "Ho-Se Research <onboarding@resend.dev>",
+  await transporter.sendMail({
+    from: `Ho-Se Research <${gmailUser}>`,
     to,
     subject,
     html: `
@@ -41,8 +44,4 @@ export async function sendResearchJoinEmail({
       <p>Ho-Se 團隊 敬上</p>
     `,
   });
-
-  if (error) {
-    throw new Error(`Resend send failed: ${error.message}`);
-  }
 }
