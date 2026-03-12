@@ -146,8 +146,7 @@ export default function AdminDashboardPage() {
                     {activeTab === "psych" && (
                       <>
                         <th className="pb-3 font-semibold text-zinc-900">測驗</th>
-                        <th className="pb-3 font-semibold text-zinc-900">姓名</th>
-                        <th className="pb-3 font-semibold text-zinc-900">Email</th>
+                        <th className="pb-3 font-semibold text-zinc-900">受試者代碼</th>
                         <th className="pb-3 font-semibold text-zinc-900">得分</th>
                       </>
                     )}
@@ -184,7 +183,6 @@ export default function AdminDashboardPage() {
                         <>
                           <td className="py-3 text-zinc-700">{item.test_title}</td>
                           <td className="py-3 text-zinc-700">{item.user_name}</td>
-                          <td className="py-3 text-zinc-700">{item.user_email}</td>
                           <td className="py-3 text-zinc-700">{item.total_score}</td>
                         </>
                       )}

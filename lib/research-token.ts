@@ -4,6 +4,7 @@ type ResearchTokenPayload = {
   projectId: string;
   projectTitle: string;
   projectTestUrl: string;
+  participantCode: string;
   name: string;
   email: string;
   exp: number;

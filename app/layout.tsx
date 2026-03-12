@@ -58,7 +58,7 @@ export default function RootLayout({
     <html lang="zh-Hant">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSerif.variable} text-zinc-900 antialiased`}
-        style={{ backgroundColor: "#f7f7f5" }}
+        style={{ backgroundColor: "#f3f3f2" }}
       >
         <div className="min-h-screen flex flex-col">
 
