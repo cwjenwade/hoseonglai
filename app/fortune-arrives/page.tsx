@@ -188,7 +188,7 @@ export default function LectureIndexPage() {
         "min-h-screen bg-[#f6f3ee] text-[#1a1a1a]",
       ].join(" ")}
     >
-      <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+      <div className="w-full px-6 sm:px-8 lg:px-12">
         <section className="border-b border-black/10 py-20 md:py-24 lg:py-28">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
             <div className="lg:col-span-7">
