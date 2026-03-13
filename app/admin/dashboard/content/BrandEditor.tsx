@@ -16,7 +16,7 @@ function createEmptyMember(): TeamMember {
     nameZh: "",
     nameEn: "",
     profession: "",
-    role: "",
+    role: "成員",
     bio: "",
     photo: "",
     color: "from-zinc-500 to-zinc-600",
@@ -147,19 +147,7 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
         <div className="mt-5 space-y-4">
           {members.map((member, index) => (
             <article key={member.id || index} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <div className="grid gap-3 md:grid-cols-3">
-                <label className="text-xs text-zinc-700">
-                  ID
-                  <input
-                    value={member.id}
-                    onChange={(e) =>
-                      setMembers((prev) =>
-                        prev.map((m, i) => (i === index ? { ...m, id: e.target.value } : m)),
-                      )
-                    }
-                    className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  />
-                </label>
+              <div className="grid gap-3 md:grid-cols-2">
                 <label className="text-xs text-zinc-700">
                   中文姓名
                   <input
@@ -186,7 +174,7 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
                 </label>
               </div>
 
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <div className="mt-3 grid gap-3 md:grid-cols-1">
                 <label className="text-xs text-zinc-700">
                   專業
                   <input
@@ -195,26 +183,6 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
                       setMembers((prev) =>
                         prev.map((m, i) => (i === index ? { ...m, profession: e.target.value } : m)),
                       )
-                    }
-                    className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  />
-                </label>
-                <label className="text-xs text-zinc-700">
-                  角色
-                  <input
-                    value={member.role}
-                    onChange={(e) =>
-                      setMembers((prev) => prev.map((m, i) => (i === index ? { ...m, role: e.target.value } : m)))
-                    }
-                    className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  />
-                </label>
-                <label className="text-xs text-zinc-700">
-                  顏色 Class
-                  <input
-                    value={member.color}
-                    onChange={(e) =>
-                      setMembers((prev) => prev.map((m, i) => (i === index ? { ...m, color: e.target.value } : m)))
                     }
                     className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
                   />

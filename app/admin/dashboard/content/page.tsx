@@ -8,7 +8,7 @@ import BrandEditor from "./BrandEditor";
 import { saveBrandPageContent, uploadBrandImage } from "./actions";
 
 type PageProps = {
-	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string }>;
+	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string }>;
 };
 
 export default async function AdminContentPage({ searchParams }: PageProps) {
@@ -104,6 +104,9 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 								: resolvedSearchParams.error === "upload_size"
 									? "圖片大小不可超過 8MB。"
 									: "儲存或上傳失敗，請稍後再試。"}
+					{resolvedSearchParams.detail ? (
+						<p className="mt-2 text-xs text-red-600">detail: {resolvedSearchParams.detail}</p>
+					) : null}
 				</div>
 			) : null}
 

@@ -47,8 +47,12 @@ export async function saveBrandPageContent(formData: FormData) {
 
 	try {
 		await saveSiteContentSection("brand_philosophy_page", parsed);
-	} catch {
-		redirect("/admin/dashboard/content?error=save");
+	} catch (error) {
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_save_error",
+		);
+		console.error("BRAND_SAVE_ERROR", error);
+		redirect(`/admin/dashboard/content?error=save&detail=${detail}`);
 	}
 
 	revalidatePath("/brand-philosophy");
@@ -77,7 +81,11 @@ export async function uploadBrandImage(formData: FormData) {
 		const url = await saveSiteContentImage("brand_philosophy_page", file);
 		revalidatePath("/admin/dashboard/content");
 		redirect(`/admin/dashboard/content?uploaded=${encodeURIComponent(url)}`);
-	} catch {
-		redirect("/admin/dashboard/content?error=upload");
+	} catch (error) {
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_upload_error",
+		);
+		console.error("BRAND_UPLOAD_ERROR", error);
+		redirect(`/admin/dashboard/content?error=upload&detail=${detail}`);
 	}
 }
