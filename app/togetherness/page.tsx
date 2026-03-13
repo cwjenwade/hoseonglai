@@ -44,9 +44,9 @@ export default async function TogethernessPage() {
                 <br />
                 一張椅子，挨著，一張椅子
                 <br />
-                夜裡的窗
+                夜裡的心燈
                 <br />
-                還亮著幾扇
+                還亮著幾盞
               </p>
 
               <p>

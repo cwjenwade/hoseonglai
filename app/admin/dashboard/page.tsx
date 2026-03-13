@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { adminLogout } from "../actions";
+import { deleteProjectData } from "./actions";
 
 type RegistrationData = {
   id: string;
@@ -9,8 +10,19 @@ type RegistrationData = {
   [key: string]: unknown;
 };
 
+type PsychAnswerRow = {
+  test_id: string;
+  participant_code: string;
+  answer_map: unknown;
+};
+
 type AdminDashboardPageProps = {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    deleted?: string;
+    project?: string;
+    deleteError?: string;
+  }>;
 };
 
 const TABS = [
@@ -23,11 +35,93 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+const DELETE_CONFIRM_CODE = "DELETETHESEDATA";
+const PAGE_SIZE = 1000;
+
 function safeString(value: unknown): string {
   if (value == null) return "";
   if (typeof value === "string") return value;
   return String(value);
 }
+
+function parseResearchMeta(value: unknown): { projectId?: string } | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+
+  try {
+    const parsed = JSON.parse(value) as { projectId?: unknown };
+    return {
+      projectId: typeof parsed.projectId === "string" ? parsed.projectId : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function normalizeAnswerMap(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.entries(value as Record<string, unknown>).reduce<Record<string, unknown>>(
+    (acc, [key, entryValue]) => {
+      acc[String(key)] = entryValue;
+      return acc;
+    },
+    {},
+  );
+}
+
+function answerMapFromArray(answers: unknown): Record<string, unknown> {
+  if (!Array.isArray(answers)) return {};
+
+  return Object.fromEntries(
+    answers.map((value, index) => [String(index + 1).padStart(3, "0"), value]),
+  );
+}
+
+function psychProjectTitle(testTitle: unknown, testId: unknown): string {
+  const title = safeString(testTitle);
+  if (!title) return safeString(testId) || "未命名專案";
+  return title.split("|")[0]?.trim() || safeString(testId) || "未命名專案";
+}
+
+async function fetchAllRows(
+  supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
+  table: string,
+) {
+  const rows: RegistrationData[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) {
+      return { rows: [] as RegistrationData[], error: error.message };
+    }
+
+    const chunk = (data || []) as RegistrationData[];
+    rows.push(...chunk);
+
+    if (chunk.length < PAGE_SIZE) {
+      break;
+    }
+
+    from += PAGE_SIZE;
+  }
+
+  return { rows, error: null as string | null };
+}
+
+type ProjectBlock = {
+  projectKey: string;
+  projectLabel: string;
+  rows: RegistrationData[];
+  ids: string[];
+};
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -90,20 +184,84 @@ export default async function AdminDashboardPage({
     );
   }
 
-  const { data, error } = await supabase
-    .from(tab.table)
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const { rows, error } = await fetchAllRows(supabase, tab.table);
 
-  const rows = (data || []) as RegistrationData[];
+  const psychAnswerLookup = new Map<string, Record<string, unknown>>();
+  if (tab.id === "psych") {
+    const { rows: answerRows } = await fetchAllRows(supabase, "psych_test_answer_columns");
+    (answerRows as unknown as PsychAnswerRow[]).forEach((row) => {
+      const key = `${safeString(row.test_id)}::${safeString(row.participant_code)}`;
+      psychAnswerLookup.set(key, normalizeAnswerMap(row.answer_map));
+    });
+  }
+
+  const blockMap = new Map<string, ProjectBlock>();
+
+  if (tab.id === "newsletter") {
+    blockMap.set("newsletter_all", {
+      projectKey: "newsletter_all",
+      projectLabel: "全部訂閱",
+      rows,
+      ids: rows.map((row) => safeString(row.id)).filter(Boolean),
+    });
+  } else {
+    rows.forEach((row) => {
+      let projectKey = "unknown";
+      let projectLabel = "未命名專案";
+
+      if (tab.id === "lectures") {
+        projectKey = safeString(row.lecture_id) || "unknown";
+        projectLabel = safeString(row.lecture_title) || projectKey;
+      }
+
+      if (tab.id === "groups") {
+        projectKey = safeString(row.group_slug) || "unknown";
+        projectLabel = safeString(row.group_title) || projectKey;
+      }
+
+      if (tab.id === "research") {
+        const meta = parseResearchMeta(row.interest_note);
+        projectKey = meta?.projectId || safeString(row.video_url) || "unknown";
+        projectLabel = safeString(row.video_title) || projectKey;
+      }
+
+      if (tab.id === "psych") {
+        projectKey = safeString(row.test_id) || "unknown";
+        projectLabel = psychProjectTitle(row.test_title, row.test_id);
+      }
+
+      const existing = blockMap.get(projectKey);
+      if (existing) {
+        existing.rows.push(row);
+        existing.ids.push(safeString(row.id));
+      } else {
+        blockMap.set(projectKey, {
+          projectKey,
+          projectLabel,
+          rows: [row],
+          ids: [safeString(row.id)],
+        });
+      }
+    });
+  }
+
+  const blocks = Array.from(blockMap.values()).sort((a, b) => b.rows.length - a.rows.length);
+
+  const deleteErrorMessage =
+    resolvedSearchParams.deleteError === "invalid_code"
+      ? `保護碼錯誤，請輸入 ${DELETE_CONFIRM_CODE}`
+      : resolvedSearchParams.deleteError === "forbidden"
+        ? "你沒有刪除權限"
+        : resolvedSearchParams.deleteError
+          ? "刪除失敗，請稍後再試"
+          : "";
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">管理儀表板</h1>
-          <p className="mt-1 text-sm text-zinc-600">查看所有報名與訂閱資料</p>
+          <p className="mt-1 text-sm text-zinc-600">查看與管理各專案報名與訂閱資料</p>
         </div>
         <div className="flex gap-3">
           <Link
@@ -148,122 +306,196 @@ export default async function AdminDashboardPage({
           </div>
 
           <Link
-            href={`/api/admin/export?table=${encodeURIComponent(tab.table)}`}
+            href={`/api/admin/export?table=${encodeURIComponent(tab.table)}&scope=all`}
             className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
           >
-            匯出 CSV（前 200 筆）
+            匯出 CSV（全部）
           </Link>
         </div>
 
+        {resolvedSearchParams.deleted === "1" ? (
+          <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            已刪除專案資料：{safeString(resolvedSearchParams.project) || "(未提供專案代碼)"}
+          </p>
+        ) : null}
+
+        {deleteErrorMessage ? (
+          <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {deleteErrorMessage}
+          </p>
+        ) : null}
+
         <div className="mt-4">
           {error ? (
-            <p className="text-sm text-red-700">載入資料失敗：{safeString(error.message)}</p>
+            <p className="text-sm text-red-700">載入資料失敗：{safeString(error)}</p>
           ) : rows.length === 0 ? (
             <p className="text-center text-sm text-zinc-500">尚無資料</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200">
-                    <th className="pb-3 font-semibold text-zinc-900">ID</th>
-                    {tab.id === "lectures" && (
-                      <>
-                        <th className="pb-3 font-semibold text-zinc-900">講座</th>
-                        <th className="pb-3 font-semibold text-zinc-900">姓名</th>
-                        <th className="pb-3 font-semibold text-zinc-900">Email</th>
-                        <th className="pb-3 font-semibold text-zinc-900">手機</th>
-                      </>
-                    )}
-                    {tab.id === "groups" && (
-                      <>
-                        <th className="pb-3 font-semibold text-zinc-900">團體</th>
-                        <th className="pb-3 font-semibold text-zinc-900">姓名</th>
-                        <th className="pb-3 font-semibold text-zinc-900">Email</th>
-                        <th className="pb-3 font-semibold text-zinc-900">手機</th>
-                        <th className="pb-3 font-semibold text-zinc-900">時段</th>
-                      </>
-                    )}
-                    {tab.id === "research" && (
-                      <>
-                        <th className="pb-3 font-semibold text-zinc-900">專案</th>
-                        <th className="pb-3 font-semibold text-zinc-900">姓名</th>
-                        <th className="pb-3 font-semibold text-zinc-900">Email</th>
-                        <th className="pb-3 font-semibold text-zinc-900">備註</th>
-                      </>
-                    )}
-                    {tab.id === "psych" && (
-                      <>
-                        <th className="pb-3 font-semibold text-zinc-900">測驗</th>
-                        <th className="pb-3 font-semibold text-zinc-900">受試者代碼</th>
-                        <th className="pb-3 font-semibold text-zinc-900">得分</th>
-                      </>
-                    )}
-                    {tab.id === "newsletter" && (
-                      <>
-                        <th className="pb-3 font-semibold text-zinc-900">姓名</th>
-                        <th className="pb-3 font-semibold text-zinc-900">Email</th>
-                      </>
-                    )}
-                    <th className="pb-3 font-semibold text-zinc-900">建立時間</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((item) => (
-                    <tr key={item.id} className="border-b border-zinc-100">
-                      <td className="py-3 text-xs text-zinc-500">
-                        {safeString(item.id).slice(0, 8)}...
-                      </td>
-                      {tab.id === "lectures" && (
-                        <>
-                          <td className="py-3 text-zinc-700">{safeString(item.lecture_title)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_name)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_email)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_phone)}</td>
-                        </>
-                      )}
-                      {tab.id === "groups" && (
-                        <>
-                          <td className="py-3 text-zinc-700">{safeString(item.group_title)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_name)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_email)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_phone)}</td>
-                          <td className="py-3 text-zinc-700">
-                            {Array.isArray(item.availability_slots)
-                              ? (item.availability_slots as unknown[]).join(", ")
-                              : "-"}
-                          </td>
-                        </>
-                      )}
-                      {tab.id === "research" && (
-                        <>
-                          <td className="py-3 text-zinc-700">{safeString(item.video_title)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_name)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_email)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.interest_note) || "-"}</td>
-                        </>
-                      )}
-                      {tab.id === "psych" && (
-                        <>
-                          <td className="py-3 text-zinc-700">{safeString(item.test_title)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.user_name)}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.total_score)}</td>
-                        </>
-                      )}
-                      {tab.id === "newsletter" && (
-                        <>
-                          <td className="py-3 text-zinc-700">{safeString(item.name) || "-"}</td>
-                          <td className="py-3 text-zinc-700">{safeString(item.email)}</td>
-                        </>
-                      )}
-                      <td className="py-3 text-xs text-zinc-500">
-                        {item.created_at
-                          ? new Date(String(item.created_at)).toLocaleString("zh-TW")
-                          : ""}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-6">
+              {blocks.map((block) => (
+                <section
+                  key={`${tab.id}-${block.projectKey}`}
+                  className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-zinc-900">{block.projectLabel}</h3>
+                      <p className="mt-1 text-xs text-zinc-600">
+                        專案代碼：{block.projectKey} ｜ 共 {block.rows.length} 筆
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {tab.id !== "newsletter" ? (
+                        <Link
+                          href={`/api/admin/export?table=${encodeURIComponent(tab.table)}&scope=project&project=${encodeURIComponent(block.projectKey)}`}
+                          className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
+                        >
+                          匯出此專案（全數）
+                        </Link>
+                      ) : null}
+
+                      {tab.id !== "newsletter" ? (
+                        <form action={deleteProjectData} className="flex flex-wrap items-center gap-2">
+                          <input type="hidden" name="tab" value={tab.id} />
+                          <input type="hidden" name="table" value={tab.table} />
+                          <input type="hidden" name="projectKey" value={block.projectKey} />
+                          <input type="hidden" name="ids" value={block.ids.join(",")} />
+                          <input
+                            type="text"
+                            name="confirmCode"
+                            placeholder={DELETE_CONFIRM_CODE}
+                            className="w-44 rounded-full border border-red-300 bg-white px-3 py-1.5 text-xs text-red-700 placeholder:text-red-300"
+                            required
+                          />
+                          <button
+                            type="submit"
+                            className="rounded-full border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                          >
+                            刪除此專案資料
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-200">
+                          <th className="pb-3 font-semibold text-zinc-900">ID</th>
+                          {tab.id === "lectures" && (
+                            <>
+                              <th className="pb-3 font-semibold text-zinc-900">姓名</th>
+                              <th className="pb-3 font-semibold text-zinc-900">Email</th>
+                              <th className="pb-3 font-semibold text-zinc-900">手機</th>
+                            </>
+                          )}
+                          {tab.id === "groups" && (
+                            <>
+                              <th className="pb-3 font-semibold text-zinc-900">姓名</th>
+                              <th className="pb-3 font-semibold text-zinc-900">Email</th>
+                              <th className="pb-3 font-semibold text-zinc-900">手機</th>
+                              <th className="pb-3 font-semibold text-zinc-900">時段</th>
+                            </>
+                          )}
+                          {tab.id === "research" && (
+                            <>
+                              <th className="pb-3 font-semibold text-zinc-900">姓名</th>
+                              <th className="pb-3 font-semibold text-zinc-900">Email</th>
+                              <th className="pb-3 font-semibold text-zinc-900">備註</th>
+                            </>
+                          )}
+                          {tab.id === "psych" && (
+                            <>
+                              <th className="pb-3 font-semibold text-zinc-900">受試者代碼</th>
+                              <th className="pb-3 font-semibold text-zinc-900">得分</th>
+                              <th className="pb-3 font-semibold text-zinc-900">每題答案</th>
+                            </>
+                          )}
+                          {tab.id === "newsletter" && (
+                            <>
+                              <th className="pb-3 font-semibold text-zinc-900">姓名</th>
+                              <th className="pb-3 font-semibold text-zinc-900">Email</th>
+                            </>
+                          )}
+                          <th className="pb-3 font-semibold text-zinc-900">建立時間</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {block.rows.map((item) => {
+                          const participantCode = safeString(item.user_name);
+                          const answerKey = `${safeString(item.test_id)}::${participantCode}`;
+                          const answerMap =
+                            tab.id === "psych"
+                              ? psychAnswerLookup.get(answerKey) || answerMapFromArray(item.answers)
+                              : {};
+
+                          return (
+                            <tr key={safeString(item.id)} className="border-b border-zinc-100 align-top">
+                              <td className="py-3 text-xs text-zinc-500">
+                                {safeString(item.id).slice(0, 8)}...
+                              </td>
+                              {tab.id === "lectures" && (
+                                <>
+                                  <td className="py-3 text-zinc-700">{safeString(item.user_name)}</td>
+                                  <td className="py-3 text-zinc-700">{safeString(item.user_email)}</td>
+                                  <td className="py-3 text-zinc-700">{safeString(item.user_phone)}</td>
+                                </>
+                              )}
+                              {tab.id === "groups" && (
+                                <>
+                                  <td className="py-3 text-zinc-700">{safeString(item.user_name)}</td>
+                                  <td className="py-3 text-zinc-700">{safeString(item.user_email)}</td>
+                                  <td className="py-3 text-zinc-700">{safeString(item.user_phone)}</td>
+                                  <td className="py-3 text-zinc-700">
+                                    {Array.isArray(item.availability_slots)
+                                      ? (item.availability_slots as unknown[]).join(", ")
+                                      : "-"}
+                                  </td>
+                                </>
+                              )}
+                              {tab.id === "research" && (
+                                <>
+                                  <td className="py-3 text-zinc-700">{safeString(item.user_name)}</td>
+                                  <td className="py-3 text-zinc-700">{safeString(item.user_email)}</td>
+                                  <td className="py-3 text-zinc-700">{safeString(item.interest_note) || "-"}</td>
+                                </>
+                              )}
+                              {tab.id === "psych" && (
+                                <>
+                                  <td className="py-3 text-zinc-700">{participantCode}</td>
+                                  <td className="py-3 text-zinc-700">{safeString(item.total_score)}</td>
+                                  <td className="py-3 text-zinc-700">
+                                    <details>
+                                      <summary className="cursor-pointer text-xs text-zinc-600">
+                                        {Object.keys(answerMap).length} 題
+                                      </summary>
+                                      <pre className="mt-2 max-h-36 overflow-auto rounded-xl bg-zinc-100 p-2 text-xs">
+                                        {JSON.stringify(answerMap, null, 2)}
+                                      </pre>
+                                    </details>
+                                  </td>
+                                </>
+                              )}
+                              {tab.id === "newsletter" && (
+                                <>
+                                  <td className="py-3 text-zinc-700">{safeString(item.name) || "-"}</td>
+                                  <td className="py-3 text-zinc-700">{safeString(item.email)}</td>
+                                </>
+                              )}
+                              <td className="py-3 text-xs text-zinc-500">
+                                {item.created_at
+                                  ? new Date(String(item.created_at)).toLocaleString("zh-TW")
+                                  : ""}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              ))}
             </div>
           )}
         </div>
