@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { verifyResearchToken } from "@/lib/research-token";
+import { sendResearchCompletionEmail } from "@/lib/email";
+import { getSiteContentSection } from "@/lib/site-content-server";
+import {
+  DEFAULT_PSYCHOMETRIC_SCALES,
+  type PsychometricScale,
+} from "@/app/collaborative-prosperity/assessment-data";
 
 type SubmitPayload = {
   token: string;
@@ -65,6 +71,30 @@ export async function POST(req: NextRequest) {
 
     if (answerMapError) {
       console.error("ASSESSMENT_ANSWER_MAP_INSERT_ERROR", answerMapError);
+    }
+
+    try {
+      const scales = await getSiteContentSection<PsychometricScale[]>(
+        "collaborative_prosperity_assessments",
+        DEFAULT_PSYCHOMETRIC_SCALES,
+      );
+      const mappedScale =
+        scales.find((scale) => scale.projectId === payload.projectId) ||
+        DEFAULT_PSYCHOMETRIC_SCALES.find((scale) => scale.projectId === payload.projectId);
+
+      await sendResearchCompletionEmail({
+        to: payload.email,
+        name: payload.name,
+        participantCode: payload.participantCode,
+        projectTitleZh: mappedScale?.projectTitleZh || payload.projectTitle,
+        projectTitleEn: mappedScale?.projectTitleEn || payload.projectTitle,
+        principalInvestigator: mappedScale?.principalInvestigator || "待填寫",
+        researchUnit: mappedScale?.researchUnit || "Ho-Se 好勢旺來研究團隊",
+        researchDescription:
+          mappedScale?.researchDescription || "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
+      });
+    } catch (emailError) {
+      console.error("ASSESSMENT_COMPLETION_EMAIL_ERROR", emailError);
     }
 
     return NextResponse.json({

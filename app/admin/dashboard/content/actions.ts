@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import {
+	getSiteContentSection,
 	saveSiteContentImage,
 	saveSiteContentSection,
 } from "@/lib/site-content-server";
 import type { BrandPageContent } from "@/app/brand-philosophy/brand-content";
 import type { ResearchProject } from "@/app/collaborative-prosperity/projects";
+import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
 
@@ -157,6 +159,37 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 
 	try {
 		await saveSiteContentSection("collaborative_prosperity_projects", cleanedProjects);
+
+		const currentScales = await getSiteContentSection<PsychometricScale[]>(
+			"collaborative_prosperity_assessments",
+			[],
+		);
+
+		const nextScales: PsychometricScale[] = cleanedProjects.map((project) => {
+			const existing = currentScales.find((scale) => scale.projectId === project.id);
+			if (existing) {
+				return {
+					...existing,
+					projectId: project.id,
+					projectTitleZh: existing.projectTitleZh || project.title,
+					projectTitleEn: existing.projectTitleEn || project.subtitle,
+				};
+			}
+
+			return {
+				projectId: project.id,
+				projectTitleZh: project.title,
+				projectTitleEn: project.subtitle,
+				principalInvestigator: "待填寫",
+				researchUnit: "Ho-Se 好勢旺來研究團隊",
+				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
+				scalePrompt: "請根據最近兩週的經驗，選擇最符合你的選項。",
+				options: ["非常不同意", "不同意", "普通", "同意", "非常同意"],
+				questions: ["請填寫第一題"],
+			};
+		});
+
+		await saveSiteContentSection("collaborative_prosperity_assessments", nextScales);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=collaborative&error=readonly_fs");
@@ -382,4 +415,93 @@ export async function saveHeartfeltVideosContent(formData: FormData) {
 	revalidatePath("/heartfelt-momentum");
 	revalidatePath("/admin/dashboard/content");
 	redirect("/admin/dashboard/content?tab=heartfelt&saved=heartfelt");
+}
+
+export async function savePsychometricScalesContent(formData: FormData) {
+	await requireAdminUser();
+
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect("/admin/dashboard/content?tab=psychometrics&error=missing");
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(payload);
+	} catch {
+		redirect("/admin/dashboard/content?tab=psychometrics&error=json");
+	}
+
+	if (!Array.isArray(parsed)) {
+		redirect("/admin/dashboard/content?tab=psychometrics&error=json");
+	}
+
+	const cleanedScales = parsed
+		.map((scale): PsychometricScale | null => {
+			if (!scale || typeof scale !== "object") return null;
+			const item = scale as Partial<PsychometricScale>;
+
+			const projectId = String(item.projectId || "").trim();
+			const projectTitleZh = String(item.projectTitleZh || "").trim();
+			const projectTitleEn = String(item.projectTitleEn || "").trim();
+			const principalInvestigator = String(item.principalInvestigator || "").trim();
+			const researchUnit = String(item.researchUnit || "").trim();
+			const researchDescription = String(item.researchDescription || "").trim();
+			const scalePrompt = String(item.scalePrompt || "").trim();
+			const options = Array.isArray(item.options)
+				? item.options.map((value) => String(value || "").trim()).filter(Boolean)
+				: [];
+			const questions = Array.isArray(item.questions)
+				? item.questions.map((value) => String(value || "").trim()).filter(Boolean)
+				: [];
+
+			if (
+				!projectId ||
+				!projectTitleZh ||
+				!projectTitleEn ||
+				!principalInvestigator ||
+				!researchUnit ||
+				!researchDescription ||
+				!scalePrompt ||
+				options.length < 2 ||
+				questions.length < 1
+			) {
+				return null;
+			}
+
+			return {
+				projectId,
+				projectTitleZh,
+				projectTitleEn,
+				principalInvestigator,
+				researchUnit,
+				researchDescription,
+				scalePrompt,
+				options,
+				questions,
+			};
+		})
+		.filter((scale): scale is PsychometricScale => scale !== null);
+
+	if (cleanedScales.length === 0) {
+		redirect("/admin/dashboard/content?tab=psychometrics&error=missing");
+	}
+
+	try {
+		await saveSiteContentSection("collaborative_prosperity_assessments", cleanedScales);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS") {
+			redirect("/admin/dashboard/content?tab=psychometrics&error=readonly_fs");
+		}
+
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_save_error",
+		);
+		console.error("PSYCHOMETRICS_SAVE_ERROR", error);
+		redirect(`/admin/dashboard/content?tab=psychometrics&error=save&detail=${detail}`);
+	}
+
+	revalidatePath("/collaborative-prosperity");
+	revalidatePath("/admin/dashboard/content");
+	redirect("/admin/dashboard/content?tab=psychometrics&saved=psychometrics");
 }

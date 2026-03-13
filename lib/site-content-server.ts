@@ -11,6 +11,7 @@ export type SiteContentSection =
   | "brand_philosophy_team"
   | "heartfelt_momentum_videos"
   | "fortune_arrives_lectures"
+  | "collaborative_prosperity_assessments"
   | "togetherness_groups"
   | "collaborative_prosperity_projects";
 

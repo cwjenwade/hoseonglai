@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { getTestQuestions } from "../../test-questions";
 
 type SessionPayload = {
   participantCode: string;
@@ -11,8 +10,6 @@ type SessionPayload = {
   projectId: string;
   projectTitle: string;
 };
-
-const OPTIONS = ["非常不同意", "不同意", "普通", "同意", "非常同意"];
 
 export default function TestProjectPage() {
   const params = useParams<{ projectId: string }>();
@@ -24,6 +21,14 @@ export default function TestProjectPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [session, setSession] = useState<SessionPayload | null>(null);
+  const [scalePrompt, setScalePrompt] = useState("請依照實際情況作答。");
+  const [options, setOptions] = useState<string[]>([
+    "非常不同意",
+    "不同意",
+    "普通",
+    "同意",
+    "非常同意",
+  ]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -58,9 +63,26 @@ export default function TestProjectPage() {
 
         setSession(data.payload as SessionPayload);
         
-        // 載入該專案的題目
-        const projectQuestions = getTestQuestions(projectId);
+        const questionRes = await fetch(
+          `/api/research/questions?projectId=${encodeURIComponent(projectId)}`,
+          { cache: "no-store" },
+        );
+        const questionData = await questionRes.json();
+
+        if (!questionRes.ok) {
+          throw new Error(questionData?.message || "載入量表題目失敗");
+        }
+
+        const projectQuestions = Array.isArray(questionData?.questions)
+          ? questionData.questions.map((q: unknown) => String(q || "").trim()).filter(Boolean)
+          : [];
+        const scaleOptions = Array.isArray(questionData?.options)
+          ? questionData.options.map((o: unknown) => String(o || "").trim()).filter(Boolean)
+          : [];
+
         setQuestions(projectQuestions);
+        setOptions(scaleOptions.length > 1 ? scaleOptions : ["非常不同意", "不同意", "普通", "同意", "非常同意"]);
+        setScalePrompt(String(questionData?.scalePrompt || "請依照實際情況作答。"));
         setAnswers(new Array(projectQuestions.length).fill(-1));
       } catch (err) {
         const message = err instanceof Error ? err.message : "驗證失敗";
@@ -210,6 +232,13 @@ export default function TestProjectPage() {
             受試者：{session?.name}（代碼 {session?.participantCode}）
           </p>
 
+          <p
+            className="mt-3 max-w-[62ch] text-[1rem] leading-[1.8] text-neutral-600"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            {scalePrompt}
+          </p>
+
           <div className="mt-12 space-y-8 border-t border-neutral-300/60 pt-10">
             {questions.map((q: string, index: number) => (
               <div key={q} className="space-y-4">
@@ -220,7 +249,7 @@ export default function TestProjectPage() {
                   {String(index + 1).padStart(3, "0")}. {q}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {OPTIONS.map((opt, optIdx) => {
+                  {options.map((opt, optIdx) => {
                     const selected = answers[index] === optIdx;
                     return (
                       <button

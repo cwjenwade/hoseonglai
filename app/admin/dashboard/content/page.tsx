@@ -5,17 +5,20 @@ import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import { DEFAULT_BRAND_PAGE_CONTENT } from "@/app/brand-philosophy/brand-content";
 import { RESEARCH_PROJECTS } from "@/app/collaborative-prosperity/projects";
+import { DEFAULT_PSYCHOMETRIC_SCALES } from "@/app/collaborative-prosperity/assessment-data";
 import { LECTURES } from "@/app/fortune-arrives/lectures-data";
 import { HEARTFELT_VIDEOS } from "@/app/heartfelt-momentum/videos-data";
 import BrandEditor from "./BrandEditor";
 import CollaborativeProjectsEditor from "./CollaborativeProjectsEditor";
 import FortuneLecturesEditor from "./FortuneLecturesEditor";
 import HeartfeltVideosEditor from "./HeartfeltVideosEditor";
+import PsychometricScalesEditor from "./PsychometricScalesEditor";
 import {
 	saveBrandPageContent,
 	saveCollaborativeProjectsContent,
 	saveFortuneLecturesContent,
 	saveHeartfeltVideosContent,
+	savePsychometricScalesContent,
 	uploadHeartfeltImage,
 	uploadBrandImage,
 } from "./actions";
@@ -53,13 +56,18 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 	);
 	const fortuneLectures = await getSiteContentSection("fortune_arrives_lectures", LECTURES);
 	const heartfeltVideos = await getSiteContentSection("heartfelt_momentum_videos", HEARTFELT_VIDEOS);
+	const psychometricScales = await getSiteContentSection(
+		"collaborative_prosperity_assessments",
+		DEFAULT_PSYCHOMETRIC_SCALES,
+	);
 
 	const tabs = [
-		{ key: "brand", name: "Brand Philosophy" },
-		{ key: "collaborative", name: "Collaborative Prosperity" },
-		{ key: "heartfelt", name: "Heartfelt Momentum" },
-		{ key: "fortune", name: "Fortune Arrives" },
-		{ key: "togetherness", name: "Togetherness" },
+		{ key: "brand", name: "品牌理念" },
+		{ key: "collaborative", name: "協力招來" },
+		{ key: "psychometrics", name: "心理量表" },
+		{ key: "heartfelt", name: "有心好勢｜5 mins research" },
+		{ key: "fortune", name: "有運旺來｜講座" },
+		{ key: "togetherness", name: "團體諮商" },
 	] as const;
 
 	const activeTab = tabs.some((tab) => tab.key === resolvedSearchParams.tab)
@@ -67,11 +75,12 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		: "brand";
 
 	const modules = [
-		{ name: "Brand Philosophy", status: "已完成" },
-		{ name: "Heartfelt Momentum", status: "已完成" },
-		{ name: "Fortune Arrives", status: "已完成" },
-		{ name: "Togetherness", status: "下一步" },
-		{ name: "Collaborative Prosperity", status: "已完成" },
+		{ name: "品牌理念", status: "已完成" },
+		{ name: "協力招來", status: "已完成" },
+		{ name: "心理量表", status: "已完成" },
+		{ name: "有心好勢｜5 mins research", status: "已完成" },
+		{ name: "有運旺來｜講座", status: "已完成" },
+		{ name: "團體諮商", status: "下一步" },
 	];
 
 	return (
@@ -100,7 +109,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 				</div>
 			</div>
 
-			<div className="grid gap-3 rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm md:grid-cols-5">
+			<div className="grid gap-3 rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm md:grid-cols-6">
 				{modules.map((m) => (
 					<div key={m.name} className="rounded-2xl border border-zinc-200 p-3">
 						<p className="text-sm font-semibold text-zinc-900">{m.name}</p>
@@ -132,13 +141,15 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 			{resolvedSearchParams.saved ? (
 				<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
 					{resolvedSearchParams.saved === "brand"
-						? "Brand 內容已更新"
+						? "品牌理念內容已更新"
 						: resolvedSearchParams.saved === "collaborative"
-							? "Collaborative Prosperity 內容已更新"
+							? "協力招來內容已更新"
+							: resolvedSearchParams.saved === "psychometrics"
+								? "心理量表內容已更新"
 							: resolvedSearchParams.saved === "heartfelt"
-								? "Heartfelt Momentum 內容已更新"
+								? "有心好勢內容已更新"
 							: resolvedSearchParams.saved === "fortune"
-								? "Fortune Arrives 內容已更新"
+								? "有運旺來內容已更新"
 							: "內容已更新"}
 				</div>
 			) : null}
@@ -223,7 +234,24 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 								type="submit"
 								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
 							>
-								儲存 Collaborative 內容
+								儲存協力招來內容
+							</button>
+						</div>
+					</form>
+				</section>
+			) : null}
+
+			{activeTab === "psychometrics" ? (
+				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<form action={savePsychometricScalesContent}>
+						<PsychometricScalesEditor initialScales={psychometricScales} />
+
+						<div className="mt-5 flex justify-end">
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存心理量表內容
 							</button>
 						</div>
 					</form>

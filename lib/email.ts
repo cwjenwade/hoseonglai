@@ -46,6 +46,66 @@ export async function sendResearchJoinEmail({
   });
 }
 
+type SendResearchCompletionEmailParams = {
+  to: string;
+  name: string;
+  participantCode: string;
+  projectTitleZh: string;
+  projectTitleEn: string;
+  principalInvestigator: string;
+  researchUnit: string;
+  researchDescription: string;
+};
+
+export async function sendResearchCompletionEmail({
+  to,
+  name,
+  participantCode,
+  projectTitleZh,
+  projectTitleEn,
+  principalInvestigator,
+  researchUnit,
+  researchDescription,
+}: SendResearchCompletionEmailParams): Promise<void> {
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+
+  if (!gmailUser || !gmailAppPassword) {
+    console.info("EMAIL_NOT_CONFIGURED", { to, projectTitleZh, participantCode });
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: gmailUser,
+      pass: gmailAppPassword,
+    },
+  });
+
+  const subject = `研究完成感謝｜${projectTitleZh}`;
+
+  await transporter.sendMail({
+    from: `Ho-Se Research <${gmailUser}>`,
+    to,
+    subject,
+    html: `
+      <p>${name} 您好：</p>
+      <p>感謝你完成心理量表填答，以下為本次研究同意資訊存檔副本：</p>
+      <hr/>
+      <p><strong>研究標題（中文）</strong>：${projectTitleZh}</p>
+      <p><strong>研究標題（英文）</strong>：${projectTitleEn}</p>
+      <p><strong>計劃主持人（PI）</strong>：${principalInvestigator}</p>
+      <p><strong>研究單位</strong>：${researchUnit}</p>
+      <p><strong>研究事項說明</strong>：${researchDescription}</p>
+      <p><strong>受試者代碼</strong>：${participantCode}</p>
+      <hr/>
+      <p>再次感謝你的參與與支持。</p>
+      <p>Ho-Se 團隊 敬上</p>
+    `,
+  });
+}
+
 type SendLectureRegistrationEmailParams = {
   to: string;
   name: string;
