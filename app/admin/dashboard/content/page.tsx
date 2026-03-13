@@ -9,12 +9,14 @@ import { DEFAULT_PSYCHOMETRIC_SCALES } from "@/app/collaborative-prosperity/asse
 import { DEFAULT_RESEARCH_CONSENTS } from "@/app/collaborative-prosperity/consent-data";
 import { LECTURES } from "@/app/fortune-arrives/lectures-data";
 import { HEARTFELT_VIDEOS } from "@/app/heartfelt-momentum/videos-data";
+import { GROUPS } from "@/app/togetherness/group-data";
 import BrandEditor from "./BrandEditor";
 import CollaborativeProjectsEditor from "./CollaborativeProjectsEditor";
 import FortuneLecturesEditor from "./FortuneLecturesEditor";
 import HeartfeltVideosEditor from "./HeartfeltVideosEditor";
 import PsychometricScalesEditor from "./PsychometricScalesEditor";
 import ResearchConsentsEditor from "./ResearchConsentsEditor";
+import TogethernessGroupsEditor from "./TogethernessGroupsEditor";
 import {
 	saveBrandPageContent,
 	saveCollaborativeProjectsContent,
@@ -22,7 +24,9 @@ import {
 	saveHeartfeltVideosContent,
 	saveResearchConsentsContent,
 	savePsychometricScalesContent,
+	saveTogethernessGroupsContent,
 	uploadHeartfeltImage,
+	uploadTogethernessImage,
 	uploadBrandImage,
 } from "./actions";
 
@@ -59,6 +63,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 	);
 	const fortuneLectures = await getSiteContentSection("fortune_arrives_lectures", LECTURES);
 	const heartfeltVideos = await getSiteContentSection("heartfelt_momentum_videos", HEARTFELT_VIDEOS);
+	const togethernessGroups = await getSiteContentSection("togetherness_groups", GROUPS);
 	const psychometricScales = await getSiteContentSection(
 		"collaborative_prosperity_assessments",
 		DEFAULT_PSYCHOMETRIC_SCALES,
@@ -89,7 +94,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		{ name: "研究同意書", status: "已完成" },
 		{ name: "有心好勢｜5 mins research", status: "已完成" },
 		{ name: "有運旺來｜講座", status: "已完成" },
-		{ name: "團體諮商", status: "下一步" },
+		{ name: "團體諮商", status: "已完成" },
 	];
 
 	return (
@@ -338,8 +343,34 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "togetherness" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-					<h2 className="text-xl font-semibold text-zinc-900">此頁籤準備中</h2>
-					<p className="mt-2 text-sm text-zinc-600">下一步會依同樣編輯邏輯補上此模組表單。</p>
+					<div className="mb-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+						<p className="mb-2 text-xs text-zinc-600">圖片上傳（上傳後可套用到團體封面）</p>
+						<form action={uploadTogethernessImage} className="flex flex-wrap items-center gap-3">
+							<input type="file" name="imageFile" accept="image/*" className="text-xs text-zinc-700" required />
+							<button
+								type="submit"
+								className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100"
+							>
+								上傳圖片
+							</button>
+						</form>
+					</div>
+
+					<form action={saveTogethernessGroupsContent}>
+						<TogethernessGroupsEditor
+							initialGroups={togethernessGroups}
+							uploadedUrl={resolvedSearchParams.uploaded}
+						/>
+
+						<div className="mt-5 flex justify-end">
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存 Togetherness 內容
+							</button>
+						</div>
+					</form>
 				</section>
 			) : null}
 		</div>

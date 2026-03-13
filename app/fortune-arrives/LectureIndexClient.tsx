@@ -92,14 +92,14 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
             <div className="lg:col-span-4">
               <div className="mx-auto mt-2 max-w-[28ch] space-y-5">
                 <p
-                  className="text-center text-[18px] leading-[1.8] text-[#3f3f3f]"
+                  className="text-right text-[18px] leading-[1.8] text-[#3f3f3f]"
                   style={{ fontFamily: fontMixed }}
                 >
-                  致力於藝術研究、書寫、策展與公民生活的公共計畫。
+                  致力於心理學研究、書寫、策展與公民生活的公共計畫。
                   <br />
                   講座、工作坊與對話在此展開，
                   <br />
-                  一場一場，累積成持續生成的公共學知。
+                  一場一場的公共學知。
                 </p>
               </div>
             </div>
@@ -107,8 +107,8 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
             <div className="lg:col-span-3">
               <div className="ml-auto mt-2 max-w-[26ch]">
                 <p
-                  className="text-right text-[14px] leading-[1.8] text-[#8a8a8a]"
-                  style={{ fontFamily: fontMixed }}
+                  className="text-right text-[18px] leading-[1.8] text-[#8a8a8a]"
+                  style={{ fontFamily: fontGeistOnly }}
                 >
                   Public programs devoted to research, writing, curation, and the civic life of art.
                   Lectures, workshops, and conversations are presented as part of an ongoing archive of public study.
@@ -144,7 +144,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
         </section>
 
         <section aria-label="Lecture archive" className="pb-20 md:pb-24 lg:pb-28">
-          <div className="border-t border-black/10">
+          <div className="border-t-0 border-black/10 md:border-t">
             {filteredLectures.map((lecture) => (
               <article
                 key={lecture.id}
@@ -178,7 +178,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                   <div className="lg:col-span-8">
                     <div className="max-w-[42rem]">
                       <h2
-                        className="text-[30px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#1a1a1a] sm:text-[31px] lg:text-[32px]"
+                        className="text-left sm:text-center md:text-left text-[30px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#1a1a1a] sm:text-[31px] lg:text-[32px]"
                         style={{
                           fontFamily: fontSerif,
                         }}
@@ -188,7 +188,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
 
                       {lecture.titleEn ? (
                         <p
-                          className="mt-2 max-w-[56ch] text-[18px] font-normal leading-[1.45] tracking-[0.02em] text-[#6b6b6b]"
+                          className="mt-2 max-w-[56ch] text-left sm:text-center md:text-left text-[18px] font-normal leading-[1.45] tracking-[0.02em] text-[#6b6b6b]"
                           style={{
                             fontFamily: fontGeistOnly,
                           }}
@@ -198,14 +198,18 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                       ) : null}
 
                       <p
-                        className="mt-6 max-w-[56ch] text-[18px] leading-[1.6] text-[#1a1a1a]"
+                        className="mt-6 max-w-[56ch] text-center text-[18px] leading-[1.6] text-[#1a1a1a] md:text-left"
                         style={{
                           fontFamily: fontMixed,
                         }}
                       >
-                        {lecture.speaker
-                          ? `${lecture.speaker}${lecture.speakerEn ? ` / ${lecture.speakerEn}` : ""}`
-                          : ""}
+                        {lecture.speaker ? lecture.speaker : ""}
+                        {lecture.speakerEn ? (
+                          <>
+                            <br />
+                            {lecture.speakerEn.split(",")[0]}
+                          </>
+                        ) : null}
                       </p>
                     </div>
                   </div>
@@ -217,11 +221,11 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                         fontFamily: fontMixed,
                       }}
                     >
-                      <div className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b]">
+                      <div className="space-y-1 text-center text-[18px] leading-[1.6] text-[#6b6b6b] md:text-left md:text-[14px] md:leading-[1.7]">
                         <p className="text-[#1a1a1a]">{lecture.addressZh || lecture.locationZh || "地點待公布"}</p>
                       </div>
 
-                      <div className="pt-8">
+                      <div className="pt-8 text-center md:text-left">
                         <Link
                           href={lecture.href}
                           className="group inline-flex items-center gap-2 text-[14px] text-[#1a1a1a] transition-opacity duration-200 hover:opacity-70"

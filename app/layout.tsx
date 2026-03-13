@@ -121,7 +121,7 @@ export default function RootLayout({
                   <div className="flex w-full justify-end">
                     <Link
                       href="/admin"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#e6e2da] text-[0.68rem] uppercase tracking-[0.18em] text-zinc-700 transition hover:border-zinc-900 hover:text-zinc-950"
+                      className="hidden h-9 w-9 items-center justify-center rounded-full border border-[#e6e2da] text-[0.68rem] uppercase tracking-[0.18em] text-zinc-700 transition hover:border-zinc-900 hover:text-zinc-950 sm:inline-flex"
                       title="管理後台"
                     >
                       A

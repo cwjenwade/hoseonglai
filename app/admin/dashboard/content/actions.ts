@@ -14,6 +14,7 @@ import type { PsychometricScale } from "@/app/collaborative-prosperity/assessmen
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
+import type { GroupItem } from "@/app/togetherness/group-data";
 
 async function requireAdminUser() {
 	const supabase = await getSupabaseServerClient();
@@ -67,7 +68,7 @@ export async function saveBrandPageContent(formData: FormData) {
 
 	revalidatePath("/brand-philosophy");
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard/content?tab=brand&saved=brand");
+	redirect("/admin/dashboard");
 }
 
 export async function uploadBrandImage(formData: FormData) {
@@ -226,7 +227,7 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 
 	revalidatePath("/collaborative-prosperity");
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard/content?tab=collaborative&saved=collaborative");
+	redirect("/admin/dashboard");
 }
 
 export async function saveFortuneLecturesContent(formData: FormData) {
@@ -327,7 +328,7 @@ export async function saveFortuneLecturesContent(formData: FormData) {
 
 	revalidatePath("/fortune-arrives");
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard/content?tab=fortune&saved=fortune");
+	redirect("/admin/dashboard");
 }
 
 export async function uploadHeartfeltImage(formData: FormData) {
@@ -436,7 +437,7 @@ export async function saveHeartfeltVideosContent(formData: FormData) {
 
 	revalidatePath("/heartfelt-momentum");
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard/content?tab=heartfelt&saved=heartfelt");
+	redirect("/admin/dashboard");
 }
 
 export async function savePsychometricScalesContent(formData: FormData) {
@@ -535,7 +536,7 @@ export async function savePsychometricScalesContent(formData: FormData) {
 
 	revalidatePath("/collaborative-prosperity");
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard/content?tab=psychometrics&saved=psychometrics");
+	redirect("/admin/dashboard");
 }
 
 export async function saveResearchConsentsContent(formData: FormData) {
@@ -643,5 +644,108 @@ export async function saveResearchConsentsContent(formData: FormData) {
 
 	revalidatePath("/collaborative-prosperity/start");
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard/content?tab=consent&saved=consent");
+	redirect("/admin/dashboard");
+}
+
+export async function uploadTogethernessImage(formData: FormData) {
+	await requireAdminUser();
+
+	const file = formData.get("imageFile");
+
+	if (!(file instanceof File) || file.size <= 0) {
+		redirect("/admin/dashboard/content?tab=togetherness&error=upload");
+	}
+
+	if (!file.type.startsWith("image/")) {
+		redirect("/admin/dashboard/content?tab=togetherness&error=upload_type");
+	}
+
+	if (file.size > 8 * 1024 * 1024) {
+		redirect("/admin/dashboard/content?tab=togetherness&error=upload_size");
+	}
+
+	let url = "";
+	try {
+		url = await saveSiteContentImage("togetherness_groups", file);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
+			redirect("/admin/dashboard/content?tab=togetherness&error=readonly_upload");
+		}
+
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_upload_error",
+		);
+		console.error("TOGETHERNESS_UPLOAD_ERROR", error);
+		redirect(`/admin/dashboard/content?tab=togetherness&error=upload&detail=${detail}`);
+	}
+
+	revalidatePath("/admin/dashboard/content");
+	redirect(`/admin/dashboard/content?tab=togetherness&uploaded=${encodeURIComponent(url)}`);
+}
+
+export async function saveTogethernessGroupsContent(formData: FormData) {
+	await requireAdminUser();
+
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect("/admin/dashboard/content?tab=togetherness&error=missing");
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(payload);
+	} catch {
+		redirect("/admin/dashboard/content?tab=togetherness&error=json");
+	}
+
+	if (!Array.isArray(parsed)) {
+		redirect("/admin/dashboard/content?tab=togetherness&error=json");
+	}
+
+	const cleanedGroups = parsed
+		.map((group): GroupItem | null => {
+			if (!group || typeof group !== "object") return null;
+			const item = group as Partial<GroupItem>;
+
+			const slug = String(item.slug || "").trim();
+			const title = String(item.title || "").trim();
+			const subtitle = String(item.subtitle || "").trim();
+			const description = String(item.description || "").trim();
+			const image = String(item.image || "").trim();
+
+			if (!slug || !title || !subtitle || !description || !image) {
+				return null;
+			}
+
+			return {
+				slug,
+				title,
+				subtitle,
+				description,
+				image,
+			};
+		})
+		.filter((group): group is GroupItem => group !== null);
+
+	if (cleanedGroups.length === 0) {
+		redirect("/admin/dashboard/content?tab=togetherness&error=missing");
+	}
+
+	try {
+		await saveSiteContentSection("togetherness_groups", cleanedGroups);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS") {
+			redirect("/admin/dashboard/content?tab=togetherness&error=readonly_fs");
+		}
+
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_save_error",
+		);
+		console.error("TOGETHERNESS_SAVE_ERROR", error);
+		redirect(`/admin/dashboard/content?tab=togetherness&error=save&detail=${detail}`);
+	}
+
+	revalidatePath("/togetherness");
+	revalidatePath("/admin/dashboard/content");
+	redirect("/admin/dashboard");
 }
