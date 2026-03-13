@@ -6,13 +6,17 @@ import { getSiteContentSection } from "@/lib/site-content-server";
 import { DEFAULT_BRAND_PAGE_CONTENT } from "@/app/brand-philosophy/brand-content";
 import { RESEARCH_PROJECTS } from "@/app/collaborative-prosperity/projects";
 import { LECTURES } from "@/app/fortune-arrives/lectures-data";
+import { HEARTFELT_VIDEOS } from "@/app/heartfelt-momentum/videos-data";
 import BrandEditor from "./BrandEditor";
 import CollaborativeProjectsEditor from "./CollaborativeProjectsEditor";
 import FortuneLecturesEditor from "./FortuneLecturesEditor";
+import HeartfeltVideosEditor from "./HeartfeltVideosEditor";
 import {
 	saveBrandPageContent,
 	saveCollaborativeProjectsContent,
 	saveFortuneLecturesContent,
+	saveHeartfeltVideosContent,
+	uploadHeartfeltImage,
 	uploadBrandImage,
 } from "./actions";
 
@@ -48,6 +52,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		RESEARCH_PROJECTS,
 	);
 	const fortuneLectures = await getSiteContentSection("fortune_arrives_lectures", LECTURES);
+	const heartfeltVideos = await getSiteContentSection("heartfelt_momentum_videos", HEARTFELT_VIDEOS);
 
 	const tabs = [
 		{ key: "brand", name: "Brand Philosophy" },
@@ -63,7 +68,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 	const modules = [
 		{ name: "Brand Philosophy", status: "已完成" },
-		{ name: "Heartfelt Momentum", status: "下一步" },
+		{ name: "Heartfelt Momentum", status: "已完成" },
 		{ name: "Fortune Arrives", status: "已完成" },
 		{ name: "Togetherness", status: "下一步" },
 		{ name: "Collaborative Prosperity", status: "已完成" },
@@ -130,6 +135,8 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 						? "Brand 內容已更新"
 						: resolvedSearchParams.saved === "collaborative"
 							? "Collaborative Prosperity 內容已更新"
+							: resolvedSearchParams.saved === "heartfelt"
+								? "Heartfelt Momentum 內容已更新"
 							: resolvedSearchParams.saved === "fortune"
 								? "Fortune Arrives 內容已更新"
 							: "內容已更新"}
@@ -240,7 +247,40 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 				</section>
 			) : null}
 
-			{activeTab === "heartfelt" || activeTab === "togetherness" ? (
+			{activeTab === "heartfelt" ? (
+				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<div className="mb-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+						<p className="mb-2 text-xs text-zinc-600">圖片上傳（上傳後可套用到影片封面）</p>
+						<form action={uploadHeartfeltImage} className="flex flex-wrap items-center gap-3">
+							<input type="file" name="imageFile" accept="image/*" className="text-xs text-zinc-700" required />
+							<button
+								type="submit"
+								className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100"
+							>
+								上傳圖片
+							</button>
+						</form>
+					</div>
+
+					<form action={saveHeartfeltVideosContent}>
+						<HeartfeltVideosEditor
+							initialVideos={heartfeltVideos}
+							uploadedUrl={resolvedSearchParams.uploaded}
+						/>
+
+						<div className="mt-5 flex justify-end">
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存 Heartfelt 內容
+							</button>
+						</div>
+					</form>
+				</section>
+			) : null}
+
+			{activeTab === "togetherness" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
 					<h2 className="text-xl font-semibold text-zinc-900">此頁籤準備中</h2>
 					<p className="mt-2 text-sm text-zinc-600">下一步會依同樣編輯邏輯補上此模組表單。</p>

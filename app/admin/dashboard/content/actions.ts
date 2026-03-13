@@ -10,6 +10,7 @@ import {
 import type { BrandPageContent } from "@/app/brand-philosophy/brand-content";
 import type { ResearchProject } from "@/app/collaborative-prosperity/projects";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
+import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
 
 async function requireAdminUser() {
 	const supabase = await getSupabaseServerClient();
@@ -272,4 +273,113 @@ export async function saveFortuneLecturesContent(formData: FormData) {
 	revalidatePath("/fortune-arrives");
 	revalidatePath("/admin/dashboard/content");
 	redirect("/admin/dashboard/content?tab=fortune&saved=fortune");
+}
+
+export async function uploadHeartfeltImage(formData: FormData) {
+	await requireAdminUser();
+
+	const file = formData.get("imageFile");
+
+	if (!(file instanceof File) || file.size <= 0) {
+		redirect("/admin/dashboard/content?tab=heartfelt&error=upload");
+	}
+
+	if (!file.type.startsWith("image/")) {
+		redirect("/admin/dashboard/content?tab=heartfelt&error=upload_type");
+	}
+
+	if (file.size > 8 * 1024 * 1024) {
+		redirect("/admin/dashboard/content?tab=heartfelt&error=upload_size");
+	}
+
+	let url = "";
+	try {
+		url = await saveSiteContentImage("heartfelt_momentum_videos", file);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
+			redirect("/admin/dashboard/content?tab=heartfelt&error=readonly_upload");
+		}
+
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_upload_error",
+		);
+		console.error("HEARTFELT_UPLOAD_ERROR", error);
+		redirect(`/admin/dashboard/content?tab=heartfelt&error=upload&detail=${detail}`);
+	}
+
+	revalidatePath("/admin/dashboard/content");
+	redirect(`/admin/dashboard/content?tab=heartfelt&uploaded=${encodeURIComponent(url)}`);
+}
+
+export async function saveHeartfeltVideosContent(formData: FormData) {
+	await requireAdminUser();
+
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect("/admin/dashboard/content?tab=heartfelt&error=missing");
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(payload);
+	} catch {
+		redirect("/admin/dashboard/content?tab=heartfelt&error=json");
+	}
+
+	if (!Array.isArray(parsed)) {
+		redirect("/admin/dashboard/content?tab=heartfelt&error=json");
+	}
+
+	const cleanedVideos = parsed
+		.map((video): HeartfeltVideoItem | null => {
+			if (!video || typeof video !== "object") return null;
+			const item = video as Partial<HeartfeltVideoItem>;
+
+			const title = String(item.title || "").trim();
+			const titleEn = String(item.titleEn || "").trim();
+			const tag = String(item.tag || "").trim();
+			const description = String(item.description || "").trim();
+			const category = String(item.category || "").trim();
+			const duration = String(item.duration || "").trim();
+			const image = String(item.image || "").trim();
+			const youtubeUrl = String(item.youtubeUrl || "").trim();
+
+			if (!title || !titleEn || !tag || !description || !category || !duration || !image) {
+				return null;
+			}
+
+			return {
+				title,
+				titleEn,
+				tag,
+				description,
+				category,
+				duration,
+				image,
+				youtubeUrl: youtubeUrl || undefined,
+			};
+		})
+		.filter((video): video is HeartfeltVideoItem => video !== null);
+
+	if (cleanedVideos.length === 0) {
+		redirect("/admin/dashboard/content?tab=heartfelt&error=missing");
+	}
+
+	try {
+		await saveSiteContentSection("heartfelt_momentum_videos", cleanedVideos);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS") {
+			redirect("/admin/dashboard/content?tab=heartfelt&error=readonly_fs");
+		}
+
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_save_error",
+		);
+		console.error("HEARTFELT_SAVE_ERROR", error);
+		redirect(`/admin/dashboard/content?tab=heartfelt&error=save&detail=${detail}`);
+	}
+
+	revalidatePath("/heartfelt-momentum");
+	revalidatePath("/admin/dashboard/content");
+	redirect("/admin/dashboard/content?tab=heartfelt&saved=heartfelt");
 }

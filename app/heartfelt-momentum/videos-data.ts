@@ -6,6 +6,7 @@ export type HeartfeltVideoItem = {
   category: string;
   duration: string;
   image: string;
+  youtubeUrl?: string;
 };
 
 export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
