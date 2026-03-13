@@ -16,9 +16,21 @@ function getSecretOrThrow(): string {
   const secret = process.env.RESEARCH_TOKEN_SECRET;
   if (secret) return secret;
 
+  const fallbackSecret = process.env.RESEARCH_TOKEN_FALLBACK_SECRET;
+  if (fallbackSecret) {
+    console.warn("RESEARCH_TOKEN_SECRET_MISSING_USING_FALLBACK_SECRET");
+    return fallbackSecret;
+  }
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (serviceRoleKey) {
+    console.warn("RESEARCH_TOKEN_SECRET_MISSING_USING_SERVICE_ROLE_KEY_FALLBACK");
+    return serviceRoleKey;
+  }
+
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "Missing RESEARCH_TOKEN_SECRET. Set it in production to prevent forged research tokens.",
+      "Missing RESEARCH_TOKEN_SECRET (and no fallback secret available).",
     );
   }
 

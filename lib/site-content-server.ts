@@ -174,6 +174,16 @@ async function writeContentStoreToBlob(
 }
 
 async function readContentStore(): Promise<ContentStore> {
+  const admin = getAdminClientOrNull();
+  if (admin) {
+    try {
+      const storageStore = await readContentStoreFromSupabase(admin);
+      if (storageStore) return storageStore;
+    } catch {
+      // fallback to local file for local development
+    }
+  }
+
   const blobToken = getBlobReadWriteToken();
   if (blobToken) {
     try {
@@ -183,17 +193,7 @@ async function readContentStore(): Promise<ContentStore> {
         if (blobStore) return blobStore;
       }
     } catch {
-      // fallback to other backends
-    }
-  }
-
-  const admin = getAdminClientOrNull();
-  if (admin) {
-    try {
-      const storageStore = await readContentStoreFromSupabase(admin);
-      if (storageStore) return storageStore;
-    } catch {
-      // fallback to local file for local development
+      // fallback to local file
     }
   }
 
@@ -207,6 +207,12 @@ async function readContentStore(): Promise<ContentStore> {
 }
 
 async function writeContentStore(nextStore: ContentStore) {
+  const admin = getAdminClientOrNull();
+  if (admin) {
+    await writeContentStoreToSupabase(admin, nextStore);
+    return;
+  }
+
   const blobToken = getBlobReadWriteToken();
   if (blobToken) {
     const blobApi = await getBlobApiOrNull();
@@ -214,12 +220,6 @@ async function writeContentStore(nextStore: ContentStore) {
       await writeContentStoreToBlob(blobToken, nextStore, blobApi);
       return;
     }
-  }
-
-  const admin = getAdminClientOrNull();
-  if (admin) {
-    await writeContentStoreToSupabase(admin, nextStore);
-    return;
   }
 
   try {

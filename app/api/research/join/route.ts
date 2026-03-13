@@ -204,14 +204,31 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const token = signResearchToken({
-      projectId,
-      projectTitle,
-      projectTestUrl,
-      name: nickname,
-      email: normalizedEmail,
-      participantCode,
-    });
+    let token = "";
+    try {
+      token = signResearchToken({
+        projectId,
+        projectTitle,
+        projectTestUrl,
+        name: nickname,
+        email: normalizedEmail,
+        participantCode,
+      });
+    } catch (tokenError) {
+      console.error("RESEARCH_TOKEN_SIGN_ERROR", tokenError);
+      const message = tokenError instanceof Error ? tokenError.message : "token_sign_failed";
+      if (message.includes("Missing RESEARCH_TOKEN_SECRET")) {
+        return NextResponse.json(
+          { message: "系統尚未完成安全設定（缺少 RESEARCH_TOKEN_SECRET），請通知管理員。" },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json(
+        { message: "目前無法建立驗證連結，請稍後再試。" },
+        { status: 500 },
+      );
+    }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const startUrl = `${siteUrl}/collaborative-prosperity/start?token=${encodeURIComponent(
@@ -250,7 +267,7 @@ export async function POST(req: NextRequest) {
     console.error("JOIN_RESEARCH_ERROR", error);
 
     return NextResponse.json(
-      { message: "目前無法寄送信件，請稍後再試。" },
+      { message: "目前系統忙碌，請稍後再試。" },
       { status: 500 }
     );
   }
