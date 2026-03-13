@@ -43,6 +43,10 @@ type LectureIndexClientProps = {
 export default function LectureIndexClient({ lectures }: LectureIndexClientProps) {
   const [activeFilter, setActiveFilter] = useState<LectureCategory>("All");
 
+  const fontGeistOnly = "var(--font-geist)";
+  const fontMixed = "var(--font-geist), var(--font-noto-serif-tc), var(--font-noto-sans-tc), serif";
+  const fontSerif = "var(--font-noto-serif-tc), var(--font-noto-sans-tc), serif";
+
   const filteredLectures = useMemo(() => {
     if (activeFilter === "All") return lectures;
     return lectures.filter((lecture) => lecture.category.includes(activeFilter));
@@ -63,7 +67,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
             <div className="lg:col-span-5">
               <p
                 className="mb-6 text-[11px] uppercase tracking-[0.28em] text-[#9c9c9c]"
-                style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
+                style={{ fontFamily: fontMixed }}
               >
                 Programs / Lectures / Talk Series
               </p>
@@ -71,7 +75,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
               <h1
                 className="max-w-[10ch] text-[3.25rem] font-semibold leading-[1.05] tracking-[-0.02em] text-[#1a1a1a] sm:text-[3.6rem] lg:text-[4rem]"
                 style={{
-                  fontFamily: "var(--font-noto-serif-tc), serif",
+                  fontFamily: fontSerif,
                 }}
               >
                 講座系列
@@ -79,7 +83,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
 
               <p
                 className="mt-3 text-[28px] font-normal leading-[1.2] tracking-[0.02em] text-[#6b6b6b] sm:text-[32px] lg:text-[44px]"
-                style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
+                style={{ fontFamily: fontMixed }}
               >
                 Lecture Series
               </p>
@@ -89,7 +93,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
               <div className="mx-auto mt-2 max-w-[28ch] space-y-5">
                 <p
                   className="text-center text-[18px] leading-[1.8] text-[#3f3f3f]"
-                  style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
+                  style={{ fontFamily: fontMixed }}
                 >
                   致力於藝術研究、書寫、策展與公民生活的公共計畫。
                   <br />
@@ -104,7 +108,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
               <div className="ml-auto mt-2 max-w-[26ch]">
                 <p
                   className="text-right text-[14px] leading-[1.8] text-[#8a8a8a]"
-                  style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
+                  style={{ fontFamily: fontMixed }}
                 >
                   Public programs devoted to research, writing, curation, and the civic life of art.
                   Lectures, workshops, and conversations are presented as part of an ongoing archive of public study.
@@ -130,7 +134,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                       ? "border-black/70 text-[#1a1a1a]"
                       : "border-transparent text-[#9c9c9c] hover:text-[#6b6b6b]",
                   ].join(" ")}
-                  style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
+                  style={{ fontFamily: fontMixed }}
                 >
                   {filter}
                 </button>
@@ -151,8 +155,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                     <p
                       className="mb-4 text-[11px] uppercase tracking-[0.24em] text-[#9c9c9c]"
                       style={{
-                        fontFamily:
-                          "var(--font-noto-sans-tc), var(--font-geist), sans-serif",
+                        fontFamily: fontGeistOnly,
                       }}
                     >
                       {lecture.type}
@@ -161,8 +164,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                     <div
                       className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b]"
                       style={{
-                        fontFamily:
-                          "var(--font-noto-sans-tc), var(--font-geist), sans-serif",
+                        fontFamily: fontGeistOnly,
                       }}
                     >
                       <p className="text-[30px] leading-[1.1] tracking-[-0.02em] text-[#1a1a1a]">
@@ -178,7 +180,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                       <h2
                         className="text-[30px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#1a1a1a] sm:text-[31px] lg:text-[32px]"
                         style={{
-                          fontFamily: "var(--font-noto-serif-tc), serif",
+                          fontFamily: fontSerif,
                         }}
                       >
                         {lecture.titleZh}
@@ -188,7 +190,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                         <p
                           className="mt-2 max-w-[56ch] text-[18px] font-normal leading-[1.45] tracking-[0.02em] text-[#6b6b6b]"
                           style={{
-                            fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                            fontFamily: fontGeistOnly,
                           }}
                         >
                           {lecture.titleEn}
@@ -198,8 +200,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                       <p
                         className="mt-6 max-w-[56ch] text-[18px] leading-[1.6] text-[#1a1a1a]"
                         style={{
-                          fontFamily:
-                            "var(--font-noto-sans-tc), var(--font-geist), sans-serif",
+                          fontFamily: fontMixed,
                         }}
                       >
                         {lecture.speaker
@@ -213,8 +214,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                     <div
                       className="flex h-full flex-col justify-between"
                       style={{
-                        fontFamily:
-                          "var(--font-noto-sans-tc), var(--font-geist), sans-serif",
+                        fontFamily: fontMixed,
                       }}
                     >
                       <div className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b]">
@@ -225,6 +225,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                         <Link
                           href={lecture.href}
                           className="group inline-flex items-center gap-2 text-[14px] text-[#1a1a1a] transition-opacity duration-200 hover:opacity-70"
+                          style={{ fontFamily: fontGeistOnly }}
                         >
                           <span>View details</span>
                         </Link>
@@ -242,7 +243,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
             <div className="lg:col-span-8">
               <p
                 className="max-w-[48ch] text-[15px] leading-[1.75] text-[#6b6b6b]"
-                style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
+                style={{ fontFamily: fontMixed }}
               >
                 For registration updates, research collaboration, and program
                 notices, please refer to each lecture page or subscribe to the
@@ -254,7 +255,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
               <Link
                 href="/programs/subscribe"
                 className="inline-flex items-center border border-black/10 px-5 py-3 text-[14px] text-[#1a1a1a] transition-colors duration-200 hover:border-black/20"
-                style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
+                style={{ fontFamily: fontMixed }}
               >
                 Subscribe
               </Link>
