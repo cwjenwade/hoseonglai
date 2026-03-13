@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type LectureRegistrationProps = {
   lectureId: string;
@@ -8,7 +9,7 @@ type LectureRegistrationProps = {
   dateLabel?: string;
   time?: string;
   location?: string;
-  onClose: () => void;
+  backHref?: string;
 };
 
 export default function LectureRegistrationForm({
@@ -17,8 +18,9 @@ export default function LectureRegistrationForm({
   dateLabel,
   time,
   location,
-  onClose,
+  backHref = "/fortune-arrives",
 }: LectureRegistrationProps) {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -91,7 +93,7 @@ export default function LectureRegistrationForm({
           我們已收到你的報名資訊，會在講座前 3 天寄送提醒信件到你的信箱。
         </p>
         <button
-          onClick={onClose}
+          onClick={() => router.push(backHref)}
           className="mt-4 rounded-full bg-emerald-600 px-4 py-2 text-sm text-white transition hover:bg-emerald-700"
         >
           關閉
@@ -144,7 +146,7 @@ export default function LectureRegistrationForm({
         </button>
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => router.push(backHref)}
           className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
         >
           取消

@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GROUPS } from "./group-data";
+import { getSiteContentSection } from "@/lib/site-content-server";
 
 export const metadata: Metadata = {
   title: "團團圓圓 | Group Therapy",
 };
 
-export default function TogethernessPage() {
+export default async function TogethernessPage() {
+  const groups = await getSiteContentSection("togetherness_groups", GROUPS);
+
   return (
     <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
       <div className="mx-auto max-w-[1520px] px-8 py-16 md:px-12 md:py-20">
@@ -31,25 +34,31 @@ export default function TogethernessPage() {
               style={{ fontFamily: "var(--font-noto-serif)" }}
             >
               <p>
-                我們不是為了把話說完，
+                我們
                 <br />
-                只是把那些說不出的，先放在這裡。
+                不是為了把話說完，
                 <br />
-                一張椅子挨著一張椅子，
+                是把那些說不出的，先
                 <br />
-                像夜裡還亮著的幾扇窗。
+                放在這裡。
+                <br />
+                一張椅子挨著，一張椅子
+                <br />
+                夜裡的窗
+                <br />
+                還亮著的幾扇。
               </p>
 
               <p>
-                有人開口，聲音很輕。
+                有人開口，站在遙遠的地方。
                 <br />
-                有人不說，呼吸也是回應。
+                有人噤聲，吐息聲宛如滯怠的思緒。
                 <br />
                 後來才知道，療癒
                 <br />
-                有時只是終於有人，
+                有時只是
                 <br />
-                在心裡陪你坐到天亮。
+                有人在心裡和你一宿親密。
               </p>
             </div>
 
@@ -88,14 +97,14 @@ export default function TogethernessPage() {
                 <br />
                 someone staying with you
                 <br />
-                until morning.
+                until dawn.
               </p>
             </div>
           </div>
         </header>
 
         <section className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-10 xl:gap-y-20">
-          {GROUPS.map((group) => (
+          {groups.map((group) => (
             <article key={group.slug} className="group">
               <Link href={`/togetherness/${group.slug}`} className="block">
                 <div className="aspect-[4/5] overflow-hidden bg-neutral-200">

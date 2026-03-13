@@ -1,10 +1,16 @@
 import JoinProjectForm from "./JoinProjectForm";
 import { RESEARCH_PROJECTS } from "./projects";
+import { getSiteContentSection } from "@/lib/site-content-server";
 
-export default function PsychTestList() {
+export default async function PsychTestList() {
+  const projects = await getSiteContentSection(
+    "collaborative_prosperity_projects",
+    RESEARCH_PROJECTS,
+  );
+
   return (
     <div className="grid gap-x-7 gap-y-14 xl:grid-cols-3 xl:gap-y-16">
-      {RESEARCH_PROJECTS.map((project) => (
+      {projects.map((project) => (
         <article
           key={project.id}
           className="border border-neutral-300/60 bg-transparent"

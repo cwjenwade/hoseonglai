@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import GroupRegistrationForm from "@/app/togetherness/GroupRegistrationForm";
 import { GROUPS } from "@/app/togetherness/group-data";
+import { getSiteContentSection } from "@/lib/site-content-server";
 
 type GroupDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -9,7 +10,8 @@ type GroupDetailPageProps = {
 
 export default async function GroupDetailPage({ params }: GroupDetailPageProps) {
   const { slug } = await params;
-  const group = GROUPS.find((item) => item.slug === slug);
+  const groups = await getSiteContentSection("togetherness_groups", GROUPS);
+  const group = groups.find((item) => item.slug === slug);
 
   if (!group) {
     notFound();

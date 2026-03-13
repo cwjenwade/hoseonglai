@@ -1,108 +1,16 @@
-"use client";
-
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 import LectureRegistrationForm from "@/app/fortune-arrives/LectureRegistrationForm";
+import { LECTURES } from "@/app/fortune-arrives/lectures-data";
+import { getSiteContentSection } from "@/lib/site-content-server";
 
-type LectureDetail = {
-  id: string;
-  slug: string;
-  titleZh: string;
-  dateLabel: string;
-  time: string;
-  speaker: string;
-  locationZh: string;
+type LectureDetailPageProps = {
+  params: Promise<{ slug: string }>;
 };
 
-const LECTURES: LectureDetail[] = [
-  {
-    id: "1",
-    slug: "avoidant-attachment",
-    titleZh: "「愛你卻不能夠給你我全部」 談迴避型人格及其伴侶自處",
-    dateLabel: "10 Apr 2026",
-    time: "19:00–21:00",
-    speaker: "王涵羽 心理師",
-    locationZh: "新竹 光合",
-  },
-  {
-    id: "2",
-    slug: "self-blame-in-love",
-    titleZh: "「一定是我不夠好 所以你才想要逃」談那些在愛情中責怪自己的人及伴侶",
-    dateLabel: "17 Apr 2026",
-    time: "19:00–21:00",
-    speaker: "陳宥語 心理師",
-    locationZh: "嘉義",
-  },
-  {
-    id: "3",
-    slug: "tsundere-dynamics",
-    titleZh: "「他要我我就不能走，得堅守不放手」傲嬌仔及其伴侶的攻防守備",
-    dateLabel: "24 Apr 2026",
-    time: "19:00–21:00",
-    speaker: "任祈蔚 心理師",
-    locationZh: "新竹 光合",
-  },
-  {
-    id: "4",
-    slug: "anxious-attachment",
-    titleZh: "「一個人撐傘、一個人擦淚、一個人好累」焦慮型人格的追趕跑跳碰",
-    dateLabel: "01 May 2026",
-    time: "19:00–21:00",
-    speaker: "任祈蔚 心理師",
-    locationZh: "新竹 光合",
-  },
-  {
-    id: "5",
-    slug: "romance-in-ordinary",
-    titleZh: "「平凡之中製造一些些浪漫」這樣談感情更幸福",
-    dateLabel: "08 May 2026",
-    time: "19:00–21:00",
-    speaker: "",
-    locationZh: "",
-  },
-  {
-    id: "6",
-    slug: "asperger-partner-support",
-    titleZh: "「你以為愛 就是被愛 你揮霍了我的崇拜」亞斯伴侶的支持",
-    dateLabel: "15 May 2026",
-    time: "19:00–21:00",
-    speaker: "甘雅婷 心理師",
-    locationZh: "線上",
-  },
-  {
-    id: "7",
-    slug: "counseling-ethics",
-    titleZh: "諮商倫理（宥語、雅婷、祈蔚）",
-    dateLabel: "22 May 2026",
-    time: "19:00–21:00",
-    speaker: "陳宥語、甘雅婷、任祈蔚 心理師",
-    locationZh: "線上",
-  },
-  {
-    id: "8",
-    slug: "online-dating",
-    titleZh: "「網路愛情，撲朔迷離，似幻似真，猶夢未醒」網路愛情的白皮書",
-    dateLabel: "29 May 2026",
-    time: "19:00–21:00",
-    speaker: "王涵羽 心理師",
-    locationZh: "新竹 光合",
-  },
-  {
-    id: "9",
-    slug: "music-therapy-love",
-    titleZh: "「兩顆心都迷惑，怎麼說，怎麼說都沒有救」從音樂中再一次經驗愛",
-    dateLabel: "05 Jun 2026",
-    time: "19:00–21:00",
-    speaker: "李昀儒 音樂治療師",
-    locationZh: "新竹 光合",
-  },
-];
-
-export default function LectureDetailPage() {
-  const params = useParams<{ slug: string }>();
-  const router = useRouter();
-
-  const lecture = LECTURES.find((item) => item.slug === params.slug);
+export default async function LectureDetailPage({ params }: LectureDetailPageProps) {
+  const { slug } = await params;
+  const lectures = await getSiteContentSection("fortune_arrives_lectures", LECTURES);
+  const lecture = lectures.find((item) => item.slug === slug);
 
   if (!lecture) {
     return (
@@ -157,7 +65,7 @@ export default function LectureDetailPage() {
               dateLabel={lecture.dateLabel}
               time={lecture.time}
               location={lecture.locationZh}
-              onClose={() => router.push("/fortune-arrives")}
+              backHref="/fortune-arrives"
             />
           </div>
         </section>

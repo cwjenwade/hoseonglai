@@ -107,6 +107,12 @@ export default async function AdminDashboardPage({
         </div>
         <div className="flex gap-3">
           <Link
+            href="/admin/dashboard/content"
+            className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
+          >
+            內容管理
+          </Link>
+          <Link
             href="/"
             className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
           >

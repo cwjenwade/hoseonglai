@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import TeamCard from "./TeamCard";
 import { TEAM_MEMBERS } from "./team-data";
+import { getSiteContentSection } from "@/lib/site-content-server";
 
 export const metadata: Metadata = {
   title: "品牌理念",
@@ -8,7 +9,12 @@ export const metadata: Metadata = {
     "Ho-Se 好勢 Ong-Lai 旺來，結合研究、文化創作、團體工作與心理學實踐的品牌平台。",
 };
 
-export default function BrandPhilosophyPage() {
+export default async function BrandPhilosophyPage() {
+  const teamMembers = await getSiteContentSection(
+    "brand_philosophy_team",
+    TEAM_MEMBERS,
+  );
+
   return (
     <main className="w-full bg-[#FDFDFD] text-neutral-900">
       <div className="mx-auto w-full max-w-[1520px] px-6 py-12 md:px-10 md:py-16 xl:px-14 xl:py-20">
@@ -193,7 +199,7 @@ export default function BrandPhilosophyPage() {
 
           <div className="grid gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
 
-            {TEAM_MEMBERS.map((member) => (
+            {teamMembers.map((member) => (
               <div key={member.id} className="mx-auto w-full max-w-[360px] border border-neutral-300/60">
                 <TeamCard member={member} />
               </div>
