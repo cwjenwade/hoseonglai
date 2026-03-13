@@ -14,6 +14,8 @@ export default function JoinProjectForm({ project }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailSent, setEmailSent] = useState(true);
+  const [fallbackStartUrl, setFallbackStartUrl] = useState("");
   const [quotaReached, setQuotaReached] = useState(false);
   const [quotaCounter, setQuotaCounter] = useState<{ sentToday: number; dailyLimit: number } | null>(null);
   const [deferredPreference, setDeferredPreference] = useState<
@@ -62,6 +64,8 @@ export default function JoinProjectForm({ project }: Props) {
       setNickname("");
       setAge("");
       setEmail("");
+      setEmailSent(data?.emailSent !== false);
+      setFallbackStartUrl(String(data?.startUrl || ""));
       setQuotaReached(Boolean(data?.queued));
       setQuotaCounter({
         sentToday: Number(data?.sentToday || 0),
@@ -89,8 +93,19 @@ export default function JoinProjectForm({ project }: Props) {
         >
           {quotaReached
             ? "今日發信額度已滿，系統已為你保留名額，將依你選擇的時段寄送同意書連結。"
-            : "我們已將專屬連結寄送至你的信箱。請前往 email，點擊連結後即可開始填寫此研究專案的心理測驗。"}
+            : emailSent
+              ? "我們已將專屬連結寄送至你的信箱。請前往 email，點擊連結後即可開始填寫此研究專案的心理測驗。"
+              : "報名已完成，但驗證信暫時寄送失敗。你可以先用下方備用連結開始，或稍後再試。"}
         </p>
+        {!quotaReached && !emailSent && fallbackStartUrl ? (
+          <a
+            href={fallbackStartUrl}
+            className="mt-3 inline-flex border border-neutral-900 px-4 py-2 text-[0.72rem] uppercase tracking-[0.2em] text-neutral-900 transition hover:bg-neutral-900 hover:text-white"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            使用備用連結開始
+          </a>
+        ) : null}
         {quotaCounter ? (
           <p className="mt-2 text-sm text-neutral-500" style={{ fontFamily: "var(--font-sans)" }}>
             今日發信計數：{quotaCounter.sentToday}/{quotaCounter.dailyLimit}

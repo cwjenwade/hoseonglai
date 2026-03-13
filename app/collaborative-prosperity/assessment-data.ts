@@ -5,9 +5,6 @@ export type PsychometricScale = {
   projectId: string;
   projectTitleZh: string;
   projectTitleEn: string;
-  principalInvestigator: string;
-  researchUnit: string;
-  researchDescription: string;
   scalePrompt: string;
   options: string[];
   questions: string[];
@@ -23,9 +20,6 @@ export const DEFAULT_PSYCHOMETRIC_SCALES: PsychometricScale[] = TEST_QUESTIONS_D
   projectId: item.projectId,
   projectTitleZh: PROJECT_TITLE_MAP.get(item.projectId)?.zh || item.projectId,
   projectTitleEn: PROJECT_TITLE_MAP.get(item.projectId)?.en || item.projectId,
-  principalInvestigator: "待填寫",
-  researchUnit: "Ho-Se 好勢旺來研究團隊",
-  researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
   scalePrompt: "請根據最近兩週的經驗，選擇最符合你的選項。",
   options: DEFAULT_OPTIONS,
   questions: item.questions,

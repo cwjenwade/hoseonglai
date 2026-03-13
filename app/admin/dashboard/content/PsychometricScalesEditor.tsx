@@ -12,9 +12,6 @@ function createEmptyScale(): PsychometricScale {
     projectId: `new-scale-${Date.now().toString(36)}`,
     projectTitleZh: "",
     projectTitleEn: "",
-    principalInvestigator: "",
-    researchUnit: "",
-    researchDescription: "",
     scalePrompt: "請依照實際情況作答。",
     options: ["非常不同意", "不同意", "普通", "同意", "非常同意"],
     questions: [""],
@@ -86,51 +83,6 @@ export default function PsychometricScalesEditor({ initialScales }: Psychometric
                 />
               </label>
             </div>
-
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <label className="text-xs text-zinc-700">
-                計劃主持人（PI）
-                <input
-                  value={scale.principalInvestigator}
-                  onChange={(e) =>
-                    setScales((prev) =>
-                      prev.map((item, i) =>
-                        i === scaleIndex ? { ...item, principalInvestigator: e.target.value } : item,
-                      ),
-                    )
-                  }
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                />
-              </label>
-
-              <label className="text-xs text-zinc-700">
-                研究單位
-                <input
-                  value={scale.researchUnit}
-                  onChange={(e) =>
-                    setScales((prev) =>
-                      prev.map((item, i) => (i === scaleIndex ? { ...item, researchUnit: e.target.value } : item)),
-                    )
-                  }
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                />
-              </label>
-            </div>
-
-            <label className="mt-3 block text-xs text-zinc-700">
-              研究事項說明（同意書）
-              <textarea
-                value={scale.researchDescription}
-                onChange={(e) =>
-                  setScales((prev) =>
-                    prev.map((item, i) =>
-                      i === scaleIndex ? { ...item, researchDescription: e.target.value } : item,
-                    ),
-                  )
-                }
-                className="mt-1 h-24 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
-              />
-            </label>
 
             <p className="mt-2 text-xs text-zinc-500">
               受試者填寫頁：/collaborative-prosperity/tests/{scale.projectId || "<projectId>"}

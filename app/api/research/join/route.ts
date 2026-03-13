@@ -221,19 +221,30 @@ export async function POST(req: NextRequest) {
     const linkCode = generateLinkCode(normalizedEmail, projectId);
     const shortUrl = await shortenUrl(startUrl, linkCode, supabaseAdmin ?? supabase);
 
-    await sendResearchJoinEmail({
-      to: normalizedEmail,
-      name: nickname,
-      projectTitle,
-      startUrl: shortUrl,
-    });
+    let emailSent = true;
+    try {
+      await sendResearchJoinEmail({
+        to: normalizedEmail,
+        name: nickname,
+        projectTitle,
+        startUrl: shortUrl,
+      });
+    } catch (mailError) {
+      emailSent = false;
+      console.error("RESEARCH_JOIN_EMAIL_SEND_ERROR", mailError);
+    }
 
     return NextResponse.json({
       ok: true,
       participantCode,
       sentToday: (todaySentCount || 0) + 1,
       dailyLimit,
+      emailSent,
       shortUrl,
+      startUrl,
+      message: emailSent
+        ? undefined
+        : "報名已完成，但驗證信暫時寄送失敗，請使用備用連結或稍後再試。",
     });
   } catch (error) {
     console.error("JOIN_RESEARCH_ERROR", error);

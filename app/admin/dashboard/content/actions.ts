@@ -11,6 +11,7 @@ import {
 import type { BrandPageContent } from "@/app/brand-philosophy/brand-content";
 import type { ResearchProject } from "@/app/collaborative-prosperity/projects";
 import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
+import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
 
@@ -164,9 +165,34 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 			"collaborative_prosperity_assessments",
 			[],
 		);
-
 		const nextScales: PsychometricScale[] = cleanedProjects.map((project) => {
 			const existing = currentScales.find((scale) => scale.projectId === project.id);
+			if (existing) {
+				return {
+					...existing,
+					projectId: project.id,
+					projectTitleZh: existing.projectTitleZh || project.title,
+					projectTitleEn: existing.projectTitleEn || project.subtitle,
+				};
+			}
+
+			return {
+				projectId: project.id,
+				projectTitleZh: project.title,
+				projectTitleEn: project.subtitle,
+				scalePrompt: "請根據最近兩週的經驗，選擇最符合你的選項。",
+				options: ["非常不同意", "不同意", "普通", "同意", "非常同意"],
+				questions: ["請填寫第一題"],
+			};
+		});
+		await saveSiteContentSection("collaborative_prosperity_assessments", nextScales);
+
+		const currentConsents = await getSiteContentSection<ResearchConsent[]>(
+			"collaborative_prosperity_consents",
+			[],
+		);
+		const nextConsents: ResearchConsent[] = cleanedProjects.map((project) => {
+			const existing = currentConsents.find((consent) => consent.projectId === project.id);
 			if (existing) {
 				return {
 					...existing,
@@ -183,13 +209,9 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 				principalInvestigator: "待填寫",
 				researchUnit: "Ho-Se 好勢旺來研究團隊",
 				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
-				scalePrompt: "請根據最近兩週的經驗，選擇最符合你的選項。",
-				options: ["非常不同意", "不同意", "普通", "同意", "非常同意"],
-				questions: ["請填寫第一題"],
 			};
 		});
-
-		await saveSiteContentSection("collaborative_prosperity_assessments", nextScales);
+		await saveSiteContentSection("collaborative_prosperity_consents", nextConsents);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=collaborative&error=readonly_fs");
@@ -444,9 +466,6 @@ export async function savePsychometricScalesContent(formData: FormData) {
 			const projectId = String(item.projectId || "").trim();
 			const projectTitleZh = String(item.projectTitleZh || "").trim();
 			const projectTitleEn = String(item.projectTitleEn || "").trim();
-			const principalInvestigator = String(item.principalInvestigator || "").trim();
-			const researchUnit = String(item.researchUnit || "").trim();
-			const researchDescription = String(item.researchDescription || "").trim();
 			const scalePrompt = String(item.scalePrompt || "").trim();
 			const options = Array.isArray(item.options)
 				? item.options.map((value) => String(value || "").trim()).filter(Boolean)
@@ -455,17 +474,7 @@ export async function savePsychometricScalesContent(formData: FormData) {
 				? item.questions.map((value) => String(value || "").trim()).filter(Boolean)
 				: [];
 
-			if (
-				!projectId ||
-				!projectTitleZh ||
-				!projectTitleEn ||
-				!principalInvestigator ||
-				!researchUnit ||
-				!researchDescription ||
-				!scalePrompt ||
-				options.length < 2 ||
-				questions.length < 1
-			) {
+			if (!projectId || !projectTitleZh || !projectTitleEn || !scalePrompt || options.length < 2 || questions.length < 1) {
 				return null;
 			}
 
@@ -473,9 +482,6 @@ export async function savePsychometricScalesContent(formData: FormData) {
 				projectId,
 				projectTitleZh,
 				projectTitleEn,
-				principalInvestigator,
-				researchUnit,
-				researchDescription,
 				scalePrompt,
 				options,
 				questions,
@@ -489,6 +495,32 @@ export async function savePsychometricScalesContent(formData: FormData) {
 
 	try {
 		await saveSiteContentSection("collaborative_prosperity_assessments", cleanedScales);
+
+		const currentConsents = await getSiteContentSection<ResearchConsent[]>(
+			"collaborative_prosperity_consents",
+			[],
+		);
+		const nextConsents: ResearchConsent[] = cleanedScales.map((scale) => {
+			const existing = currentConsents.find((consent) => consent.projectId === scale.projectId);
+			if (existing) {
+				return {
+					...existing,
+					projectId: scale.projectId,
+					projectTitleZh: existing.projectTitleZh || scale.projectTitleZh,
+					projectTitleEn: existing.projectTitleEn || scale.projectTitleEn,
+				};
+			}
+
+			return {
+				projectId: scale.projectId,
+				projectTitleZh: scale.projectTitleZh,
+				projectTitleEn: scale.projectTitleEn,
+				principalInvestigator: "待填寫",
+				researchUnit: "Ho-Se 好勢旺來研究團隊",
+				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
+			};
+		});
+		await saveSiteContentSection("collaborative_prosperity_consents", nextConsents);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=psychometrics&error=readonly_fs");
@@ -504,4 +536,73 @@ export async function savePsychometricScalesContent(formData: FormData) {
 	revalidatePath("/collaborative-prosperity");
 	revalidatePath("/admin/dashboard/content");
 	redirect("/admin/dashboard/content?tab=psychometrics&saved=psychometrics");
+}
+
+export async function saveResearchConsentsContent(formData: FormData) {
+	await requireAdminUser();
+
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect("/admin/dashboard/content?tab=consent&error=missing");
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(payload);
+	} catch {
+		redirect("/admin/dashboard/content?tab=consent&error=json");
+	}
+
+	if (!Array.isArray(parsed)) {
+		redirect("/admin/dashboard/content?tab=consent&error=json");
+	}
+
+	const cleanedConsents = parsed
+		.map((consent): ResearchConsent | null => {
+			if (!consent || typeof consent !== "object") return null;
+			const item = consent as Partial<ResearchConsent>;
+
+			const projectId = String(item.projectId || "").trim();
+			const projectTitleZh = String(item.projectTitleZh || "").trim();
+			const projectTitleEn = String(item.projectTitleEn || "").trim();
+			const principalInvestigator = String(item.principalInvestigator || "").trim();
+			const researchUnit = String(item.researchUnit || "").trim();
+			const researchDescription = String(item.researchDescription || "").trim();
+
+			if (!projectId || !projectTitleZh || !projectTitleEn || !principalInvestigator || !researchUnit || !researchDescription) {
+				return null;
+			}
+
+			return {
+				projectId,
+				projectTitleZh,
+				projectTitleEn,
+				principalInvestigator,
+				researchUnit,
+				researchDescription,
+			};
+		})
+		.filter((consent): consent is ResearchConsent => consent !== null);
+
+	if (cleanedConsents.length === 0) {
+		redirect("/admin/dashboard/content?tab=consent&error=missing");
+	}
+
+	try {
+		await saveSiteContentSection("collaborative_prosperity_consents", cleanedConsents);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS") {
+			redirect("/admin/dashboard/content?tab=consent&error=readonly_fs");
+		}
+
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_save_error",
+		);
+		console.error("CONSENT_SAVE_ERROR", error);
+		redirect(`/admin/dashboard/content?tab=consent&error=save&detail=${detail}`);
+	}
+
+	revalidatePath("/collaborative-prosperity/start");
+	revalidatePath("/admin/dashboard/content");
+	redirect("/admin/dashboard/content?tab=consent&saved=consent");
 }

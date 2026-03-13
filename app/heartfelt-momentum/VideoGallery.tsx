@@ -7,48 +7,8 @@ type VideoGalleryProps = {
   videos: HeartfeltVideoItem[];
 };
 
-function getYouTubeEmbedUrl(url?: string): string {
-  if (!url) return "";
-
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./, "");
-
-    if (host === "youtu.be") {
-      const id = parsed.pathname.replace("/", "").trim();
-      return id ? `https://www.youtube.com/embed/${id}` : "";
-    }
-
-    if (host === "youtube.com" || host === "m.youtube.com") {
-      if (parsed.pathname === "/watch") {
-        const id = parsed.searchParams.get("v") || "";
-        return id ? `https://www.youtube.com/embed/${id}` : "";
-      }
-
-      if (parsed.pathname.startsWith("/embed/")) {
-        return parsed.toString();
-      }
-
-      if (parsed.pathname.startsWith("/shorts/")) {
-        const id = parsed.pathname.replace("/shorts/", "").trim();
-        return id ? `https://www.youtube.com/embed/${id}` : "";
-      }
-    }
-  } catch {
-    return "";
-  }
-
-  return "";
-}
-
-function getCurrentPageUrl() {
-  if (typeof window === "undefined") return "https://hoseonglai.vercel.app/heartfelt-momentum";
-  return window.location.href;
-}
-
 export function VideoGallery({ videos }: VideoGalleryProps) {
   const [activeVideo, setActiveVideo] = useState<HeartfeltVideoItem | null>(null);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!activeVideo) {
@@ -69,23 +29,6 @@ export function VideoGallery({ videos }: VideoGalleryProps) {
       document.body.style.overflow = "";
     };
   }, [activeVideo]);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 1500);
-    return () => clearTimeout(timer);
-  }, [copied]);
-
-  const youtubeEmbedUrl = getYouTubeEmbedUrl(activeVideo?.youtubeUrl);
-  const youtubeChannelUrl = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_URL || "https://www.youtube.com";
-  const shareUrl = activeVideo?.youtubeUrl || getCurrentPageUrl();
-  const shareText = activeVideo ? `${activeVideo.title}｜Ho-Se Ong-Lai` : "Ho-Se Ong-Lai";
-
-  const lineShareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}`;
-  const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-  const xShareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(
-    shareText,
-  )}`;
 
   return (
     <>
@@ -177,86 +120,7 @@ export function VideoGallery({ videos }: VideoGalleryProps) {
               {activeVideo.titleEn}
             </p>
 
-            <p
-              className="mt-4 text-[0.95rem] leading-[1.8] text-black/65"
-              style={{ fontFamily: "var(--font-noto-serif)" }}
-            >
-              {activeVideo.description}
-            </p>
-
-            <div className="mt-6 min-h-[340px] overflow-hidden rounded-xl border border-dashed border-black/15 bg-[#fdfdfc]">
-              {youtubeEmbedUrl ? (
-                <iframe
-                  title={activeVideo.title}
-                  src={youtubeEmbedUrl}
-                  className="h-[340px] w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                />
-              ) : (
-                <div className="flex h-[340px] items-center justify-center px-5 text-center text-sm text-black/45">
-                  尚未設定 YouTube 影片網址，請到後台 Heartfelt 分頁補上。
-                </div>
-              )}
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <a
-                href={lineShareUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-black/15 px-3 py-1.5 text-xs text-black/70 transition hover:bg-black/5"
-              >
-                分享 LINE
-              </a>
-              <a
-                href={fbShareUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-black/15 px-3 py-1.5 text-xs text-black/70 transition hover:bg-black/5"
-              >
-                分享 FB
-              </a>
-              <a
-                href={xShareUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-black/15 px-3 py-1.5 text-xs text-black/70 transition hover:bg-black/5"
-              >
-                分享 X
-              </a>
-              <a
-                href="https://www.instagram.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-black/15 px-3 py-1.5 text-xs text-black/70 transition hover:bg-black/5"
-              >
-                打開 IG
-              </a>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(shareUrl);
-                    setCopied(true);
-                  } catch {
-                    setCopied(false);
-                  }
-                }}
-                className="rounded-full border border-black/15 px-3 py-1.5 text-xs text-black/70 transition hover:bg-black/5"
-              >
-                {copied ? "已複製連結" : "複製連結"}
-              </button>
-              <a
-                href={youtubeChannelUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-700 transition hover:bg-red-100"
-              >
-                前往 YouTube 頻道
-              </a>
-            </div>
+            <div className="mt-6 min-h-[340px] rounded-xl border border-dashed border-black/15 bg-[#fdfdfc]" />
           </div>
         </div>
       ) : null}
