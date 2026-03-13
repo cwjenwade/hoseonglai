@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { unstable_noStore as noStore } from "next/cache";
 
 export type SiteContentSection =
+  | "brand_philosophy_page"
   | "brand_philosophy_team"
   | "heartfelt_momentum_videos"
   | "fortune_arrives_lectures"

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import TeamCard from "./TeamCard";
-import { TEAM_MEMBERS } from "./team-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
+import { DEFAULT_BRAND_PAGE_CONTENT } from "./brand-content";
 
 export const metadata: Metadata = {
   title: "品牌理念",
@@ -10,10 +11,12 @@ export const metadata: Metadata = {
 };
 
 export default async function BrandPhilosophyPage() {
-  const teamMembers = await getSiteContentSection(
-    "brand_philosophy_team",
-    TEAM_MEMBERS,
+  const brandContent = await getSiteContentSection(
+    "brand_philosophy_page",
+    DEFAULT_BRAND_PAGE_CONTENT,
   );
+  const director = brandContent.director;
+  const teamMembers = brandContent.teamMembers;
 
   return (
     <main className="w-full bg-[#FDFDFD] text-neutral-900">
@@ -87,13 +90,22 @@ export default async function BrandPhilosophyPage() {
 
             <div>
 
-              <div className="aspect-[4/5] w-full bg-neutral-200 flex items-center justify-center">
-                <span
-                  className="text-[0.7rem] uppercase tracking-[0.3em] text-neutral-500"
-                  style={{ fontFamily: "var(--font-geist)" }}
-                >
-                  Brand Director Photo
-                </span>
+              <div className="relative aspect-[4/5] w-full bg-neutral-200 flex items-center justify-center overflow-hidden">
+                {director.photo ? (
+                  <Image
+                    src={director.photo}
+                    alt={director.nameZh || "Brand Director"}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <span
+                    className="text-[0.7rem] uppercase tracking-[0.3em] text-neutral-500"
+                    style={{ fontFamily: "var(--font-geist)" }}
+                  >
+                    Brand Director Photo
+                  </span>
+                )}
               </div>
 
             </div>
@@ -111,14 +123,14 @@ export default async function BrandPhilosophyPage() {
                 className="mt-6 text-[2.5rem] tracking-[-0.02em] sm:text-[3.1rem]"
                 style={{ fontFamily: "var(--font-noto-serif)" }}
               >
-                任祈蔚
+                {director.nameZh || "-"}
               </h2>
 
               <p
                 className="mt-3 text-[1.75rem] uppercase tracking-[0.08em] text-neutral-600"
                 style={{ fontFamily: "var(--font-geist)" }}
               >
-                Jen Chi-Wei
+                {director.nameEn || "-"}
               </p>
 
               <div className="mt-10 grid gap-8 md:gap-10 lg:grid-cols-[0.55fr_1.45fr]">
@@ -136,37 +148,37 @@ export default async function BrandPhilosophyPage() {
                     className="mt-3 text-[0.95rem] leading-7 text-neutral-700"
                     style={{ fontFamily: "var(--font-geist)" }}
                   >
-                    <p>Licensed Counselor</p>
-                    <p>Ph.D. Program in Clinical Psychology</p>
-                    <p>National Taiwan University</p>
-                    <p className="mt-2" style={{ fontFamily: "var(--font-noto-serif)" }}>
-                      諮商心理師
-                    </p>
-                    <p style={{ fontFamily: "var(--font-noto-serif)" }}>
-                      台灣大學臨床心理博士研究生
-                    </p>
+                    {director.affiliationLines.map((line, index) => {
+                      const isZh = /[\u4e00-\u9fff]/.test(line);
+                      const isFirstZh = director.affiliationLines
+                        .slice(0, index)
+                        .every((prev) => !/[\u4e00-\u9fff]/.test(prev));
+
+                      return (
+                        <p
+                          key={`${line}-${index}`}
+                          className={isZh && isFirstZh ? "mt-2" : ""}
+                          style={isZh ? { fontFamily: "var(--font-noto-serif)" } : undefined}
+                        >
+                          {line}
+                        </p>
+                      );
+                    })}
                   </div>
 
                 </div>
 
                 <div className="space-y-6">
 
-                  <p
-                    className="text-[1.08rem] leading-[1.95] text-neutral-700"
-                    style={{ fontFamily: "var(--font-noto-serif)" }}
-                  >
-                    負責整體品牌概念、內容方向、視覺語言與對外表述，
-                    將心理學研究、團體實踐與文化內容整理為一致的品牌敘事。
-                  </p>
-
-                  <p
-                    className="text-[1.08rem] leading-[1.95] text-neutral-700"
-                    style={{ fontFamily: "var(--font-noto-serif)" }}
-                  >
-                    在 Ho-Se 好勢 Ong-Lai 旺來之中，
-                    品牌不是附加層，而是研究、文化與人際連結
-                    之間的一個共同界面。
-                  </p>
+                  {director.introParagraphs.map((paragraph, index) => (
+                    <p
+                      key={`${paragraph}-${index}`}
+                      className="text-[1.08rem] leading-[1.95] text-neutral-700"
+                      style={{ fontFamily: "var(--font-noto-serif)" }}
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
 
                 </div>
 

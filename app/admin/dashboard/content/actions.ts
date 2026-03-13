@@ -6,16 +6,8 @@ import { getSupabaseServerClient } from "@/lib/supabase-server";
 import {
 	saveSiteContentImage,
 	saveSiteContentSection,
-	type SiteContentSection,
 } from "@/lib/site-content-server";
-
-const SECTION_REVALIDATE_PATHS: Record<SiteContentSection, string[]> = {
-	brand_philosophy_team: ["/brand-philosophy"],
-	heartfelt_momentum_videos: ["/heartfelt-momentum"],
-	fortune_arrives_lectures: ["/fortune-arrives"],
-	togetherness_groups: ["/togetherness"],
-	collaborative_prosperity_projects: ["/collaborative-prosperity"],
-};
+import type { BrandPageContent } from "@/app/brand-philosophy/brand-content";
 
 async function requireAdminUser() {
 	const supabase = await getSupabaseServerClient();
@@ -38,63 +30,54 @@ async function requireAdminUser() {
 	}
 }
 
-export async function saveSiteContent(formData: FormData) {
+export async function saveBrandPageContent(formData: FormData) {
 	await requireAdminUser();
 
-	const section = String(formData.get("section") || "") as SiteContentSection;
-	const jsonData = String(formData.get("jsonData") || "").trim();
-
-	if (!section || !jsonData) {
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
 		redirect("/admin/dashboard/content?error=missing");
 	}
 
-	let parsed: unknown;
+	let parsed: BrandPageContent;
 	try {
-		parsed = JSON.parse(jsonData);
+		parsed = JSON.parse(payload) as BrandPageContent;
 	} catch {
-		redirect(`/admin/dashboard/content?error=json&section=${encodeURIComponent(section)}`);
+		redirect("/admin/dashboard/content?error=json");
 	}
 
 	try {
-		await saveSiteContentSection(section, parsed);
+		await saveSiteContentSection("brand_philosophy_page", parsed);
 	} catch {
-		redirect(`/admin/dashboard/content?error=save&section=${encodeURIComponent(section)}`);
+		redirect("/admin/dashboard/content?error=save");
 	}
 
-	const paths = SECTION_REVALIDATE_PATHS[section] || [];
-	for (const path of paths) {
-		revalidatePath(path);
-	}
+	revalidatePath("/brand-philosophy");
 	revalidatePath("/admin/dashboard/content");
-
-	redirect(`/admin/dashboard/content?saved=${encodeURIComponent(section)}`);
+	redirect("/admin/dashboard/content?saved=brand");
 }
 
-export async function uploadSectionImage(formData: FormData) {
+export async function uploadBrandImage(formData: FormData) {
 	await requireAdminUser();
 
-	const section = String(formData.get("section") || "") as SiteContentSection;
 	const file = formData.get("imageFile");
 
-	if (!section || !(file instanceof File) || file.size <= 0) {
-		redirect(`/admin/dashboard/content?error=upload&section=${encodeURIComponent(section || "")}`);
+	if (!(file instanceof File) || file.size <= 0) {
+		redirect("/admin/dashboard/content?error=upload");
 	}
 
 	if (!file.type.startsWith("image/")) {
-		redirect(`/admin/dashboard/content?error=upload_type&section=${encodeURIComponent(section)}`);
+		redirect("/admin/dashboard/content?error=upload_type");
 	}
 
 	if (file.size > 8 * 1024 * 1024) {
-		redirect(`/admin/dashboard/content?error=upload_size&section=${encodeURIComponent(section)}`);
+		redirect("/admin/dashboard/content?error=upload_size");
 	}
 
 	try {
-		const url = await saveSiteContentImage(section, file);
+		const url = await saveSiteContentImage("brand_philosophy_page", file);
 		revalidatePath("/admin/dashboard/content");
-		redirect(
-			`/admin/dashboard/content?uploaded=${encodeURIComponent(url)}&section=${encodeURIComponent(section)}`,
-		);
+		redirect(`/admin/dashboard/content?uploaded=${encodeURIComponent(url)}`);
 	} catch {
-		redirect(`/admin/dashboard/content?error=upload&section=${encodeURIComponent(section)}`);
+		redirect("/admin/dashboard/content?error=upload");
 	}
 }
