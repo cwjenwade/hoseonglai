@@ -1,6 +1,7 @@
 import { Geist, Noto_Serif_TC, Playfair_Display } from "next/font/google";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import { HEARTFELT_VIDEOS } from "./videos-data";
+import { VideoGallery } from "./VideoGallery";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -45,51 +46,7 @@ export default async function PsychologyArtworkPage() {
           </h1>
         </header>
 
-        <div className="grid gap-x-7 gap-y-14 md:grid-cols-2 xl:grid-cols-4 xl:gap-y-16">
-          {videos.map((video) => (
-            <article key={video.title} className="group">
-              <div className="aspect-[4/3] w-full overflow-hidden bg-[#f1eee8]">
-                <img
-                  src={video.image}
-                  alt={video.title}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]"
-                />
-              </div>
-
-              <div className="mt-4">
-                <h2
-                  className="mt-4 text-[2.02rem] leading-[1.04] tracking-[-0.045em] text-black/92"
-                  style={{ fontFamily: "var(--font-noto-serif)" }}
-                >
-                  {video.title}
-                </h2>
-
-                <p
-                  className="mt-2 text-[0.7rem] uppercase tracking-[0.24em] text-black/32"
-                  style={{ fontFamily: "var(--font-geist)" }}
-                >
-                  {video.titleEn}
-                </p>
-
-                <p
-                  className="mt-4 max-w-[25ch] text-[1.02rem] leading-[1.7] text-black/62"
-                  style={{ fontFamily: "var(--font-noto-serif)" }}
-                >
-                  {video.description}
-                </p>
-
-                <div className="mt-6 space-y-2">
-                  <p
-                    className="text-[0.72rem] uppercase tracking-[0.2em] text-black/36"
-                    style={{ fontFamily: "var(--font-geist)" }}
-                  >
-                    {video.tag}
-                  </p>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+        <VideoGallery videos={videos} />
       </section>
     </main>
   );

@@ -15,12 +15,45 @@ export type SiteContentSection =
   | "collaborative_prosperity_projects";
 
 const CONTENT_FILE_PATH = path.join(process.cwd(), "data", "site-content.json");
+const CONTENT_BLOB_PATH = "site-content/site-content.json";
 const CONTENT_BUCKET = process.env.SITE_CONTENT_BUCKET || "site-content";
 const CONTENT_JSON_PATH = "site-content.json";
 
 let bucketEnsured = false;
 
 type ContentStore = Partial<Record<SiteContentSection, unknown>>;
+
+type BlobApi = {
+  list: (options: { token: string; prefix: string; limit: number }) => Promise<{
+    blobs: Array<{ pathname: string; url: string }>;
+  }>;
+  put: (
+    pathname: string,
+    body: string | File,
+    options: {
+      token: string;
+      access: "public";
+      addRandomSuffix: boolean;
+      allowOverwrite?: boolean;
+      contentType?: string;
+      cacheControlMaxAge?: number;
+    },
+  ) => Promise<{ url: string }>;
+};
+
+function getBlobReadWriteToken(): string | null {
+  return process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN || null;
+}
+
+async function getBlobApiOrNull(): Promise<BlobApi | null> {
+  try {
+    const moduleName = "@vercel/blob";
+    const blob = (await import(moduleName)) as BlobApi;
+    return blob;
+  } catch {
+    return null;
+  }
+}
 
 function getAdminClientOrNull(): SupabaseClient | null {
   try {
@@ -96,7 +129,62 @@ async function writeContentStoreToSupabase(admin: SupabaseClient, nextStore: Con
   }
 }
 
+async function readContentStoreFromBlob(blobToken: string, blobApi: BlobApi): Promise<ContentStore | null> {
+  const { blobs } = await blobApi.list({
+    token: blobToken,
+    prefix: CONTENT_BLOB_PATH,
+    limit: 10,
+  });
+
+  const target =
+    blobs.find((blob) => blob.pathname === CONTENT_BLOB_PATH) ||
+    blobs.find((blob) => blob.pathname.startsWith(CONTENT_BLOB_PATH));
+
+  if (!target) {
+    return {};
+  }
+
+  const response = await fetch(target.url, { cache: "no-store" });
+  if (!response.ok) {
+    return {};
+  }
+
+  const raw = await response.text();
+  if (!raw.trim()) return {};
+
+  const parsed = JSON.parse(raw) as ContentStore;
+  return parsed && typeof parsed === "object" ? parsed : {};
+}
+
+async function writeContentStoreToBlob(
+  blobToken: string,
+  nextStore: ContentStore,
+  blobApi: BlobApi,
+) {
+  await blobApi.put(CONTENT_BLOB_PATH, JSON.stringify(nextStore, null, 2), {
+    token: blobToken,
+    access: "public",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: "application/json",
+    cacheControlMaxAge: 0,
+  });
+}
+
 async function readContentStore(): Promise<ContentStore> {
+  const blobToken = getBlobReadWriteToken();
+  if (blobToken) {
+    try {
+      const blobApi = await getBlobApiOrNull();
+      if (blobApi) {
+        const blobStore = await readContentStoreFromBlob(blobToken, blobApi);
+        if (blobStore) return blobStore;
+      }
+    } catch {
+      // fallback to other backends
+    }
+  }
+
   const admin = getAdminClientOrNull();
   if (admin) {
     try {
@@ -117,6 +205,15 @@ async function readContentStore(): Promise<ContentStore> {
 }
 
 async function writeContentStore(nextStore: ContentStore) {
+  const blobToken = getBlobReadWriteToken();
+  if (blobToken) {
+    const blobApi = await getBlobApiOrNull();
+    if (blobApi) {
+      await writeContentStoreToBlob(blobToken, nextStore, blobApi);
+      return;
+    }
+  }
+
   const admin = getAdminClientOrNull();
   if (admin) {
     await writeContentStoreToSupabase(admin, nextStore);
@@ -175,6 +272,25 @@ export async function saveSiteContentImage(
   const ext = (extFromType || extFromName || "png").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
 
   const fileName = `${Date.now()}-${randomUUID()}.${ext || "png"}`;
+
+  const blobToken = getBlobReadWriteToken();
+  if (blobToken) {
+    const blobApi = await getBlobApiOrNull();
+    if (!blobApi) {
+      throw new Error("BLOB_CLIENT_UNAVAILABLE");
+    }
+
+    const objectPath = `site-content/images/${section}/${fileName}`;
+    const uploaded = await blobApi.put(objectPath, file, {
+      token: blobToken,
+      access: "public",
+      addRandomSuffix: false,
+      contentType: file.type || "application/octet-stream",
+      cacheControlMaxAge: 60 * 60,
+    });
+
+    return uploaded.url;
+  }
 
   const admin = getAdminClientOrNull();
   if (admin) {

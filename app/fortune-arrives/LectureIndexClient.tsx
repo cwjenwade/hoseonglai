@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Playfair_Display,
   Noto_Serif_TC,
   Geist,
   Noto_Sans_TC,
@@ -13,12 +12,6 @@ import {
   type LectureCategory,
   type LectureItem,
 } from "./lectures-data";
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-playfair",
-});
 
 const notoSerifTC = Noto_Serif_TC({
   subsets: ["latin"],
@@ -43,10 +36,6 @@ function formatZhDate(date: string): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-function extractLocationZh(summary: string): string {
-  return summary.replace(/^地點：\s*/, "").trim();
-}
-
 type LectureIndexClientProps = {
   lectures: LectureItem[];
 };
@@ -62,7 +51,6 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
   return (
     <main
       className={[
-        playfair.variable,
         notoSerifTC.variable,
         geist.variable,
         notoSansTC.variable,
@@ -81,14 +69,20 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
               </p>
 
               <h1
-                className="max-w-[10ch] text-[3.5rem] leading-none tracking-[-0.035em] text-[#1a1a1a] sm:text-[4.25rem] lg:text-[4.5rem]"
+                className="max-w-[10ch] text-[3.25rem] font-semibold leading-[1.05] tracking-[-0.02em] text-[#1a1a1a] sm:text-[3.6rem] lg:text-[4rem]"
                 style={{
-                  fontFamily:
-                    "var(--font-playfair), var(--font-noto-serif-tc), serif",
+                  fontFamily: "var(--font-noto-serif-tc), serif",
                 }}
               >
                 講座系列
               </h1>
+
+              <p
+                className="mt-3 text-[28px] font-normal leading-[1.2] tracking-[0.02em] text-[#6b6b6b] sm:text-[32px] lg:text-[44px]"
+                style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
+              >
+                Lecture Series
+              </p>
             </div>
 
             <div className="lg:col-span-4">
@@ -131,12 +125,12 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                   type="button"
                   onClick={() => setActiveFilter(filter)}
                   className={[
-                    "border-b pb-1 text-[14px] transition-[color,border-color,opacity] duration-200",
+                    "border-b pb-1 text-[14px] leading-none tracking-[0.01em] transition-[color,border-color,opacity] duration-200",
                     isActive
                       ? "border-black/70 text-[#1a1a1a]"
                       : "border-transparent text-[#9c9c9c] hover:text-[#6b6b6b]",
                   ].join(" ")}
-                  style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
+                  style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
                 >
                   {filter}
                 </button>
@@ -158,60 +152,73 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                       className="mb-4 text-[11px] uppercase tracking-[0.24em] text-[#9c9c9c]"
                       style={{
                         fontFamily:
-                          "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                          "var(--font-noto-sans-tc), var(--font-geist), sans-serif",
                       }}
                     >
                       {lecture.type}
                     </p>
 
                     <div
-                      className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b] md:text-[15px]"
+                      className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b]"
                       style={{
                         fontFamily:
-                          "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                          "var(--font-noto-sans-tc), var(--font-geist), sans-serif",
                       }}
                     >
-                      <p>{formatZhDate(lecture.date)}</p>
+                      <p className="text-[30px] leading-[1.1] tracking-[-0.02em] text-[#1a1a1a]">
+                        {formatZhDate(lecture.date)}
+                      </p>
                       <p>{lecture.dateLabel}</p>
                       <p>{lecture.time}</p>
                     </div>
                   </div>
 
-                  <div className="lg:col-span-7">
+                  <div className="lg:col-span-8">
                     <div className="max-w-[42rem]">
                       <h2
-                        className="text-[1.9rem] leading-[1.08] tracking-[-0.03em] text-[#1a1a1a] sm:text-[2.15rem] lg:text-[33px]"
+                        className="text-[30px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#1a1a1a] sm:text-[31px] lg:text-[32px]"
                         style={{
-                          fontFamily:
-                            "var(--font-playfair), var(--font-noto-serif-tc), serif",
+                          fontFamily: "var(--font-noto-serif-tc), serif",
                         }}
                       >
                         {lecture.titleZh}
                       </h2>
 
+                      {lecture.titleEn ? (
+                        <p
+                          className="mt-2 max-w-[56ch] text-[18px] font-normal leading-[1.45] tracking-[0.02em] text-[#6b6b6b]"
+                          style={{
+                            fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                          }}
+                        >
+                          {lecture.titleEn}
+                        </p>
+                      ) : null}
+
                       <p
-                        className="mt-6 max-w-[42ch] text-[16px] leading-[1.65] text-[#1a1a1a]"
+                        className="mt-6 max-w-[56ch] text-[18px] leading-[1.6] text-[#1a1a1a]"
                         style={{
                           fontFamily:
-                            "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                            "var(--font-noto-sans-tc), var(--font-geist), sans-serif",
                         }}
                       >
-                        {lecture.speaker ? `講者：${lecture.speaker}` : ""}
+                        {lecture.speaker
+                          ? `${lecture.speaker}${lecture.speakerEn ? ` / ${lecture.speakerEn}` : ""}`
+                          : ""}
                       </p>
                     </div>
                   </div>
 
-                  <div className="lg:col-span-3 lg:pl-4">
+                  <div className="lg:col-span-2 lg:pl-2">
                     <div
                       className="flex h-full flex-col justify-between"
                       style={{
                         fontFamily:
-                          "var(--font-geist), var(--font-noto-sans-tc), sans-serif",
+                          "var(--font-noto-sans-tc), var(--font-geist), sans-serif",
                       }}
                     >
-                      <div className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b] md:text-[15px]">
-                        <p className="text-[#1a1a1a]">地點｜{extractLocationZh(lecture.summary)}</p>
-                        {lecture.subtitleEn ? <p>Location｜{lecture.subtitleEn}</p> : null}
+                      <div className="space-y-1 text-[14px] leading-[1.7] text-[#6b6b6b]">
+                        <p className="text-[#1a1a1a]">{lecture.addressZh || lecture.locationZh || "地點待公布"}</p>
                       </div>
 
                       <div className="pt-8">
@@ -219,7 +226,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                           href={lecture.href}
                           className="group inline-flex items-center gap-2 text-[14px] text-[#1a1a1a] transition-opacity duration-200 hover:opacity-70"
                         >
-                          <span>View detail</span>
+                          <span>View details</span>
                         </Link>
                       </div>
                     </div>
@@ -235,7 +242,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
             <div className="lg:col-span-8">
               <p
                 className="max-w-[48ch] text-[15px] leading-[1.75] text-[#6b6b6b]"
-                style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
+                style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
               >
                 For registration updates, research collaboration, and program
                 notices, please refer to each lecture page or subscribe to the
@@ -247,7 +254,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
               <Link
                 href="/programs/subscribe"
                 className="inline-flex items-center border border-black/10 px-5 py-3 text-[14px] text-[#1a1a1a] transition-colors duration-200 hover:border-black/20"
-                style={{ fontFamily: "var(--font-geist), var(--font-noto-sans-tc), sans-serif" }}
+                style={{ fontFamily: "var(--font-noto-sans-tc), var(--font-geist), sans-serif" }}
               >
                 Subscribe
               </Link>

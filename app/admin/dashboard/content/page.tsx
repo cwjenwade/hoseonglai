@@ -4,11 +4,20 @@ import { adminLogout } from "@/app/admin/actions";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import { DEFAULT_BRAND_PAGE_CONTENT } from "@/app/brand-philosophy/brand-content";
+import { RESEARCH_PROJECTS } from "@/app/collaborative-prosperity/projects";
+import { LECTURES } from "@/app/fortune-arrives/lectures-data";
 import BrandEditor from "./BrandEditor";
-import { saveBrandPageContent, uploadBrandImage } from "./actions";
+import CollaborativeProjectsEditor from "./CollaborativeProjectsEditor";
+import FortuneLecturesEditor from "./FortuneLecturesEditor";
+import {
+	saveBrandPageContent,
+	saveCollaborativeProjectsContent,
+	saveFortuneLecturesContent,
+	uploadBrandImage,
+} from "./actions";
 
 type PageProps = {
-	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string }>;
+	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string; tab?: string }>;
 };
 
 export default async function AdminContentPage({ searchParams }: PageProps) {
@@ -34,13 +43,30 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 	}
 
 	const brandContent = await getSiteContentSection("brand_philosophy_page", DEFAULT_BRAND_PAGE_CONTENT);
+	const collaborativeProjects = await getSiteContentSection(
+		"collaborative_prosperity_projects",
+		RESEARCH_PROJECTS,
+	);
+	const fortuneLectures = await getSiteContentSection("fortune_arrives_lectures", LECTURES);
+
+	const tabs = [
+		{ key: "brand", name: "Brand Philosophy" },
+		{ key: "collaborative", name: "Collaborative Prosperity" },
+		{ key: "heartfelt", name: "Heartfelt Momentum" },
+		{ key: "fortune", name: "Fortune Arrives" },
+		{ key: "togetherness", name: "Togetherness" },
+	] as const;
+
+	const activeTab = tabs.some((tab) => tab.key === resolvedSearchParams.tab)
+		? (resolvedSearchParams.tab as (typeof tabs)[number]["key"])
+		: "brand";
 
 	const modules = [
-		{ name: "Brand Philosophy", status: "已完成（本頁）" },
+		{ name: "Brand Philosophy", status: "已完成" },
 		{ name: "Heartfelt Momentum", status: "下一步" },
-		{ name: "Fortune Arrives", status: "下一步" },
+		{ name: "Fortune Arrives", status: "已完成" },
 		{ name: "Togetherness", status: "下一步" },
-		{ name: "Collaborative Prosperity", status: "下一步" },
+		{ name: "Collaborative Prosperity", status: "已完成" },
 	];
 
 	return (
@@ -78,9 +104,35 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 				))}
 			</div>
 
+			<div className="flex flex-wrap gap-2 rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+				{tabs.map((tab) => {
+					const isActive = activeTab === tab.key;
+					return (
+						<Link
+							key={tab.key}
+							href={`/admin/dashboard/content?tab=${tab.key}`}
+							className={
+								"rounded-full px-4 py-2 text-sm transition " +
+								(isActive
+									? "bg-zinc-900 text-white"
+									: "border border-zinc-300 text-zinc-700 hover:bg-zinc-100")
+							}
+						>
+							{tab.name}
+						</Link>
+					);
+				})}
+			</div>
+
 			{resolvedSearchParams.saved ? (
 				<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-					Brand 內容已更新
+					{resolvedSearchParams.saved === "brand"
+						? "Brand 內容已更新"
+						: resolvedSearchParams.saved === "collaborative"
+							? "Collaborative Prosperity 內容已更新"
+							: resolvedSearchParams.saved === "fortune"
+								? "Fortune Arrives 內容已更新"
+							: "內容已更新"}
 				</div>
 			) : null}
 
@@ -114,43 +166,86 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 				</div>
 			) : null}
 
-			<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-				<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-					<div>
-						<h2 className="text-xl font-semibold text-zinc-900">Brand Philosophy 編輯器</h2>
-						<p className="mt-1 text-sm text-zinc-600">Director + Team 的完整表單編輯。</p>
+			{activeTab === "brand" ? (
+				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+						<div>
+							<h2 className="text-xl font-semibold text-zinc-900">Brand Philosophy 編輯器</h2>
+							<p className="mt-1 text-sm text-zinc-600">Director + Team 的完整表單編輯。</p>
+						</div>
 					</div>
-				</div>
 
-				<div className="mb-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-					<p className="mb-2 text-xs text-zinc-600">圖片上傳（上傳後可套用到 Director 或 Team）</p>
-					<form action={uploadBrandImage} className="flex flex-wrap items-center gap-3">
-						<input type="file" name="imageFile" accept="image/*" className="text-xs text-zinc-700" required />
-						<button
-							type="submit"
-							className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100"
-						>
-							上傳圖片
-						</button>
+					<div className="mb-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+						<p className="mb-2 text-xs text-zinc-600">圖片上傳（上傳後可套用到 Director 或 Team）</p>
+						<form action={uploadBrandImage} className="flex flex-wrap items-center gap-3">
+							<input type="file" name="imageFile" accept="image/*" className="text-xs text-zinc-700" required />
+							<button
+								type="submit"
+								className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100"
+							>
+								上傳圖片
+							</button>
+						</form>
+					</div>
+
+					<form action={saveBrandPageContent}>
+						<BrandEditor
+							initialContent={brandContent}
+							uploadedUrl={resolvedSearchParams.uploaded}
+						/>
+
+						<div className="mt-5 flex justify-end">
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存 Brand 內容
+							</button>
+						</div>
 					</form>
-				</div>
+				</section>
+			) : null}
 
-				<form action={saveBrandPageContent}>
-					<BrandEditor
-						initialContent={brandContent}
-						uploadedUrl={resolvedSearchParams.uploaded}
-					/>
+			{activeTab === "collaborative" ? (
+				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<form action={saveCollaborativeProjectsContent}>
+						<CollaborativeProjectsEditor initialProjects={collaborativeProjects} />
 
-					<div className="mt-5 flex justify-end">
-						<button
-							type="submit"
-							className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
-						>
-							儲存 Brand 內容
-						</button>
-					</div>
-				</form>
-			</section>
+						<div className="mt-5 flex justify-end">
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存 Collaborative 內容
+							</button>
+						</div>
+					</form>
+				</section>
+			) : null}
+
+			{activeTab === "fortune" ? (
+				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<form action={saveFortuneLecturesContent}>
+						<FortuneLecturesEditor initialLectures={fortuneLectures} />
+
+						<div className="mt-5 flex justify-end">
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存 Fortune 內容
+							</button>
+						</div>
+					</form>
+				</section>
+			) : null}
+
+			{activeTab === "heartfelt" || activeTab === "togetherness" ? (
+				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<h2 className="text-xl font-semibold text-zinc-900">此頁籤準備中</h2>
+					<p className="mt-2 text-sm text-zinc-600">下一步會依同樣編輯邏輯補上此模組表單。</p>
+				</section>
+			) : null}
 		</div>
 	);
 }

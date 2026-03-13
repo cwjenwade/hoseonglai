@@ -50,11 +50,28 @@ export default async function LectureDetailPage({ params }: LectureDetailPagePro
               {lecture.titleZh}
             </h1>
 
-            <div className="mt-8 space-y-2 text-[16px] text-[#4a4a4a]">
-              <p>講者：{lecture.speaker || "待公布"}</p>
-              <p>日期：{lecture.dateLabel}</p>
-              <p>時間：{lecture.time}</p>
+            <p className="mt-3 text-[1.05rem] leading-[1.7] text-[#6b6b6b]">
+              {lecture.titleEn || "English title coming soon"}
+            </p>
+
+            <div className="mt-8 space-y-3 text-[16px] text-[#4a4a4a]">
+              <p>
+                講師：
+                {lecture.speaker || "待公布"}
+                {lecture.speakerEn ? ` / ${lecture.speakerEn}` : ""}
+              </p>
+              <p>時間：{`${lecture.dateLabel} ${lecture.time}`.trim()}</p>
               <p>地點：{lecture.locationZh || "待公布"}</p>
+              <p>地址：{lecture.addressZh || "待公布"}</p>
+            </div>
+
+            <div className="mt-8 rounded-2xl border border-black/10 bg-white/50 p-6">
+              <h2 className="text-[12px] uppercase tracking-[0.24em] text-[#8d8d8d]">
+                摘要 / 描述
+              </h2>
+              <p className="mt-3 text-[16px] leading-[1.85] text-[#4a4a4a]">
+                {lecture.summary || "摘要待公布"}
+              </p>
             </div>
           </div>
 

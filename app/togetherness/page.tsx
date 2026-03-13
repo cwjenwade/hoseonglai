@@ -105,8 +105,11 @@ export default async function TogethernessPage() {
 
         <section className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-10 xl:gap-y-20">
           {groups.map((group) => (
-            <article key={group.slug} className="group">
-              <Link href={`/togetherness/${group.slug}`} className="block">
+            <article key={group.slug} className="group relative z-0">
+              <Link
+                href={`/togetherness/${group.slug}`}
+                className="relative block p-0 text-left transition-[padding,transform,box-shadow] duration-300 ease-out hover:z-20 hover:-translate-y-2 hover:p-5 hover:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:z-20 focus-visible:-translate-y-2 focus-visible:p-5 focus-visible:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:outline-none"
+              >
                 <div className="aspect-[4/5] overflow-hidden bg-neutral-200">
                   <img
                     src={group.image}
