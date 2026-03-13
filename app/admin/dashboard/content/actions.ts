@@ -81,10 +81,9 @@ export async function uploadBrandImage(formData: FormData) {
 		redirect("/admin/dashboard/content?error=upload_size");
 	}
 
+	let url = "";
 	try {
-		const url = await saveSiteContentImage("brand_philosophy_page", file);
-		revalidatePath("/admin/dashboard/content");
-		redirect(`/admin/dashboard/content?uploaded=${encodeURIComponent(url)}`);
+		url = await saveSiteContentImage("brand_philosophy_page", file);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
 			redirect("/admin/dashboard/content?error=readonly_upload");
@@ -96,4 +95,7 @@ export async function uploadBrandImage(formData: FormData) {
 		console.error("BRAND_UPLOAD_ERROR", error);
 		redirect(`/admin/dashboard/content?error=upload&detail=${detail}`);
 	}
+
+	revalidatePath("/admin/dashboard/content");
+	redirect(`/admin/dashboard/content?uploaded=${encodeURIComponent(url)}`);
 }
