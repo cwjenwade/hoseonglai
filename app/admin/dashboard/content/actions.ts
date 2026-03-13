@@ -48,6 +48,10 @@ export async function saveBrandPageContent(formData: FormData) {
 	try {
 		await saveSiteContentSection("brand_philosophy_page", parsed);
 	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS") {
+			redirect("/admin/dashboard/content?error=readonly_fs");
+		}
+
 		const detail = encodeURIComponent(
 			error instanceof Error ? error.message : "unknown_save_error",
 		);
@@ -82,6 +86,10 @@ export async function uploadBrandImage(formData: FormData) {
 		revalidatePath("/admin/dashboard/content");
 		redirect(`/admin/dashboard/content?uploaded=${encodeURIComponent(url)}`);
 	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
+			redirect("/admin/dashboard/content?error=readonly_upload");
+		}
+
 		const detail = encodeURIComponent(
 			error instanceof Error ? error.message : "unknown_upload_error",
 		);
