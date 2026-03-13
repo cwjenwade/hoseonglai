@@ -589,7 +589,46 @@ export async function saveResearchConsentsContent(formData: FormData) {
 	}
 
 	try {
-		await saveSiteContentSection("collaborative_prosperity_consents", cleanedConsents);
+		const scales = await getSiteContentSection<PsychometricScale[]>(
+			"collaborative_prosperity_assessments",
+			[],
+		);
+
+		const normalizedConsents: ResearchConsent[] = (scales.length ? scales : cleanedConsents).map((scale) => {
+			if ("principalInvestigator" in scale) {
+				const consentScale = scale as ResearchConsent;
+				return {
+					projectId: consentScale.projectId,
+					projectTitleZh: consentScale.projectTitleZh,
+					projectTitleEn: consentScale.projectTitleEn,
+					principalInvestigator: consentScale.principalInvestigator,
+					researchUnit: consentScale.researchUnit,
+					researchDescription: consentScale.researchDescription,
+				};
+			}
+
+			const psychometricScale = scale as PsychometricScale;
+			const matched = cleanedConsents.find((consent) => consent.projectId === psychometricScale.projectId);
+			if (matched) {
+				return {
+					...matched,
+					projectId: psychometricScale.projectId,
+					projectTitleZh: psychometricScale.projectTitleZh,
+					projectTitleEn: psychometricScale.projectTitleEn,
+				};
+			}
+
+			return {
+				projectId: psychometricScale.projectId,
+				projectTitleZh: psychometricScale.projectTitleZh,
+				projectTitleEn: psychometricScale.projectTitleEn,
+				principalInvestigator: "待填寫",
+				researchUnit: "Ho-Se 好勢旺來研究團隊",
+				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
+			};
+		});
+
+		await saveSiteContentSection("collaborative_prosperity_consents", normalizedConsents);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=consent&error=readonly_fs");

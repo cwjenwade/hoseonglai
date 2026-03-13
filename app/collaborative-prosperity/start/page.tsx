@@ -2,9 +2,9 @@ import Link from "next/link";
 import { verifyResearchToken } from "@/lib/research-token";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import {
-  DEFAULT_PSYCHOMETRIC_SCALES,
-  type PsychometricScale,
-} from "@/app/collaborative-prosperity/assessment-data";
+  DEFAULT_RESEARCH_CONSENTS,
+  type ResearchConsent,
+} from "@/app/collaborative-prosperity/consent-data";
 
 type PageProps = {
   searchParams: Promise<{
@@ -14,9 +14,9 @@ type PageProps = {
 
 export default async function ResearchStartPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
-  const scales = await getSiteContentSection<PsychometricScale[]>(
-    "collaborative_prosperity_assessments",
-    DEFAULT_PSYCHOMETRIC_SCALES,
+  const consents = await getSiteContentSection<ResearchConsent[]>(
+    "collaborative_prosperity_consents",
+    DEFAULT_RESEARCH_CONSENTS,
   );
   const token = resolvedSearchParams.token || "";
   const payload = verifyResearchToken(token);
@@ -56,11 +56,11 @@ export default async function ResearchStartPage({ searchParams }: PageProps) {
     );
   }
 
-  const mappedScale =
-    scales.find((scale) => scale.projectId === payload.projectId) ||
-    DEFAULT_PSYCHOMETRIC_SCALES.find((scale) => scale.projectId === payload.projectId);
+  const mappedConsent =
+    consents.find((consentItem) => consentItem.projectId === payload.projectId) ||
+    DEFAULT_RESEARCH_CONSENTS.find((consentItem) => consentItem.projectId === payload.projectId);
 
-  const consent = mappedScale || {
+  const consent = mappedConsent || {
     projectTitleZh: payload.projectTitle,
     projectTitleEn: payload.projectTitle,
     principalInvestigator: "待填寫",

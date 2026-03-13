@@ -4,9 +4,9 @@ import { verifyResearchToken } from "@/lib/research-token";
 import { sendResearchCompletionEmail } from "@/lib/email";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import {
-  DEFAULT_PSYCHOMETRIC_SCALES,
-  type PsychometricScale,
-} from "@/app/collaborative-prosperity/assessment-data";
+  DEFAULT_RESEARCH_CONSENTS,
+  type ResearchConsent,
+} from "@/app/collaborative-prosperity/consent-data";
 
 type SubmitPayload = {
   token: string;
@@ -74,24 +74,24 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const scales = await getSiteContentSection<PsychometricScale[]>(
-        "collaborative_prosperity_assessments",
-        DEFAULT_PSYCHOMETRIC_SCALES,
+      const consents = await getSiteContentSection<ResearchConsent[]>(
+        "collaborative_prosperity_consents",
+        DEFAULT_RESEARCH_CONSENTS,
       );
-      const mappedScale =
-        scales.find((scale) => scale.projectId === payload.projectId) ||
-        DEFAULT_PSYCHOMETRIC_SCALES.find((scale) => scale.projectId === payload.projectId);
+      const mappedConsent =
+        consents.find((consent) => consent.projectId === payload.projectId) ||
+        DEFAULT_RESEARCH_CONSENTS.find((consent) => consent.projectId === payload.projectId);
 
       await sendResearchCompletionEmail({
         to: payload.email,
         name: payload.name,
         participantCode: payload.participantCode,
-        projectTitleZh: mappedScale?.projectTitleZh || payload.projectTitle,
-        projectTitleEn: mappedScale?.projectTitleEn || payload.projectTitle,
-        principalInvestigator: mappedScale?.principalInvestigator || "待填寫",
-        researchUnit: mappedScale?.researchUnit || "Ho-Se 好勢旺來研究團隊",
+        projectTitleZh: mappedConsent?.projectTitleZh || payload.projectTitle,
+        projectTitleEn: mappedConsent?.projectTitleEn || payload.projectTitle,
+        principalInvestigator: mappedConsent?.principalInvestigator || "待填寫",
+        researchUnit: mappedConsent?.researchUnit || "Ho-Se 好勢旺來研究團隊",
         researchDescription:
-          mappedScale?.researchDescription || "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
+          mappedConsent?.researchDescription || "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
       });
     } catch (emailError) {
       console.error("ASSESSMENT_COMPLETION_EMAIL_ERROR", emailError);

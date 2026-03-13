@@ -6,6 +6,7 @@ import { getSiteContentSection } from "@/lib/site-content-server";
 import { DEFAULT_BRAND_PAGE_CONTENT } from "@/app/brand-philosophy/brand-content";
 import { RESEARCH_PROJECTS } from "@/app/collaborative-prosperity/projects";
 import { DEFAULT_PSYCHOMETRIC_SCALES } from "@/app/collaborative-prosperity/assessment-data";
+import { DEFAULT_RESEARCH_CONSENTS } from "@/app/collaborative-prosperity/consent-data";
 import { LECTURES } from "@/app/fortune-arrives/lectures-data";
 import { HEARTFELT_VIDEOS } from "@/app/heartfelt-momentum/videos-data";
 import BrandEditor from "./BrandEditor";
@@ -13,11 +14,13 @@ import CollaborativeProjectsEditor from "./CollaborativeProjectsEditor";
 import FortuneLecturesEditor from "./FortuneLecturesEditor";
 import HeartfeltVideosEditor from "./HeartfeltVideosEditor";
 import PsychometricScalesEditor from "./PsychometricScalesEditor";
+import ResearchConsentsEditor from "./ResearchConsentsEditor";
 import {
 	saveBrandPageContent,
 	saveCollaborativeProjectsContent,
 	saveFortuneLecturesContent,
 	saveHeartfeltVideosContent,
+	saveResearchConsentsContent,
 	savePsychometricScalesContent,
 	uploadHeartfeltImage,
 	uploadBrandImage,
@@ -60,11 +63,16 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		"collaborative_prosperity_assessments",
 		DEFAULT_PSYCHOMETRIC_SCALES,
 	);
+	const researchConsents = await getSiteContentSection(
+		"collaborative_prosperity_consents",
+		DEFAULT_RESEARCH_CONSENTS,
+	);
 
 	const tabs = [
 		{ key: "brand", name: "品牌理念" },
 		{ key: "collaborative", name: "協力招來" },
 		{ key: "psychometrics", name: "心理量表" },
+		{ key: "consent", name: "研究同意書" },
 		{ key: "heartfelt", name: "有心好勢｜5 mins research" },
 		{ key: "fortune", name: "有運旺來｜講座" },
 		{ key: "togetherness", name: "團體諮商" },
@@ -78,6 +86,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		{ name: "品牌理念", status: "已完成" },
 		{ name: "協力招來", status: "已完成" },
 		{ name: "心理量表", status: "已完成" },
+		{ name: "研究同意書", status: "已完成" },
 		{ name: "有心好勢｜5 mins research", status: "已完成" },
 		{ name: "有運旺來｜講座", status: "已完成" },
 		{ name: "團體諮商", status: "下一步" },
@@ -146,6 +155,8 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 							? "協力招來內容已更新"
 							: resolvedSearchParams.saved === "psychometrics"
 								? "心理量表內容已更新"
+								: resolvedSearchParams.saved === "consent"
+									? "研究同意書內容已更新"
 							: resolvedSearchParams.saved === "heartfelt"
 								? "有心好勢內容已更新"
 							: resolvedSearchParams.saved === "fortune"
@@ -252,6 +263,23 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
 							>
 								儲存心理量表內容
+							</button>
+						</div>
+					</form>
+				</section>
+			) : null}
+
+			{activeTab === "consent" ? (
+				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<form action={saveResearchConsentsContent}>
+						<ResearchConsentsEditor initialConsents={researchConsents} />
+
+						<div className="mt-5 flex justify-end">
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存研究同意書內容
 							</button>
 						</div>
 					</form>

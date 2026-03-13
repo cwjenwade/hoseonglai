@@ -7,17 +7,6 @@ type ResearchConsentsEditorProps = {
   initialConsents: ResearchConsent[];
 };
 
-function createEmptyConsent(): ResearchConsent {
-  return {
-    projectId: `new-project-${Date.now().toString(36)}`,
-    projectTitleZh: "",
-    projectTitleEn: "",
-    principalInvestigator: "",
-    researchUnit: "",
-    researchDescription: "",
-  };
-}
-
 export default function ResearchConsentsEditor({ initialConsents }: ResearchConsentsEditorProps) {
   const [consents, setConsents] = useState<ResearchConsent[]>(initialConsents || []);
 
@@ -28,16 +17,8 @@ export default function ResearchConsentsEditor({ initialConsents }: ResearchCons
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-zinc-900">研究同意書編輯器</h2>
-          <p className="mt-1 text-sm text-zinc-600">每個研究一份同意書，含標題、PI、研究單位與研究事項說明。</p>
+          <p className="mt-1 text-sm text-zinc-600">每個研究固定自動對應一份同意書。可編輯 PI、研究單位與研究事項說明。</p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setConsents((prev) => [...prev, createEmptyConsent()])}
-          className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
-        >
-          新增同意書
-        </button>
       </div>
 
       <div className="space-y-4">
@@ -48,26 +29,16 @@ export default function ResearchConsentsEditor({ initialConsents }: ResearchCons
                 專案 ID（自動對應 tests/[projectId]）
                 <input
                   value={consent.projectId}
-                  onChange={(e) =>
-                    setConsents((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, projectId: e.target.value } : item)),
-                    )
-                  }
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  readOnly
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 bg-zinc-100 px-3 text-sm text-zinc-600 outline-none"
                 />
               </label>
               <label className="text-xs text-zinc-700">
                 研究標題（中文）
                 <input
                   value={consent.projectTitleZh}
-                  onChange={(e) =>
-                    setConsents((prev) =>
-                      prev.map((item, i) =>
-                        i === index ? { ...item, projectTitleZh: e.target.value } : item,
-                      ),
-                    )
-                  }
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  readOnly
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 bg-zinc-100 px-3 text-sm text-zinc-600 outline-none"
                 />
               </label>
             </div>
@@ -77,14 +48,8 @@ export default function ResearchConsentsEditor({ initialConsents }: ResearchCons
                 研究標題（英文）
                 <input
                   value={consent.projectTitleEn}
-                  onChange={(e) =>
-                    setConsents((prev) =>
-                      prev.map((item, i) =>
-                        i === index ? { ...item, projectTitleEn: e.target.value } : item,
-                      ),
-                    )
-                  }
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  readOnly
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 bg-zinc-100 px-3 text-sm text-zinc-600 outline-none"
                 />
               </label>
 
@@ -131,16 +96,6 @@ export default function ResearchConsentsEditor({ initialConsents }: ResearchCons
                 className="mt-1 h-28 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
               />
             </label>
-
-            <div className="mt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setConsents((prev) => prev.filter((_, i) => i !== index))}
-                className="rounded-full border border-red-200 px-3 py-1 text-xs text-red-600 transition hover:bg-red-50"
-              >
-                刪除此同意書
-              </button>
-            </div>
           </article>
         ))}
       </div>
