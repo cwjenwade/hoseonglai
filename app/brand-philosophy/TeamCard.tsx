@@ -36,7 +36,16 @@ export default function TeamCard({ member }: { member: Member }) {
         </div>
 
         <div className="border-t border-zinc-200/80 px-4 pb-5 pt-4 sm:px-5">
-          <div className="mt-3 space-y-1">
+          <div className="mt-1 space-y-2">
+            {member.role ? (
+              <p
+                className="text-[0.72rem] uppercase tracking-[0.28em] text-zinc-500"
+                style={{ fontFamily: "var(--font-geist-sans)" }}
+              >
+                {member.role}
+              </p>
+            ) : null}
+
             <h3
               className="text-[2.5rem] leading-none tracking-[-0.04em] text-zinc-950"
               style={{ fontFamily: "var(--font-noto-serif)" }}
@@ -50,6 +59,15 @@ export default function TeamCard({ member }: { member: Member }) {
                 style={{ fontFamily: "var(--font-geist-sans)" }}
               >
                 {member.nameEn}
+              </p>
+            ) : null}
+
+            {member.profession ? (
+              <p
+                className="text-sm leading-7 text-zinc-500"
+                style={{ fontFamily: "var(--font-noto-serif)" }}
+              >
+                {member.profession}
               </p>
             ) : null}
           </div>

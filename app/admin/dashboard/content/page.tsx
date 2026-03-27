@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 import { adminLogout } from "@/app/admin/actions";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { getSiteContentSection } from "@/lib/site-content-server";
-import { DEFAULT_BRAND_PAGE_CONTENT } from "@/app/brand-philosophy/brand-content";
+import {
+	DEFAULT_BRAND_PAGE_CONTENT,
+	normalizeBrandPageContent,
+} from "@/app/brand-philosophy/brand-content";
 import { RESEARCH_PROJECTS } from "@/app/collaborative-prosperity/projects";
 import { DEFAULT_PSYCHOMETRIC_SCALES } from "@/app/collaborative-prosperity/assessment-data";
 import { DEFAULT_RESEARCH_CONSENTS } from "@/app/collaborative-prosperity/consent-data";
@@ -56,7 +59,9 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		redirect("/admin/dashboard");
 	}
 
-	const brandContent = await getSiteContentSection("brand_philosophy_page", DEFAULT_BRAND_PAGE_CONTENT);
+	const brandContent = normalizeBrandPageContent(
+		await getSiteContentSection("brand_philosophy_page", DEFAULT_BRAND_PAGE_CONTENT),
+	);
 	const collaborativeProjects = await getSiteContentSection(
 		"collaborative_prosperity_projects",
 		RESEARCH_PROJECTS,

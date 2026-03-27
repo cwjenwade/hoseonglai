@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import TeamCard from "./TeamCard";
 import { getSiteContentSection } from "@/lib/site-content-server";
-import { DEFAULT_BRAND_PAGE_CONTENT } from "./brand-content";
+import { DEFAULT_BRAND_PAGE_CONTENT, normalizeBrandPageContent } from "./brand-content";
 
 export const metadata: Metadata = {
   title: "品牌理念",
@@ -11,12 +11,20 @@ export const metadata: Metadata = {
 };
 
 export default async function BrandPhilosophyPage() {
-  const brandContent = await getSiteContentSection(
-    "brand_philosophy_page",
-    DEFAULT_BRAND_PAGE_CONTENT,
+  const brandContent = normalizeBrandPageContent(
+    await getSiteContentSection(
+      "brand_philosophy_page",
+      DEFAULT_BRAND_PAGE_CONTENT,
+    ),
   );
   const director = brandContent.director;
   const teamMembers = brandContent.teamMembers;
+  const teamSections = brandContent.teamSections
+    .map((section) => ({
+      ...section,
+      members: teamMembers.filter((member) => member.sectionId === section.id),
+    }))
+    .filter((section) => section.members.length > 0);
 
   return (
     <main className="w-full bg-[#FDFDFD] text-neutral-900">
@@ -94,7 +102,7 @@ export default async function BrandPhilosophyPage() {
                 {director.photo ? (
                   <Image
                     src={director.photo}
-                    alt={director.nameZh || "Brand Director"}
+                    alt={director.nameZh || "Branding Director"}
                     fill
                     className="object-cover"
                   />
@@ -103,7 +111,7 @@ export default async function BrandPhilosophyPage() {
                     className="text-[0.7rem] uppercase tracking-[0.3em] text-neutral-500"
                     style={{ fontFamily: "var(--font-geist)" }}
                   >
-                    Brand Director Photo
+                    Branding Director Photo
                   </span>
                 )}
               </div>
@@ -116,7 +124,7 @@ export default async function BrandPhilosophyPage() {
                 className="text-[0.7rem] uppercase tracking-[0.32em] text-neutral-400"
                 style={{ fontFamily: "var(--font-geist)" }}
               >
-                Brand Director
+                Branding Director
               </p>
 
               <h2
@@ -209,19 +217,44 @@ export default async function BrandPhilosophyPage() {
 
           </div>
 
-          <div className="grid gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-14 md:space-y-16">
+            {teamSections.map((section) => (
+              <section key={section.id} className="border-t border-neutral-300/60 pt-8 md:pt-10">
+                <div className="mb-8 md:mb-10">
+                  <p
+                    className="text-[0.68rem] uppercase tracking-[0.28em] text-neutral-400"
+                    style={{ fontFamily: "var(--font-geist)" }}
+                  >
+                    Team Row
+                  </p>
 
-            {teamMembers.map((member) => (
-              <div key={member.id} className="mx-auto w-full max-w-[360px] border border-neutral-300/60">
-                <TeamCard member={member} />
-              </div>
+                  <h3
+                    className="mt-3 text-[1.7rem] uppercase tracking-[0.12em] text-neutral-900 md:text-[2rem]"
+                    style={{ fontFamily: "var(--font-geist)" }}
+                  >
+                    {section.title}
+                  </h3>
+                </div>
+
+                <div
+                  className={[
+                    "grid gap-x-8 gap-y-12 md:grid-cols-2",
+                    section.members.length >= 3 ? "lg:grid-cols-3" : "lg:grid-cols-2",
+                  ].join(" ")}
+                >
+                  {section.members.map((member) => (
+                    <div key={member.id} className="mx-auto w-full max-w-[360px] border border-neutral-300/60">
+                      <TeamCard member={member} />
+                    </div>
+                  ))}
+                </div>
+              </section>
             ))}
-
           </div>
 
       </section>
 
-      </div>
+    </div>
     </main>
   );
 }

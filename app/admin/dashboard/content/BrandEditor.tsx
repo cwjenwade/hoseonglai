@@ -1,8 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { BrandPageContent } from "@/app/brand-philosophy/brand-content";
-import type { TeamMember } from "@/app/brand-philosophy/team-data";
+import {
+  normalizeBrandPageContent,
+  type BrandPageContent,
+} from "@/app/brand-philosophy/brand-content";
+import type { TeamMember, TeamSection, TeamSectionId } from "@/app/brand-philosophy/team-data";
 
 type BrandEditorProps = {
   initialContent: BrandPageContent;
@@ -16,24 +19,66 @@ function createEmptyMember(): TeamMember {
     nameZh: "",
     nameEn: "",
     profession: "",
-    role: "成員",
+    role: "",
     bio: "",
     photo: "",
     color: "from-zinc-500 to-zinc-600",
+    sectionId: "strategic_creative_team",
   };
 }
 
 export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditorProps) {
-  const [directorPhoto, setDirectorPhoto] = useState(initialContent.director.photo || "");
-  const [directorNameZh, setDirectorNameZh] = useState(initialContent.director.nameZh || "");
-  const [directorNameEn, setDirectorNameEn] = useState(initialContent.director.nameEn || "");
+  const normalizedContent = normalizeBrandPageContent(initialContent);
+  const [directorPhoto, setDirectorPhoto] = useState(normalizedContent.director.photo || "");
+  const [directorNameZh, setDirectorNameZh] = useState(normalizedContent.director.nameZh || "");
+  const [directorNameEn, setDirectorNameEn] = useState(normalizedContent.director.nameEn || "");
   const [affiliationLinesText, setAffiliationLinesText] = useState(
-    (initialContent.director.affiliationLines || []).join("\n"),
+    (normalizedContent.director.affiliationLines || []).join("\n"),
   );
   const [introParagraphsText, setIntroParagraphsText] = useState(
-    (initialContent.director.introParagraphs || []).join("\n\n"),
+    (normalizedContent.director.introParagraphs || []).join("\n\n"),
   );
-  const [members, setMembers] = useState<TeamMember[]>(initialContent.teamMembers || []);
+  const [teamSections, setTeamSections] = useState<TeamSection[]>(normalizedContent.teamSections || []);
+  const [members, setMembers] = useState<TeamMember[]>(normalizedContent.teamMembers || []);
+
+  function updateMember(index: number, updates: Partial<TeamMember>) {
+    setMembers((prev) => prev.map((member, i) => (i === index ? { ...member, ...updates } : member)));
+  }
+
+  function moveMemberWithinSection(index: number, direction: -1 | 1) {
+    setMembers((prev) => {
+      const currentMember = prev[index];
+      if (!currentMember) return prev;
+
+      const sectionIndexes = prev.reduce<number[]>((acc, member, memberIndex) => {
+        if (member.sectionId === currentMember.sectionId) {
+          acc.push(memberIndex);
+        }
+        return acc;
+      }, []);
+
+      const currentPosition = sectionIndexes.indexOf(index);
+      const targetIndex = sectionIndexes[currentPosition + direction];
+      if (targetIndex == null) return prev;
+
+      const next = [...prev];
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
+  }
+
+  function moveMemberToSection(index: number, sectionId: TeamSectionId) {
+    setMembers((prev) => {
+      const currentMember = prev[index];
+      if (!currentMember) return prev;
+      if (currentMember.sectionId === sectionId) return prev;
+
+      const next = [...prev];
+      const [movedMember] = next.splice(index, 1);
+      next.push({ ...movedMember, sectionId });
+      return next;
+    });
+  }
 
   const payload = useMemo<BrandPageContent>(() => {
     const affiliationLines = affiliationLinesText
@@ -54,14 +99,34 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
         affiliationLines,
         introParagraphs,
       },
-      teamMembers: members,
+      teamSections: teamSections.map((section) => ({
+        id: section.id,
+        title: section.title.trim(),
+      })),
+      teamMembers: members.map((member) => ({
+        ...member,
+        nameZh: member.nameZh.trim(),
+        nameEn: member.nameEn.trim(),
+        profession: member.profession.trim(),
+        role: member.role.trim(),
+        bio: member.bio.trim(),
+        photo: member.photo.trim(),
+      })),
     };
-  }, [directorPhoto, directorNameZh, directorNameEn, affiliationLinesText, introParagraphsText, members]);
+  }, [
+    directorPhoto,
+    directorNameZh,
+    directorNameEn,
+    affiliationLinesText,
+    introParagraphsText,
+    teamSections,
+    members,
+  ]);
 
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-zinc-900">Brand Director</h2>
+        <h2 className="text-xl font-semibold text-zinc-900">Branding Director</h2>
         <p className="mt-1 text-sm text-zinc-600">照片、姓名、學歷與介紹段落。</p>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -133,7 +198,7 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-zinc-900">Team Members</h2>
-            <p className="mt-1 text-sm text-zinc-600">可新增、刪除、修改每位成員欄位。</p>
+            <p className="mt-1 text-sm text-zinc-600">可調整分類標題、人員職稱、照片與 row 內排序。</p>
           </div>
           <button
             type="button"
@@ -144,97 +209,179 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
           </button>
         </div>
 
-        <div className="mt-5 space-y-4">
-          {members.map((member, index) => (
-            <article key={member.id || index} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="text-xs text-zinc-700">
-                  中文姓名
+        <div className="mt-5 space-y-6">
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+            <h3 className="text-sm font-semibold text-zinc-900">Team Row 標題</h3>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {teamSections.map((section, index) => (
+                <label key={section.id} className="text-xs text-zinc-700">
+                  Row {index + 2} 標題
                   <input
-                    value={member.nameZh}
+                    value={section.title}
                     onChange={(e) =>
-                      setMembers((prev) =>
-                        prev.map((m, i) => (i === index ? { ...m, nameZh: e.target.value } : m)),
+                      setTeamSections((prev) =>
+                        prev.map((item) =>
+                          item.id === section.id ? { ...item, title: e.target.value } : item,
+                        ),
                       )
                     }
                     className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
                   />
                 </label>
-                <label className="text-xs text-zinc-700">
-                  英文姓名
-                  <input
-                    value={member.nameEn}
-                    onChange={(e) =>
-                      setMembers((prev) =>
-                        prev.map((m, i) => (i === index ? { ...m, nameEn: e.target.value } : m)),
-                      )
-                    }
-                    className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  />
-                </label>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <div className="mt-3 grid gap-3 md:grid-cols-1">
-                <label className="text-xs text-zinc-700">
-                  專業
-                  <input
-                    value={member.profession}
-                    onChange={(e) =>
-                      setMembers((prev) =>
-                        prev.map((m, i) => (i === index ? { ...m, profession: e.target.value } : m)),
-                      )
-                    }
-                    className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  />
-                </label>
-              </div>
+          {teamSections.map((section) => {
+            const sectionMembers = members
+              .map((member, index) => ({ member, index }))
+              .filter(({ member }) => member.sectionId === section.id);
 
-              <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
-                <label className="text-xs text-zinc-700">
-                  照片路徑
-                  <input
-                    value={member.photo}
-                    onChange={(e) =>
-                      setMembers((prev) => prev.map((m, i) => (i === index ? { ...m, photo: e.target.value } : m)))
-                    }
-                    className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  />
-                </label>
-                {uploadedUrl ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMembers((prev) => prev.map((m, i) => (i === index ? { ...m, photo: uploadedUrl } : m)))
-                    }
-                    className="mt-5 rounded-full border border-sky-300 px-3 py-2 text-xs text-sky-700 transition hover:bg-sky-100"
-                  >
-                    套用最新上傳
-                  </button>
-                ) : null}
-              </div>
+            return (
+              <section key={section.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-zinc-900">{section.title || "未命名分類"}</h3>
+                    <p className="mt-1 text-xs text-zinc-600">在這個 row 內可直接調整成員順序與職稱。</p>
+                  </div>
+                  <span className="rounded-full border border-zinc-300 px-3 py-1 text-xs text-zinc-600">
+                    {sectionMembers.length} 位成員
+                  </span>
+                </div>
 
-              <label className="mt-3 block text-xs text-zinc-700">
-                介紹
-                <textarea
-                  value={member.bio}
-                  onChange={(e) =>
-                    setMembers((prev) => prev.map((m, i) => (i === index ? { ...m, bio: e.target.value } : m)))
-                  }
-                  className="mt-1 h-24 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
-                />
-              </label>
+                <div className="mt-4 space-y-4">
+                  {sectionMembers.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-6 text-sm text-zinc-500">
+                      目前這個分類還沒有成員，可從其他分類切換過來或新增成員。
+                    </div>
+                  ) : null}
 
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setMembers((prev) => prev.filter((_, i) => i !== index))}
-                  className="rounded-full border border-red-200 px-3 py-1 text-xs text-red-600 transition hover:bg-red-50"
-                >
-                  刪除成員
-                </button>
-              </div>
-            </article>
-          ))}
+                  {sectionMembers.map(({ member, index }, position) => (
+                    <article key={member.id || index} className="rounded-2xl border border-zinc-200 bg-white p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Position {position + 1}</p>
+                          <p className="mt-1 text-sm font-medium text-zinc-900">
+                            {member.nameZh || member.nameEn || "未命名成員"}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => moveMemberWithinSection(index, -1)}
+                            disabled={position === 0}
+                            className="rounded-full border border-zinc-300 px-3 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            上移
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveMemberWithinSection(index, 1)}
+                            disabled={position === sectionMembers.length - 1}
+                            className="rounded-full border border-zinc-300 px-3 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            下移
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMembers((prev) => prev.filter((_, i) => i !== index))}
+                            className="rounded-full border border-red-200 px-3 py-1 text-xs text-red-600 transition hover:bg-red-50"
+                          >
+                            刪除
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        <label className="text-xs text-zinc-700">
+                          中文姓名
+                          <input
+                            value={member.nameZh}
+                            onChange={(e) => updateMember(index, { nameZh: e.target.value })}
+                            className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                          />
+                        </label>
+                        <label className="text-xs text-zinc-700">
+                          英文姓名
+                          <input
+                            value={member.nameEn}
+                            onChange={(e) => updateMember(index, { nameEn: e.target.value })}
+                            className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        <label className="text-xs text-zinc-700">
+                          類別 / Row
+                          <select
+                            value={member.sectionId}
+                            onChange={(e) => moveMemberToSection(index, e.target.value as TeamSectionId)}
+                            className="mt-1 h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-amber-400"
+                          >
+                            {teamSections.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.title}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="text-xs text-zinc-700">
+                          職稱 / Position
+                          <input
+                            value={member.role}
+                            onChange={(e) => updateMember(index, { role: e.target.value })}
+                            className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                            placeholder="Founding Partner / Strategist / Coordinator"
+                          />
+                        </label>
+
+                        <label className="text-xs text-zinc-700">
+                          專業
+                          <input
+                            value={member.profession}
+                            onChange={(e) => updateMember(index, { profession: e.target.value })}
+                            className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
+                        <label className="text-xs text-zinc-700">
+                          照片路徑
+                          <input
+                            value={member.photo}
+                            onChange={(e) => updateMember(index, { photo: e.target.value })}
+                            className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                          />
+                        </label>
+                        {uploadedUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => updateMember(index, { photo: uploadedUrl })}
+                            className="mt-5 rounded-full border border-sky-300 px-3 py-2 text-xs text-sky-700 transition hover:bg-sky-100"
+                          >
+                            套用最新上傳
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <label className="mt-3 block text-xs text-zinc-700">
+                        介紹
+                        <textarea
+                          value={member.bio}
+                          onChange={(e) => updateMember(index, { bio: e.target.value })}
+                          className="mt-1 h-24 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+                        />
+                      </label>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </section>
 

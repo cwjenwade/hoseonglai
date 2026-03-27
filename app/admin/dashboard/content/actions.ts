@@ -8,7 +8,10 @@ import {
 	saveSiteContentImage,
 	saveSiteContentSection,
 } from "@/lib/site-content-server";
-import type { BrandPageContent } from "@/app/brand-philosophy/brand-content";
+import {
+	normalizeBrandPageContent,
+	type BrandPageContent,
+} from "@/app/brand-philosophy/brand-content";
 import type { ResearchProject } from "@/app/collaborative-prosperity/projects";
 import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
@@ -47,7 +50,7 @@ export async function saveBrandPageContent(formData: FormData) {
 
 	let parsed: BrandPageContent;
 	try {
-		parsed = JSON.parse(payload) as BrandPageContent;
+		parsed = normalizeBrandPageContent(JSON.parse(payload) as BrandPageContent);
 	} catch {
 		redirect("/admin/dashboard/content?tab=brand&error=json");
 	}
