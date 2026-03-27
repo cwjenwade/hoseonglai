@@ -53,7 +53,7 @@ export default async function BrandPhilosophyPage() {
             </div>
 
             <div
-              className="max-w-[62ch] space-y-6 text-[20px] leading-[1.95] text-neutral-700"
+              className="max-w-[62ch] space-y-6 text-center text-[20px] leading-[1.95] text-neutral-700 md:text-left"
               style={{ fontFamily: "var(--font-geist)" }}
             >
               <p>
