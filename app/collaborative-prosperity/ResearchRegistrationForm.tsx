@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 
 type ResearchRegistrationProps = {
@@ -20,8 +20,9 @@ export default function ResearchRegistrationForm({
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
+  const submitFormRef = useRef<() => Promise<void>>(async () => {});
 
-  const submitForm = async () => {
+  submitFormRef.current = async () => {
     if (loading || submitted) return;
     if (!name.trim() || !email.trim()) {
       alert("請至少填寫姓名與 Email");
@@ -57,7 +58,7 @@ export default function ResearchRegistrationForm({
     if (!name.trim() || !email.trim() || submitted) return;
 
     const timer = setTimeout(() => {
-      void submitForm();
+      void submitFormRef.current();
     }, 800);
 
     return () => clearTimeout(timer);
@@ -65,7 +66,7 @@ export default function ResearchRegistrationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitForm();
+    await submitFormRef.current();
   };
 
   if (submitted) {

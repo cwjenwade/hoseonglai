@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type LectureRegistrationProps = {
@@ -27,8 +27,9 @@ export default function LectureRegistrationForm({
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
+  const submitFormRef = useRef<() => Promise<void>>(async () => {});
 
-  const submitForm = async () => {
+  submitFormRef.current = async () => {
     if (loading || submitted) return;
     if (!name.trim() || !email.trim() || !phone.trim()) {
       alert("請填寫所有欄位");
@@ -74,7 +75,7 @@ export default function LectureRegistrationForm({
     if (!name.trim() || !email.trim() || !phone.trim() || submitted) return;
 
     const timer = setTimeout(() => {
-      void submitForm();
+      void submitFormRef.current();
     }, 800);
 
     return () => clearTimeout(timer);
@@ -82,7 +83,7 @@ export default function LectureRegistrationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitForm();
+    await submitFormRef.current();
   };
 
   if (submitted) {

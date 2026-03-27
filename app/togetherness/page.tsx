@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { GROUPS } from "./group-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
@@ -110,11 +111,13 @@ export default async function TogethernessPage() {
                 href={`/togetherness/${group.slug}`}
                 className="relative block p-0 text-left transition-[padding,transform,box-shadow] duration-300 ease-out hover:z-20 hover:-translate-y-2 hover:p-5 hover:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:z-20 focus-visible:-translate-y-2 focus-visible:p-5 focus-visible:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:outline-none"
               >
-                <div className="aspect-[4/5] overflow-hidden bg-neutral-200">
-                  <img
+                <div className="relative aspect-[4/5] overflow-hidden bg-neutral-200">
+                  <Image
                     src={group.image}
                     alt={group.title}
-                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                    fill
+                    sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 100vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                   />
                 </div>
 

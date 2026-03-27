@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { HeartfeltVideoItem } from "./videos-data";
 
@@ -41,11 +42,13 @@ export function VideoGallery({ videos }: VideoGalleryProps) {
             className="group relative z-0 w-full p-0 text-left transition-[padding,transform,box-shadow] duration-300 ease-out hover:z-20 hover:-translate-y-2 hover:p-5 hover:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:z-20 focus-visible:-translate-y-2 focus-visible:p-5 focus-visible:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:outline-none"
           >
             <article>
-              <div className="aspect-[4/3] w-full overflow-hidden bg-[#f1eee8]">
-                <img
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#f1eee8]">
+                <Image
                   src={video.image}
                   alt={video.title}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  fill
+                  sizes="(min-width: 1280px) 23vw, (min-width: 768px) 45vw, 100vw"
+                  className="object-cover transition duration-500 group-hover:scale-[1.03]"
                 />
               </div>
 
