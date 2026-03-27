@@ -32,13 +32,6 @@ export default async function BrandPhilosophyPage() {
 
       {/* HERO */}
       <section className="mb-14 border-b border-neutral-300/60 pb-8 md:mb-16 md:pb-10">
-          <p
-            className="text-[0.7rem] uppercase tracking-[0.32em] text-neutral-400"
-            style={{ fontFamily: "var(--font-geist)" }}
-          >
-            Brand Platform
-          </p>
-
           <h1
             className="mt-8 text-center text-[2.5rem] leading-none uppercase tracking-[0.2em] text-neutral-900 md:text-[4rem] xl:text-[4.9rem]"
             style={{ fontFamily: "var(--font-geist)" }}
@@ -60,7 +53,7 @@ export default async function BrandPhilosophyPage() {
             </div>
 
             <div
-              className="max-w-[62ch] space-y-6 text-[1.08rem] leading-[1.95] text-neutral-700"
+              className="max-w-[62ch] space-y-6 text-[20px] leading-[1.95] text-neutral-700"
               style={{ fontFamily: "var(--font-geist)" }}
             >
               <p>
@@ -153,7 +146,7 @@ export default async function BrandPhilosophyPage() {
                   </p>
 
                   <div
-                    className="mt-3 text-[0.95rem] leading-7 text-neutral-700"
+                    className="mt-3 text-[1.08rem] leading-7 text-neutral-700"
                     style={{ fontFamily: "var(--font-geist)" }}
                   >
                     {director.affiliationLines.map((line, index) => {
@@ -200,20 +193,6 @@ export default async function BrandPhilosophyPage() {
       {/* TEAM */}
       <section id="team">
           <div className="mb-12 md:mb-14">
-
-            <p
-              className="text-[0.7rem] uppercase tracking-[0.32em] text-neutral-400"
-              style={{ fontFamily: "var(--font-geist)" }}
-            >
-              Team
-            </p>
-
-            <h2
-              className="mt-4 text-[2.4rem] uppercase tracking-[0.12em] text-neutral-900 sm:text-[2.9rem]"
-              style={{ fontFamily: "var(--font-geist)" }}
-            >
-              The people
-            </h2>
 
           </div>
 
