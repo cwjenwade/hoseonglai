@@ -37,7 +37,27 @@ export const metadata: Metadata = {
     template: "%s｜Ho-Se 好勢｜Ong-Lai 旺來",
   },
   description:
-    "Ho-Se 好勢・Ong-Lai 旺來。以心聚勢，以運旺來，團圓共好。結合研究、內容、社群與合作的品牌平台。",
+    "Ho-Se 好勢・Ong-Lai 旺來。任祈蔚 - 諮商心理師，專長諮商心理、團體諮商與諮商心理治療，提供心理健康支持與團體治療課程。",
+  keywords: [
+    "任祈蔚",
+    "諮商心理師",
+    "心理健康",
+    "團體諮商",
+    "諮商心理治療",
+  ],
+  openGraph: {
+    title: "任祈蔚 — 諮商心理師｜心理健康·團體諮商",
+    description:
+      "任祈蔚，註冊諮商心理師，提供諮商心理治療與心理健康團體諮商，歡迎預約或了解團體課程。",
+    url: "https://你的網站/",
+    siteName: "Ho-Se 好勢｜Ong-Lai 旺來",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "任祈蔚 — 諮商心理師｜心理健康·團體諮商",
+    description:
+      "任祈蔚，註冊諮商心理師，專長諮商心理、團體諮商與諮商心理治療。",
+  },
 };
 
 export default function RootLayout({
@@ -93,6 +113,7 @@ export default function RootLayout({
                         >
                           Ong-Lai 旺來
                         </h2>
+                        <span className="sr-only">任祈蔚</span>
                       </div>
 
                       <div className="max-w-2xl space-y-2 pt-2">
@@ -156,6 +177,41 @@ export default function RootLayout({
               </div>
             </div>
           </header>
+
+          {/* JSON-LD: Person (structured data for SEO) */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Person",
+                name: "任祈蔚",
+                jobTitle: "諮商心理師",
+                description:
+                  "註冊諮商心理師，提供個別諮商與團體諮商、諮商心理治療，專注心理健康促進。",
+              }),
+            }}
+          />
+
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "ProfessionalService",
+                name: "任祈蔚 諮商心理服務",
+                serviceType: ["諮商心理","團體諮商","諮商心理治療"],
+                provider: {
+                  "@type": "Person",
+                  name: "任祈蔚",
+                  jobTitle: "諮商心理師",
+                },
+                description:
+                  "提供個別諮商與團體諮商服務，專注心理健康與團體治療。",
+                url: "https://你的網站/therapist/ren",
+              }),
+            }}
+          />
 
           {/* MAIN CONTENT */}
           <main className="flex-1 w-full">
