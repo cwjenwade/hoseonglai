@@ -9,6 +9,12 @@ import Link from "next/link";
 import NewsletterSubscription from "./NewsletterSubscription";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const personSameAs = (process.env.NEXT_PUBLIC_PERSON_SAME_AS || "")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -32,9 +38,13 @@ const notoSerif = Noto_Serif_TC({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Ho-Se 好勢｜Ong-Lai 旺來",
     template: "%s｜Ho-Se 好勢｜Ong-Lai 旺來",
+  },
+  alternates: {
+    canonical: "/",
   },
   description:
     "Ho-Se 好勢・Ong-Lai 旺來。任祈蔚 - 諮商心理師，專長諮商心理、團體諮商與諮商心理治療，提供心理健康支持與團體治療課程。",
@@ -49,8 +59,19 @@ export const metadata: Metadata = {
     title: "任祈蔚 — 諮商心理師｜心理健康·團體諮商",
     description:
       "任祈蔚，註冊諮商心理師，提供諮商心理治療與心理健康團體諮商，歡迎預約或了解團體課程。",
-    url: "https://你的網站/",
+    url: "/",
     siteName: "Ho-Se 好勢｜Ong-Lai 旺來",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
   },
   twitter: {
     card: "summary_large_image",
@@ -189,6 +210,7 @@ export default function RootLayout({
                 jobTitle: "諮商心理師",
                 description:
                   "註冊諮商心理師，提供個別諮商與團體諮商、諮商心理治療，專注心理健康促進。",
+                ...(personSameAs.length > 0 ? { sameAs: personSameAs } : {}),
               }),
             }}
           />
@@ -205,6 +227,7 @@ export default function RootLayout({
                   "@type": "Person",
                   name: "任祈蔚",
                   jobTitle: "諮商心理師",
+                  ...(personSameAs.length > 0 ? { sameAs: personSameAs } : {}),
                 },
                 description:
                   "提供個別諮商與團體諮商服務，專注心理健康與團體治療。",

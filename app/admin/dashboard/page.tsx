@@ -1,8 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { adminLogout } from "../actions";
 import { deleteProjectData } from "./actions";
+
+export const metadata: Metadata = {
+  title: "管理後台儀表板",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type RegistrationData = {
   id: string;

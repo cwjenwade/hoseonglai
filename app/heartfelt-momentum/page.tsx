@@ -2,6 +2,13 @@ import { Geist, Noto_Serif_TC, Playfair_Display } from "next/font/google";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import { HEARTFELT_VIDEOS } from "./videos-data";
 import { VideoGallery } from "./VideoGallery";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "任祈蔚｜心理健康內容與研究影片",
+  description:
+    "任祈蔚的心理健康內容與研究影片頁，整理與諮商心理、團體諮商、心理治療相關的短影音與知識內容。",
+};
 
 const geist = Geist({
   subsets: ["latin"],

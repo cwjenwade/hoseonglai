@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import LectureRegistrationForm from "@/app/fortune-arrives/LectureRegistrationForm";
 import { LECTURES } from "@/app/fortune-arrives/lectures-data";
@@ -6,6 +7,27 @@ import { getSiteContentSection } from "@/lib/site-content-server";
 type LectureDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: LectureDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const lectures = await getSiteContentSection("fortune_arrives_lectures", LECTURES);
+  const lecture = lectures.find((item) => item.slug === slug);
+
+  if (!lecture) {
+    return {
+      title: "講座與課程",
+      description: "任祈蔚相關講座與課程資訊。",
+    };
+  }
+
+  const title = lecture.titleZh;
+  const speaker = lecture.speaker || "任祈蔚"
+
+  return {
+    title: `${title}｜講座詳情`,
+    description: `${title}。講師：${speaker}。時間：${lecture.dateLabel} ${lecture.time}。${lecture.locationZh || "活動地點待公布"}。`,
+  };
+}
 
 export default async function LectureDetailPage({ params }: LectureDetailPageProps) {
   const { slug } = await params;

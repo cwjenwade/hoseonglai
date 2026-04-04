@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "任祈蔚｜諮商心理師｜心理健康與團體諮商",
+  description:
+    "任祈蔚，諮商心理師，專長諮商心理治療、心理健康支持與團體諮商。認識服務內容、研究內容與團體方案。",
+};
 
 export default function Home() {
   const platformFeatures = [

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { adminLogout } from "@/app/admin/actions";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { getSiteContentSection } from "@/lib/site-content-server";
@@ -32,6 +33,14 @@ import {
 	uploadTogethernessImage,
 	uploadBrandImage,
 } from "./actions";
+
+export const metadata: Metadata = {
+	title: "管理後台內容編輯",
+	robots: {
+		index: false,
+		follow: false,
+	},
+};
 
 type PageProps = {
 	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string; tab?: string }>;

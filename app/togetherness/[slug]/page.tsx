@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import GroupRegistrationForm from "@/app/togetherness/GroupRegistrationForm";
@@ -7,6 +8,24 @@ import { getSiteContentSection } from "@/lib/site-content-server";
 type GroupDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: GroupDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const groups = await getSiteContentSection("togetherness_groups", GROUPS);
+  const group = groups.find((item) => item.slug === slug);
+
+  if (!group) {
+    return {
+      title: "團體諮商",
+      description: "任祈蔚的團體諮商與團體心理治療資訊。",
+    };
+  }
+
+  return {
+    title: `${group.title}｜團體諮商`,
+    description: `${group.title}｜${group.subtitle}。${group.description} 任祈蔚團體諮商與團體心理治療資訊。`,
+  };
+}
 
 export default async function GroupDetailPage({ params }: GroupDetailPageProps) {
   const { slug } = await params;
