@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendGroupRegistrationEmail } from "@/lib/email";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { getSiteContentSection } from "@/lib/site-content-server";
-import {
-  DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
-  normalizeTogethernessRegistrationCopy,
-} from "@/app/togetherness/registration-copy";
+import { GROUPS, DEFAULT_GROUP_FOLLOW_UP_NOTE } from "@/app/togetherness/group-data";
 
 type GroupRegisterPayload = {
   groupSlug: string;
@@ -63,12 +60,9 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const registrationCopy = normalizeTogethernessRegistrationCopy(
-        await getSiteContentSection(
-          "togetherness_registration_copy",
-          DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
-        ),
-      );
+      const groups = await getSiteContentSection("togetherness_groups", GROUPS);
+      const matchedGroup = groups.find((item) => item.slug === groupSlug);
+      const followUpNote = matchedGroup?.followUpNote || DEFAULT_GROUP_FOLLOW_UP_NOTE;
 
       await sendGroupRegistrationEmail({
         to: email.trim().toLowerCase(),
@@ -76,7 +70,7 @@ export async function POST(req: NextRequest) {
         groupTitle,
         consultationSlots,
         availabilitySlots,
-        followUpNote: registrationCopy.followUpNote,
+        followUpNote,
       });
     } catch (emailError) {
       console.error("GROUP_REGISTRATION_EMAIL_ERROR", emailError);

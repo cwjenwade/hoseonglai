@@ -2,11 +2,18 @@
 
 import { useMemo, useState } from "react";
 import type { GroupItem } from "@/app/togetherness/group-data";
-import type { TogethernessRegistrationCopy } from "@/app/togetherness/registration-copy";
+
+type LeaderOption = {
+  id: string;
+  nameZh: string;
+  nameEn: string;
+  titleZh: string;
+  photo: string;
+};
 
 type TogethernessGroupsEditorProps = {
   initialGroups: GroupItem[];
-  initialRegistrationCopy: TogethernessRegistrationCopy;
+  leaderOptions: LeaderOption[];
   uploadedUrl?: string;
 };
 
@@ -18,33 +25,33 @@ function createEmptyGroup(): GroupItem {
     subtitle: "",
     description: "",
     image: "",
+    leaderProfileId: "",
+    leaderNameZh: "",
+    leaderNameEn: "",
+    leaderTitleZh: "",
+    leaderPhoto: "",
+    approach: "",
+    suitableFor: "",
+    consultationNote: "",
+    followUpNote: "",
   };
 }
 
 export default function TogethernessGroupsEditor({
   initialGroups,
-  initialRegistrationCopy,
+  leaderOptions,
   uploadedUrl,
 }: TogethernessGroupsEditorProps) {
   const [groups, setGroups] = useState<GroupItem[]>(initialGroups || []);
-  const [registrationCopy, setRegistrationCopy] = useState<TogethernessRegistrationCopy>(
-    initialRegistrationCopy,
-  );
 
-  const payload = useMemo(
-    () => ({
-      groups,
-      registrationCopy,
-    }),
-    [groups, registrationCopy],
-  );
+  const payload = useMemo(() => groups, [groups]);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-zinc-900">Togetherness 編輯器</h2>
-          <p className="mt-1 text-sm text-zinc-600">管理團體諮商卡片（slug、標題、副標、描述、圖片）。</p>
+          <p className="mt-1 text-sm text-zinc-600">管理團體諮商卡片（每個團體可各自設定帶領者、文案、圖片）。</p>
         </div>
 
         <button
@@ -57,57 +64,6 @@ export default function TogethernessGroupsEditor({
       </div>
 
       <div className="space-y-4">
-        <article className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-          <h3 className="text-sm font-semibold text-zinc-900">團體頁固定文案（可編輯）</h3>
-          <p className="mt-1 text-xs text-zinc-500">這四段會顯示在團體詳情頁與寄信內容。</p>
-
-          <div className="mt-3 space-y-3">
-            <label className="block text-xs text-zinc-700">
-              帶領方式
-              <textarea
-                value={registrationCopy.approach}
-                onChange={(e) =>
-                  setRegistrationCopy((prev) => ({ ...prev, approach: e.target.value }))
-                }
-                className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
-              />
-            </label>
-
-            <label className="block text-xs text-zinc-700">
-              適合族群
-              <textarea
-                value={registrationCopy.suitableFor}
-                onChange={(e) =>
-                  setRegistrationCopy((prev) => ({ ...prev, suitableFor: e.target.value }))
-                }
-                className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
-              />
-            </label>
-
-            <label className="block text-xs text-zinc-700">
-              初談說明
-              <textarea
-                value={registrationCopy.consultationNote}
-                onChange={(e) =>
-                  setRegistrationCopy((prev) => ({ ...prev, consultationNote: e.target.value }))
-                }
-                className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
-              />
-            </label>
-
-            <label className="block text-xs text-zinc-700">
-              後續聯繫
-              <textarea
-                value={registrationCopy.followUpNote}
-                onChange={(e) =>
-                  setRegistrationCopy((prev) => ({ ...prev, followUpNote: e.target.value }))
-                }
-                className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
-              />
-            </label>
-          </div>
-        </article>
-
         {groups.map((group, index) => (
           <article key={`${group.slug}-${index}`} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
             <div className="grid gap-3 md:grid-cols-2">
@@ -165,6 +121,159 @@ export default function TogethernessGroupsEditor({
                 className="mt-1 h-24 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
               />
             </label>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <label className="text-xs text-zinc-700">
+                團體帶領者（可從 Brand Identity 選）
+                <select
+                  value={group.leaderProfileId || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => {
+                        if (i !== index) return item;
+                        const matched = leaderOptions.find((option) => option.id === e.target.value);
+                        if (!matched) {
+                          return {
+                            ...item,
+                            leaderProfileId: "",
+                          };
+                        }
+                        return {
+                          ...item,
+                          leaderProfileId: matched.id,
+                          leaderNameZh: matched.nameZh,
+                          leaderNameEn: matched.nameEn,
+                          leaderTitleZh: matched.titleZh,
+                          leaderPhoto: matched.photo,
+                        };
+                      }),
+                    )
+                  }
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                >
+                  <option value="">不指定（手動填寫）</option>
+                  {leaderOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.nameZh} / {option.nameEn}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-xs text-zinc-700">
+                帶領者頭像（圓框）
+                <input
+                  value={group.leaderPhoto || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, leaderPhoto: e.target.value } : item)),
+                    )
+                  }
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  placeholder="https://..."
+                />
+              </label>
+            </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <label className="text-xs text-zinc-700">
+                帶領者中文名
+                <input
+                  value={group.leaderNameZh || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, leaderNameZh: e.target.value } : item)),
+                    )
+                  }
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  placeholder="任祈蔚"
+                />
+              </label>
+
+              <label className="text-xs text-zinc-700">
+                帶領者英文名
+                <input
+                  value={group.leaderNameEn || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, leaderNameEn: e.target.value } : item)),
+                    )
+                  }
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  placeholder="Jen Chi-Wei"
+                />
+              </label>
+
+              <label className="text-xs text-zinc-700">
+                身分標示
+                <input
+                  value={group.leaderTitleZh || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, leaderTitleZh: e.target.value } : item)),
+                    )
+                  }
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  placeholder="諮商心理師"
+                />
+              </label>
+            </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <label className="block text-xs text-zinc-700">
+                帶領方式（此團體）
+                <textarea
+                  value={group.approach || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, approach: e.target.value } : item)),
+                    )
+                  }
+                  className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+                />
+              </label>
+
+              <label className="block text-xs text-zinc-700">
+                適合族群（此團體）
+                <textarea
+                  value={group.suitableFor || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, suitableFor: e.target.value } : item)),
+                    )
+                  }
+                  className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+                />
+              </label>
+            </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <label className="block text-xs text-zinc-700">
+                初談說明（此團體）
+                <textarea
+                  value={group.consultationNote || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, consultationNote: e.target.value } : item)),
+                    )
+                  }
+                  className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+                />
+              </label>
+
+              <label className="block text-xs text-zinc-700">
+                後續聯繫（此團體）
+                <textarea
+                  value={group.followUpNote || ""}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, followUpNote: e.target.value } : item)),
+                    )
+                  }
+                  className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+                />
+              </label>
+            </div>
 
             <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
               <label className="text-xs text-zinc-700">

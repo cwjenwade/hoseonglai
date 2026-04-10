@@ -1,30 +1,21 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import GroupRegistrationForm from "@/app/togetherness/GroupRegistrationForm";
-import { GROUPS } from "@/app/togetherness/group-data";
 import {
-  DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
-  normalizeTogethernessRegistrationCopy,
-} from "@/app/togetherness/registration-copy";
+  DEFAULT_BRAND_PAGE_CONTENT,
+  normalizeBrandPageContent,
+} from "@/app/brand-philosophy/brand-content";
+import {
+  GROUPS,
+  DEFAULT_GROUP_CONSULTATION_NOTE,
+  DEFAULT_GROUP_FOLLOW_UP_NOTE,
+  DEFAULT_GROUP_LEADER_NAME_EN,
+  DEFAULT_GROUP_LEADER_NAME_ZH,
+  DEFAULT_GROUP_LEADER_TITLE_ZH,
+} from "@/app/togetherness/group-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
-
-const GROUP_THERAPIST_COPY: Record<
-  string,
-  {
-    therapist: string;
-  }
-> = {
-  "group-counseling": {
-    therapist: "任祈蔚心理師帶領，並由督導系統持續支持與討論。",
-  },
-  "group-psychotherapy": {
-    therapist: "任祈蔚心理師帶領，並由督導系統持續支持與討論。",
-  },
-  "interpersonal-group": {
-    therapist: "任祈蔚心理師帶領，並由督導系統持續支持與討論。",
-  },
-};
 
 type GroupDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -51,11 +42,8 @@ export async function generateMetadata({ params }: GroupDetailPageProps): Promis
 export default async function GroupDetailPage({ params }: GroupDetailPageProps) {
   const { slug } = await params;
   const groups = await getSiteContentSection("togetherness_groups", GROUPS);
-  const registrationCopy = normalizeTogethernessRegistrationCopy(
-    await getSiteContentSection(
-      "togetherness_registration_copy",
-      DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
-    ),
+  const brandContent = normalizeBrandPageContent(
+    await getSiteContentSection("brand_philosophy_page", DEFAULT_BRAND_PAGE_CONTENT),
   );
   const group = groups.find((item) => item.slug === slug);
 
@@ -63,10 +51,15 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
     notFound();
   }
 
-  const detailCopy = GROUP_THERAPIST_COPY[group.slug] || GROUP_THERAPIST_COPY["group-counseling"];
+  const consultationNote = group.consultationNote || DEFAULT_GROUP_CONSULTATION_NOTE;
+  const followUpNote = group.followUpNote || DEFAULT_GROUP_FOLLOW_UP_NOTE;
+  const leaderNameZh = group.leaderNameZh || DEFAULT_GROUP_LEADER_NAME_ZH;
+  const leaderNameEn = group.leaderNameEn || DEFAULT_GROUP_LEADER_NAME_EN;
+  const leaderTitleZh = group.leaderTitleZh || DEFAULT_GROUP_LEADER_TITLE_ZH;
+  const leaderPhoto = group.leaderPhoto || brandContent.director.photo;
 
   return (
-    <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
+    <main className="min-h-screen bg-[#f2f7f6] text-[#171717]" style={{ fontFamily: "var(--font-serif)" }}>
       <div className="w-full px-6 py-8 md:px-10 md:py-10 lg:px-14">
         <Link
           href="/togetherness"
@@ -81,21 +74,32 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
               <p className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400">
                 Group Registration
               </p>
-              <h1 className="max-w-[7ch] text-[clamp(3rem,7vw,6.25rem)] leading-[0.95] tracking-[-0.04em] text-neutral-900">
+
+              <div className="flex items-center gap-4 rounded-2xl border border-neutral-300/70 bg-white/75 px-4 py-3">
+                <div className="relative h-16 w-16 overflow-hidden rounded-full border border-neutral-300 bg-neutral-100">
+                  {leaderPhoto ? (
+                    <Image
+                      src={leaderPhoto}
+                      alt={leaderNameZh}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">團體帶領者</p>
+                  <p className="text-[1.05rem] font-medium text-neutral-900">{leaderNameZh} {leaderTitleZh}</p>
+                  <p className="text-[0.9rem] text-neutral-600">{leaderNameEn}</p>
+                </div>
+              </div>
+
+              <h1 className="max-w-[7ch] text-[3.5rem] leading-[0.95] tracking-[-0.04em] text-neutral-900">
                 {group.title}
               </h1>
               <p className="text-[0.95rem] uppercase tracking-[0.2em] text-neutral-500 md:text-[1rem]">
                 {group.subtitle}
               </p>
-            </div>
-
-            <div className="space-y-5 text-[1rem] leading-[1.95] text-neutral-700 md:text-[1.04rem]">
-              <p>{group.description}</p>
-              <p>{registrationCopy.approach}</p>
-              <div className="space-y-2 rounded-[1.5rem] border border-neutral-300/70 bg-white/70 p-5 text-[0.95rem] leading-[1.9] text-neutral-700">
-                <p><span className="font-medium text-neutral-900">適合族群：</span>{registrationCopy.suitableFor}</p>
-                <p><span className="font-medium text-neutral-900">帶領心理師：</span>{detailCopy.therapist}</p>
-              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -124,18 +128,13 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                   先理解這個團體，再進入預約流程
                 </h2>
                 <p className="max-w-[52ch] text-[0.98rem] leading-[1.9] text-neutral-600 md:text-[1.02rem]">
-                  這一頁先讓你看清楚團體的帶領方式、適合參與的族群，以及帶領心理師的背景。
-                  看完後再往下預約初談時間，整個流程會更清楚。
+                  你可以先看團體帶領者與初談說明，再往下填寫初談與參與時段。
                 </p>
               </div>
 
               <div className="rounded-[1.5rem] bg-[#f6f7f7] p-5 text-[0.92rem] leading-[1.9] text-neutral-700">
-                <p className="font-medium text-neutral-900">初談說明</p>
                 <p>
-                  初談將由心理與諮商學系研究生或學士班學生進行，並在督導之下，接受過評估與訪談的方法訓練。
-                </p>
-                <p>
-                  {registrationCopy.consultationNote}
+                  {consultationNote}
                 </p>
               </div>
             </div>
@@ -144,8 +143,8 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
               <GroupRegistrationForm
                 groupSlug={group.slug}
                 groupTitle={group.title}
-                consultationNote={registrationCopy.consultationNote}
-                followUpNote={registrationCopy.followUpNote}
+                consultationNote={consultationNote}
+                followUpNote={followUpNote}
               />
             </div>
           </section>

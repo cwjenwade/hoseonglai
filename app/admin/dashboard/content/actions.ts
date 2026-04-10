@@ -17,11 +17,16 @@ import type { PsychometricScale } from "@/app/collaborative-prosperity/assessmen
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
-import type { GroupItem } from "@/app/togetherness/group-data";
 import {
-	DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
-	normalizeTogethernessRegistrationCopy,
-} from "@/app/togetherness/registration-copy";
+	type GroupItem,
+	DEFAULT_GROUP_APPROACH,
+	DEFAULT_GROUP_CONSULTATION_NOTE,
+	DEFAULT_GROUP_FOLLOW_UP_NOTE,
+	DEFAULT_GROUP_LEADER_NAME_EN,
+	DEFAULT_GROUP_LEADER_NAME_ZH,
+	DEFAULT_GROUP_LEADER_TITLE_ZH,
+	DEFAULT_GROUP_SUITABLE_FOR,
+} from "@/app/togetherness/group-data";
 
 async function requireAdminUser() {
 	const supabase = await getSupabaseServerClient();
@@ -740,16 +745,6 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 		redirect("/admin/dashboard/content?tab=togetherness&error=json");
 	}
 
-	const rawRegistrationCopy =
-		parsed && typeof parsed === "object" && !Array.isArray(parsed)
-			? (parsed as { registrationCopy?: unknown }).registrationCopy
-			: null;
-
-	const cleanedRegistrationCopy = normalizeTogethernessRegistrationCopy(
-		(rawRegistrationCopy as Partial<typeof DEFAULT_TOGETHERNESS_REGISTRATION_COPY> | null) ??
-			DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
-	);
-
 	const cleanedGroups: GroupItem[] = [];
 
 	for (let index = 0; index < rawGroups.length; index += 1) {
@@ -765,6 +760,16 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 		const subtitle = String(item.subtitle || "").trim();
 		const description = String(item.description || "").trim();
 		const image = String(item.image || "").trim();
+		const leaderProfileId = String(item.leaderProfileId || "").trim();
+		const leaderNameZh = String(item.leaderNameZh || "").trim() || DEFAULT_GROUP_LEADER_NAME_ZH;
+		const leaderNameEn = String(item.leaderNameEn || "").trim() || DEFAULT_GROUP_LEADER_NAME_EN;
+		const leaderTitleZh = String(item.leaderTitleZh || "").trim() || DEFAULT_GROUP_LEADER_TITLE_ZH;
+		const leaderPhoto = String(item.leaderPhoto || "").trim();
+		const approach = String(item.approach || "").trim() || DEFAULT_GROUP_APPROACH;
+		const suitableFor = String(item.suitableFor || "").trim() || DEFAULT_GROUP_SUITABLE_FOR;
+		const consultationNote =
+			String(item.consultationNote || "").trim() || DEFAULT_GROUP_CONSULTATION_NOTE;
+		const followUpNote = String(item.followUpNote || "").trim() || DEFAULT_GROUP_FOLLOW_UP_NOTE;
 
 		if (!slug || !title || !subtitle || !description || !image) {
 			const detail = encodeURIComponent(`第${index + 1}筆有未填欄位`);
@@ -777,6 +782,15 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 			subtitle,
 			description,
 			image,
+			leaderProfileId: leaderProfileId || undefined,
+			leaderNameZh,
+			leaderNameEn,
+			leaderTitleZh,
+			leaderPhoto: leaderPhoto || undefined,
+			approach,
+			suitableFor,
+			consultationNote,
+			followUpNote,
 		});
 	}
 
@@ -786,7 +800,6 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 
 	try {
 		await saveSiteContentSection("togetherness_groups", cleanedGroups);
-		await saveSiteContentSection("togetherness_registration_copy", cleanedRegistrationCopy);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=togetherness&error=readonly_fs");
