@@ -2,6 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { adminLogout } from "@/app/admin/actions";
+
+type PageProps = {
+	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string; tab?: string }>;
+};
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import {
@@ -34,13 +38,13 @@ import {
 	uploadBrandImage,
 } from "./actions";
 
-export const metadata: Metadata = {
-	title: "管理後台內容編輯",
-	robots: {
-		index: false,
-		follow: false,
-	},
-};
+// export const metadata: Metadata = {
+// 	title: "管理後台內容編輯",
+// 	robots: {
+// 		index: false,
+// 		follow: false,
+// 	},
+// };
 
 type PageProps = {
 	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string; tab?: string }>;
@@ -167,20 +171,25 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 			</div>
 
 			{resolvedSearchParams.saved ? (
-				<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-					{resolvedSearchParams.saved === "brand"
-						? "品牌理念內容已更新"
-						: resolvedSearchParams.saved === "collaborative"
-							? "協力招來內容已更新"
-							: resolvedSearchParams.saved === "psychometrics"
-								? "心理量表內容已更新"
-								: resolvedSearchParams.saved === "consent"
-									? "研究同意書內容已更新"
-							: resolvedSearchParams.saved === "heartfelt"
-								? "有心好勢內容已更新"
-							: resolvedSearchParams.saved === "fortune"
-								? "有運旺來內容已更新"
-							: "內容已更新"}
+				<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 flex items-center gap-2">
+					<span className="text-lg">✓</span>
+					<span>
+						{resolvedSearchParams.saved === "brand"
+							? "品牌理念內容已更新"
+							: resolvedSearchParams.saved === "collaborative"
+								? "協力招來內容已更新"
+								: resolvedSearchParams.saved === "psychometrics"
+									? "心理量表內容已更新"
+									: resolvedSearchParams.saved === "consent"
+										? "研究同意書內容已更新"
+								: resolvedSearchParams.saved === "heartfelt"
+									? "有心好勢內容已更新"
+								: resolvedSearchParams.saved === "fortune"
+									? "有運旺來內容已更新"
+								: resolvedSearchParams.saved === "togetherness"
+									? "團體諮商內容已更新"
+								: "內容已更新"}
+					</span>
 				</div>
 			) : null}
 
@@ -236,16 +245,17 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 						</form>
 					</div>
 
-					<form action={saveBrandPageContent}>
+					<form action={saveBrandPageContent} className="space-y-4">
 						<BrandEditor
 							initialContent={brandContent}
 							uploadedUrl={resolvedSearchParams.uploaded}
 						/>
 
-						<div className="mt-5 flex justify-end">
+						<div className="mt-5 flex justify-end gap-3">
+							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
 							<button
 								type="submit"
-								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								儲存 Brand 內容
 							</button>
@@ -256,15 +266,14 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "collaborative" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-					<form action={saveCollaborativeProjectsContent}>
-						<CollaborativeProjectsEditor initialProjects={collaborativeProjects} />
+				<form action={saveCollaborativeProjectsContent} className="space-y-4">
+					<CollaborativeProjectsEditor initialProjects={collaborativeProjects} />
 
-						<div className="mt-5 flex justify-end">
-							<button
-								type="submit"
-								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
-							>
-								儲存協力招來內容
+					<div className="mt-5 flex justify-end gap-3">
+						<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
+						<button
+							type="submit"
+							className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							</button>
 						</div>
 					</form>
@@ -273,15 +282,14 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "psychometrics" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-					<form action={savePsychometricScalesContent}>
-						<PsychometricScalesEditor initialScales={psychometricScales} />
+				<form action={savePsychometricScalesContent} className="space-y-4">
+					<PsychometricScalesEditor initialScales={psychometricScales} />
 
-						<div className="mt-5 flex justify-end">
-							<button
-								type="submit"
-								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
-							>
-								儲存心理量表內容
+					<div className="mt-5 flex justify-end gap-3">
+						<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
+						<button
+							type="submit"
+							className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							</button>
 						</div>
 					</form>
@@ -290,15 +298,14 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "consent" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-					<form action={saveResearchConsentsContent}>
-						<ResearchConsentsEditor initialConsents={researchConsents} />
+				<form action={saveResearchConsentsContent} className="space-y-4">
+					<ResearchConsentsEditor initialConsents={researchConsents} />
 
-						<div className="mt-5 flex justify-end">
-							<button
-								type="submit"
-								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
-							>
-								儲存研究同意書內容
+					<div className="mt-5 flex justify-end gap-3">
+						<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
+						<button
+							type="submit"
+							className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							</button>
 						</div>
 					</form>
@@ -307,13 +314,14 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "fortune" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-					<form action={saveFortuneLecturesContent}>
+					<form action={saveFortuneLecturesContent} className="space-y-4">
 						<FortuneLecturesEditor initialLectures={fortuneLectures} />
 
-						<div className="mt-5 flex justify-end">
+						<div className="mt-5 flex justify-end gap-3">
+							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
 							<button
 								type="submit"
-								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								儲存 Fortune 內容
 							</button>
@@ -337,16 +345,17 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 						</form>
 					</div>
 
-					<form action={saveHeartfeltVideosContent}>
+					<form action={saveHeartfeltVideosContent} className="space-y-4">
 						<HeartfeltVideosEditor
 							initialVideos={heartfeltVideos}
 							uploadedUrl={resolvedSearchParams.uploaded}
 						/>
 
-						<div className="mt-5 flex justify-end">
+						<div className="mt-5 flex justify-end gap-3">
+							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
 							<button
 								type="submit"
-								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								儲存 Heartfelt 內容
 							</button>
@@ -380,6 +389,23 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 							<button
 								type="submit"
 								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存 Togetherness 內容
+							</button>
+						</div>
+					</form>
+
+					<form action={saveTogethernessGroupsContent} className="space-y-4">
+						<TogethernessGroupsEditor
+							initialGroups={togethernessGroups}
+							uploadedUrl={resolvedSearchParams.uploaded}
+						/>
+
+						<div className="mt-5 flex justify-end gap-3">
+							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								儲存 Togetherness 內容
 							</button>
