@@ -726,30 +726,35 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 		redirect("/admin/dashboard/content?tab=togetherness&error=json");
 	}
 
-	const cleanedGroups = parsed
-		.map((group): GroupItem | null => {
-			if (!group || typeof group !== "object") return null;
-			const item = group as Partial<GroupItem>;
+	const cleanedGroups: GroupItem[] = [];
 
-			const slug = String(item.slug || "").trim();
-			const title = String(item.title || "").trim();
-			const subtitle = String(item.subtitle || "").trim();
-			const description = String(item.description || "").trim();
-			const image = String(item.image || "").trim();
+	for (let index = 0; index < parsed.length; index += 1) {
+		const group = parsed[index];
+		if (!group || typeof group !== "object") {
+			const detail = encodeURIComponent(`第${index + 1}筆資料格式錯誤`);
+			redirect(`/admin/dashboard/content?tab=togetherness&error=json&detail=${detail}`);
+		}
 
-			if (!slug || !title || !subtitle || !description || !image) {
-				return null;
-			}
+		const item = group as Partial<GroupItem>;
+		const slug = String(item.slug || "").trim();
+		const title = String(item.title || "").trim();
+		const subtitle = String(item.subtitle || "").trim();
+		const description = String(item.description || "").trim();
+		const image = String(item.image || "").trim();
 
-			return {
-				slug,
-				title,
-				subtitle,
-				description,
-				image,
-			};
-		})
-		.filter((group): group is GroupItem => group !== null);
+		if (!slug || !title || !subtitle || !description || !image) {
+			const detail = encodeURIComponent(`第${index + 1}筆有未填欄位`);
+			redirect(`/admin/dashboard/content?tab=togetherness&error=missing&detail=${detail}`);
+		}
+
+		cleanedGroups.push({
+			slug,
+			title,
+			subtitle,
+			description,
+			image,
+		});
+	}
 
 	if (cleanedGroups.length === 0) {
 		redirect("/admin/dashboard/content?tab=togetherness&error=missing");

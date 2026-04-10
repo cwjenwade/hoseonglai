@@ -2,10 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { adminLogout } from "@/app/admin/actions";
-
-type PageProps = {
-	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string; tab?: string }>;
-};
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import {
@@ -38,13 +34,13 @@ import {
 	uploadBrandImage,
 } from "./actions";
 
-// export const metadata: Metadata = {
-// 	title: "管理後台內容編輯",
-// 	robots: {
-// 		index: false,
-// 		follow: false,
-// 	},
-// };
+export const metadata: Metadata = {
+	title: "管理後台內容編輯",
+	robots: {
+		index: false,
+		follow: false,
+	},
+};
 
 type PageProps = {
 	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string; tab?: string }>;
@@ -266,14 +262,16 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "collaborative" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-				<form action={saveCollaborativeProjectsContent} className="space-y-4">
-					<CollaborativeProjectsEditor initialProjects={collaborativeProjects} />
+					<form action={saveCollaborativeProjectsContent} className="space-y-4">
+						<CollaborativeProjectsEditor initialProjects={collaborativeProjects} />
 
-					<div className="mt-5 flex justify-end gap-3">
-						<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
-						<button
-							type="submit"
-							className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+						<div className="mt-5 flex justify-end gap-3">
+							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存協力招來內容
 							</button>
 						</div>
 					</form>
@@ -282,14 +280,16 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "psychometrics" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-				<form action={savePsychometricScalesContent} className="space-y-4">
-					<PsychometricScalesEditor initialScales={psychometricScales} />
+					<form action={savePsychometricScalesContent} className="space-y-4">
+						<PsychometricScalesEditor initialScales={psychometricScales} />
 
-					<div className="mt-5 flex justify-end gap-3">
-						<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
-						<button
-							type="submit"
-							className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+						<div className="mt-5 flex justify-end gap-3">
+							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存心理量表內容
 							</button>
 						</div>
 					</form>
@@ -298,14 +298,16 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "consent" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-				<form action={saveResearchConsentsContent} className="space-y-4">
-					<ResearchConsentsEditor initialConsents={researchConsents} />
+					<form action={saveResearchConsentsContent} className="space-y-4">
+						<ResearchConsentsEditor initialConsents={researchConsents} />
 
-					<div className="mt-5 flex justify-end gap-3">
-						<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
-						<button
-							type="submit"
-							className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+						<div className="mt-5 flex justify-end gap-3">
+							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>
+							<button
+								type="submit"
+								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
+							>
+								儲存研究同意書內容
 							</button>
 						</div>
 					</form>
@@ -378,22 +380,6 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 							</button>
 						</form>
 					</div>
-
-					<form action={saveTogethernessGroupsContent}>
-						<TogethernessGroupsEditor
-							initialGroups={togethernessGroups}
-							uploadedUrl={resolvedSearchParams.uploaded}
-						/>
-
-						<div className="mt-5 flex justify-end">
-							<button
-								type="submit"
-								className="rounded-full bg-amber-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-amber-500"
-							>
-								儲存 Togetherness 內容
-							</button>
-						</div>
-					</form>
 
 					<form action={saveTogethernessGroupsContent} className="space-y-4">
 						<TogethernessGroupsEditor
