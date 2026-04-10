@@ -10,22 +10,23 @@ type GroupRegistrationFormProps = {
 };
 
 function buildInterviewSlots(): string[] {
-  const days = ["週一", "週二", "週三", "週四", "週五"];
-  const ranges: Array<[number, number]> = [
-    [10, 12],
-    [13, 17],
-    [19, 21],
-  ];
+  const weekdayDays = ["週一", "週二", "週三", "週四", "週五"];
+  const weekendDays = ["週六", "週日"];
+
+  const weekdaySlots = ["19:00–20:30", "20:30–22:00"];
+  const weekendSlots = ["10:30–12:00", "14:30–16:00", "19:00–20:30"];
 
   const slots: string[] = [];
 
-  for (const day of days) {
-    for (const [start, end] of ranges) {
-      for (let hour = start; hour < end; hour += 1) {
-        const from = `${String(hour).padStart(2, "0")}:00`;
-        const to = `${String(hour + 1).padStart(2, "0")}:00`;
-        slots.push(`${day} ${from}–${to}`);
-      }
+  for (const day of weekdayDays) {
+    for (const slot of weekdaySlots) {
+      slots.push(`${day} ${slot}`);
+    }
+  }
+
+  for (const day of weekendDays) {
+    for (const slot of weekendSlots) {
+      slots.push(`${day} ${slot}`);
     }
   }
 
@@ -82,7 +83,7 @@ export default function GroupRegistrationForm({
   }, [consultationSlots]);
 
   const groupDayColumns = useMemo(() => {
-    const days = ["週一", "週二", "週三", "週四", "週五"];
+    const days = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
     return days.map((day) => ({
       day,
       slots: groupSlots.filter((slot) => slot.startsWith(`${day} `)),
@@ -215,7 +216,7 @@ export default function GroupRegistrationForm({
       </div>
 
       <div>
-        <p className="text-sm font-medium text-zinc-900">
+        <p className="text-[18.4px] font-medium text-zinc-900">
           初談可約時段（30 分鐘，至少 2 個，最多 4 個）
         </p>
         <div className="mt-3">
@@ -225,7 +226,7 @@ export default function GroupRegistrationForm({
                 key={column.day}
                 className="rounded-xl border border-zinc-200 bg-white p-2.5"
               >
-                <p className="mb-2 px-1 text-xs font-semibold tracking-[0.06em] text-zinc-500">
+                <p className="mb-2 px-1 text-[14px] font-semibold tracking-[0.06em] text-zinc-500">
                   {column.day}
                 </p>
 
@@ -237,7 +238,7 @@ export default function GroupRegistrationForm({
                     return (
                       <label
                         key={slot}
-                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition ${
+                        className={`grid grid-cols-[16px_minmax(0,1fr)] cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-[13px] transition ${
                           checked
                             ? "border-emerald-500 bg-emerald-50 text-emerald-800"
                             : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400"
@@ -249,7 +250,7 @@ export default function GroupRegistrationForm({
                             onChange={() => toggleSlot(slot, setConsultationSlotsSelected, 4)}
                           className="h-4 w-4 accent-emerald-600"
                         />
-                        <span className="whitespace-nowrap">{timeLabel}</span>
+                        <span className="min-w-0 leading-[1.2]">{timeLabel}</span>
                       </label>
                     );
                   })}
@@ -263,10 +264,7 @@ export default function GroupRegistrationForm({
 
       <div id="schedule">
         <p className="text-sm font-medium text-zinc-900">
-          團體可參與時段（1 小時為單位，至少 3 個，最多 5 個）
-        </p>
-        <p className="mt-1 text-xs leading-6 text-zinc-500">
-          這會幫助我們判斷團體開設時間；如果你有偏好的週幾，也可以在備註中寫下來。
+          團體可參與時段（90 分鐘為單位，至少 3 個，最多 5 個）
         </p>
         <div className="mt-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -275,7 +273,7 @@ export default function GroupRegistrationForm({
                 key={column.day}
                 className="rounded-xl border border-zinc-200 bg-white p-2.5"
               >
-                <p className="mb-2 px-1 text-xs font-semibold tracking-[0.06em] text-zinc-500">
+                <p className="mb-2 px-1 text-[14px] font-semibold tracking-[0.06em] text-zinc-500">
                   {column.day}
                 </p>
 
@@ -287,7 +285,7 @@ export default function GroupRegistrationForm({
                     return (
                       <label
                         key={slot}
-                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition ${
+                        className={`grid grid-cols-[16px_minmax(0,1fr)] cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-[13px] transition ${
                           checked
                             ? "border-emerald-500 bg-emerald-50 text-emerald-800"
                             : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400"
@@ -299,7 +297,7 @@ export default function GroupRegistrationForm({
                           onChange={() => toggleSlot(slot, setGroupSlotsSelected, 5)}
                           className="h-4 w-4 accent-emerald-600"
                         />
-                        <span className="whitespace-nowrap">{timeLabel}</span>
+                        <span className="min-w-0 leading-[1.2]">{timeLabel}</span>
                       </label>
                     );
                   })}
@@ -319,7 +317,7 @@ export default function GroupRegistrationForm({
         className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
       />
 
-      <p className="text-xs leading-6 text-zinc-500">{followUpNote}</p>
+      <p className="text-[16px] leading-7 text-zinc-600">我們確認約談時間後會寄信通知，並再以電話與你確認一次。</p>
 
       <button
         type="submit"

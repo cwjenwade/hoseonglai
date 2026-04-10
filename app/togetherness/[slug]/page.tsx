@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import GroupRegistrationForm from "@/app/togetherness/GroupRegistrationForm";
 import {
@@ -20,6 +19,17 @@ import { getSiteContentSection } from "@/lib/site-content-server";
 type GroupDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+function splitGroupTitle(title: string): string[] {
+  const trimmed = title.trim();
+  const quoteEnd = trimmed.indexOf("」");
+  if (quoteEnd > -1 && quoteEnd < trimmed.length - 1) {
+    const first = trimmed.slice(0, quoteEnd + 1).trim();
+    const second = trimmed.slice(quoteEnd + 1).trim();
+    return [first, second].filter(Boolean);
+  }
+  return [trimmed];
+}
 
 export async function generateMetadata({ params }: GroupDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -57,89 +67,84 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
   const leaderNameEn = group.leaderNameEn || DEFAULT_GROUP_LEADER_NAME_EN;
   const leaderTitleZh = group.leaderTitleZh || DEFAULT_GROUP_LEADER_TITLE_ZH;
   const leaderPhoto = group.leaderPhoto || brandContent.director.photo;
+  const titleLines = splitGroupTitle(group.title);
 
   return (
-    <main className="min-h-screen bg-[#f2f7f6] text-[#171717]" style={{ fontFamily: "var(--font-serif)" }}>
-      <div className="w-full px-6 py-8 md:px-10 md:py-10 lg:px-14">
-        <Link
-          href="/togetherness"
-          className="text-xs uppercase tracking-[0.24em] text-neutral-500 transition hover:text-neutral-900"
-        >
-          ← Back to gatherings
-        </Link>
+    <main className="min-h-screen bg-[#f7f6f3] text-[#171717]" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
+      <div className="w-full px-6 py-10 md:px-10 md:py-12 lg:px-14">
+        <section className="grid gap-10 border-t border-neutral-300/70 pt-10 xl:grid-cols-[0.88fr_1.12fr] xl:gap-14">
+          <aside className="space-y-7 xl:sticky xl:top-10 xl:self-start">
+            <div className="space-y-5">
+              <div className="w-full border border-neutral-300/70 bg-white/70 px-5 py-4">
+                <p className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-500" style={{ fontFamily: "var(--font-playfair), serif" }}>
+                  Group Registration
+                </p>
+              </div>
 
-        <section className="mt-8 grid gap-8 border-t border-neutral-300/60 pt-8 xl:grid-cols-[0.88fr_1.12fr] xl:gap-10">
-          <aside className="space-y-8 xl:sticky xl:top-10 xl:self-start">
-            <div className="space-y-3">
-              <p className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400">
-                Group Registration
-              </p>
-
-              <div className="flex items-center gap-4 rounded-2xl border border-neutral-300/70 bg-white/75 px-4 py-3">
-                <div className="relative h-16 w-16 overflow-hidden rounded-full border border-neutral-300 bg-neutral-100">
+              <div className="mx-auto w-full max-w-[420px] rounded-[2.2rem] border border-neutral-300/70 bg-white/85 px-6 py-8 text-center shadow-[0_12px_40px_-28px_rgba(0,0,0,0.45)]">
+                <div className="relative mx-auto h-[350px] w-[350px] max-w-full overflow-hidden rounded-full border border-neutral-300 bg-neutral-100">
                   {leaderPhoto ? (
                     <Image
                       src={leaderPhoto}
                       alt={leaderNameZh}
                       fill
-                      sizes="64px"
+                      sizes="350px"
                       className="object-cover"
                     />
                   ) : null}
                 </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">團體帶領者</p>
-                  <p className="text-[1.05rem] font-medium text-neutral-900">{leaderNameZh} {leaderTitleZh}</p>
-                  <p className="text-[0.9rem] text-neutral-600">{leaderNameEn}</p>
+                <div className="mt-6 border-y border-neutral-200 py-5">
+                  <p className="text-[20px] leading-[1.2] tracking-[0.01em] text-neutral-900" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
+                    {leaderTitleZh}
+                  </p>
+                  <p className="mt-1 text-[30px] leading-[1.15] tracking-[-0.005em] text-neutral-700" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
+                    {leaderNameZh}
+                  </p>
+                  <p className="mt-2 text-[28px] leading-[1.2] tracking-[0.015em] text-neutral-600" style={{ fontFamily: "var(--font-playfair), serif" }}>
+                    {leaderNameEn}
+                  </p>
                 </div>
               </div>
 
-              <h1 className="max-w-[7ch] text-[3.5rem] leading-[0.95] tracking-[-0.04em] text-neutral-900">
-                {group.title}
-              </h1>
-              <p className="text-[0.95rem] uppercase tracking-[0.2em] text-neutral-500 md:text-[1rem]">
+              <div className="space-y-2">
+                {titleLines.map((line, idx) => (
+                  <h1
+                    key={`${line}-${idx}`}
+                    className="text-[36px] leading-[1.08] tracking-[-0.02em] text-neutral-900"
+                    style={{ fontFamily: "var(--font-noto-serif), serif" }}
+                  >
+                    {line}
+                  </h1>
+                ))}
+              </div>
+              <p className="text-[1.08rem] leading-[1.45] tracking-[0.02em] text-neutral-600 md:text-[1.22rem]" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
                 {group.subtitle}
               </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="#booking"
-                className="rounded-full bg-neutral-900 px-5 py-3 text-sm text-white transition hover:bg-neutral-700"
-              >
-                下一頁：預約初談時間
-              </a>
-              <a
-                href="#schedule"
-                className="rounded-full border border-neutral-300 bg-white px-5 py-3 text-sm text-neutral-700 transition hover:border-neutral-500"
-              >
-                直接看可參與時段
-              </a>
             </div>
           </aside>
 
           <section className="space-y-8">
-            <div className="grid gap-4 rounded-[2rem] border border-neutral-300/70 bg-white/80 p-6 md:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+            <div className="grid gap-5 rounded-[2rem] border border-neutral-300/70 bg-white/85 p-6 md:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
               <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.26em] text-neutral-400">
+                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-neutral-400" style={{ fontFamily: "var(--font-playfair), serif" }}>
                   Step 1 / 團體詳情
                 </p>
-                <h2 className="text-[1.25rem] font-medium text-neutral-900 md:text-[1.45rem]">
+                <h2 className="text-[1.42rem] font-medium leading-[1.45] text-neutral-900 md:text-[1.62rem]" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
                   先理解這個團體，再進入預約流程
                 </h2>
-                <p className="max-w-[52ch] text-[0.98rem] leading-[1.9] text-neutral-600 md:text-[1.02rem]">
+                <p className="max-w-[52ch] text-[1.08rem] leading-[1.95] text-neutral-700 md:text-[1.14rem]" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
                   你可以先看團體帶領者與初談說明，再往下填寫初談與參與時段。
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] bg-[#f6f7f7] p-5 text-[0.92rem] leading-[1.9] text-neutral-700">
+              <div className="rounded-[1.5rem] border border-neutral-200 bg-[#f8f8f6] p-5 text-[1.04rem] leading-[1.95] text-neutral-700 md:text-[1.08rem]" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
                 <p>
                   {consultationNote}
                 </p>
               </div>
             </div>
 
-            <div id="booking" className="rounded-[2rem] border border-neutral-300/70 bg-white/80 p-6 md:p-8">
+            <div id="booking" className="rounded-[2rem] border border-neutral-300/70 bg-white/85 p-6 md:p-8">
               <GroupRegistrationForm
                 groupSlug={group.slug}
                 groupTitle={group.title}

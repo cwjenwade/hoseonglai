@@ -20,25 +20,19 @@ export default async function TogethernessPage({ searchParams }: TogethernessPag
     <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
       <div className="mx-auto max-w-[1520px] px-8 py-16 md:px-12 md:py-20">
         <header className="mb-16 md:mb-20">
-          <p
-            className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400"
-            style={{ fontFamily: "var(--font-geist-sans)" }}
-          >
+          <p className="text-[0.64rem] uppercase tracking-[0.34em] text-neutral-400">
             Group Therapy Programme
           </p>
 
           <h1
             className="mt-8 text-center text-[2.6rem] leading-none uppercase tracking-[0.16em] text-neutral-900 sm:text-[4rem] xl:text-[5.2rem]"
-            style={{ fontFamily: "var(--font-geist-sans)" }}
+            style={{ fontFamily: "var(--font-playfair), var(--font-noto-serif)" }}
           >
             GROUP
           </h1>
 
           <div className="mx-auto mt-10 grid max-w-[980px] gap-10 md:grid-cols-2">
-            <div
-              className="space-y-3 text-right text-[1rem] leading-[1.85] text-neutral-700"
-              style={{ fontFamily: "var(--font-noto-serif)" }}
-            >
+            <div className="space-y-3 text-right text-[1rem] leading-[1.85] text-neutral-700" style={{ fontFamily: "var(--font-playfair), var(--font-noto-serif)" }}>
               <p>
                 我們
                 <br />
@@ -68,10 +62,7 @@ export default async function TogethernessPage({ searchParams }: TogethernessPag
               </p>
             </div>
 
-            <div
-              className="space-y-3 text-[0.96rem] leading-[1.85] text-neutral-600"
-              style={{ fontFamily: "var(--font-geist-sans)" }}
-            >
+            <div className="space-y-3 text-[0.96rem] leading-[1.85] text-neutral-600" style={{ fontFamily: "var(--font-playfair), var(--font-noto-serif)" }}>
               <p>
                 We are not here
                 <br />
