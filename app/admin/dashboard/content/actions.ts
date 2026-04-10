@@ -776,5 +776,5 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 
 	revalidatePath("/togetherness");
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard");
+	redirect("/admin/dashboard/content?tab=togetherness&saved=togetherness");
 }

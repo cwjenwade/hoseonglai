@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { sendGroupRegistrationEmail } from "@/lib/email";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 type GroupRegisterPayload = {
   groupSlug: string;
@@ -33,14 +33,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "請提供 3 至 5 個訪談時段" }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json({ message: "Supabase 環境變數未設定" }, { status: 500 });
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = getSupabaseAdminClient();
 
     const { error } = await supabase.from("group_registrations").insert({
       group_slug: groupSlug,

@@ -108,7 +108,7 @@ export default function GroupRegistrationForm({
       setSubmitted(true);
     } catch (error) {
       console.error("GROUP_REGISTRATION_ERROR", error);
-      alert("送出失敗，請稍後再試");
+      alert(error instanceof Error ? error.message : "送出失敗，請稍後再試");
     } finally {
       setLoading(false);
     }
