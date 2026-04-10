@@ -1,12 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  GROUP_TAG_PRESETS,
-  normalizeGroupTags,
-  suggestGroupTags,
-  type GroupItem,
-} from "@/app/togetherness/group-data";
+import type { GroupItem } from "@/app/togetherness/group-data";
 
 type TogethernessGroupsEditorProps = {
   initialGroups: GroupItem[];
@@ -21,14 +16,6 @@ function createEmptyGroup(): GroupItem {
     subtitle: "",
     description: "",
     image: "",
-    tags: [],
-  };
-}
-
-function normalizeInitialGroup(group: GroupItem): GroupItem {
-  return {
-    ...group,
-    tags: normalizeGroupTags(group.tags?.length ? group.tags : suggestGroupTags(group)),
   };
 }
 
@@ -36,20 +23,9 @@ export default function TogethernessGroupsEditor({
   initialGroups,
   uploadedUrl,
 }: TogethernessGroupsEditorProps) {
-  const [groups, setGroups] = useState<GroupItem[]>(() => (initialGroups || []).map(normalizeInitialGroup));
+  const [groups, setGroups] = useState<GroupItem[]>(initialGroups || []);
 
-  const payload = useMemo(
-    () =>
-      groups.map((group) => ({
-        ...group,
-        tags: normalizeGroupTags(group.tags || []),
-      })),
-    [groups],
-  );
-
-  const updateGroupTags = (index: number, nextTags: string[]) => {
-    setGroups((prev) => prev.map((item, i) => (i === index ? { ...item, tags: normalizeGroupTags(nextTags) } : item)));
-  };
+  const payload = useMemo(() => groups, [groups]);
 
   return (
     <div className="space-y-4">
@@ -126,53 +102,6 @@ export default function TogethernessGroupsEditor({
                 className="mt-1 h-24 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
               />
             </label>
-
-            <div className="mt-3">
-              <label className="block text-xs text-zinc-700">
-                標籤（逗號分隔，前台顯示 # 標籤）
-                <input
-                  value={(group.tags || []).join(", ")}
-                  onChange={(e) =>
-                    updateGroupTags(
-                      index,
-                      e.target.value
-                        .split(",")
-                        .map((tag) => tag.trim())
-                        .filter(Boolean),
-                    )
-                  }
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  placeholder="親密關係, 性少數, 存在主題"
-                />
-              </label>
-
-              <div className="mt-2 flex flex-wrap gap-2">
-                {GROUP_TAG_PRESETS.map((tag) => {
-                  const active = (group.tags || []).includes(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        const current = group.tags || [];
-                        updateGroupTags(
-                          index,
-                          active ? current.filter((item) => item !== tag) : [...current, tag],
-                        );
-                      }}
-                      className={[
-                        "rounded-full border px-3 py-1 text-[11px] transition",
-                        active
-                          ? "border-zinc-900 bg-zinc-900 text-white"
-                          : "border-zinc-300 bg-white text-zinc-600 hover:border-zinc-500",
-                      ].join(" ")}
-                    >
-                      #{tag}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
             <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
               <label className="text-xs text-zinc-700">
