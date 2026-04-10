@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendGroupRegistrationEmail } from "@/lib/email";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { getSiteContentSection } from "@/lib/site-content-server";
+import {
+  DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
+  normalizeTogethernessRegistrationCopy,
+} from "@/app/togetherness/registration-copy";
 
 type GroupRegisterPayload = {
   groupSlug: string;
@@ -9,6 +14,7 @@ type GroupRegisterPayload = {
   email: string;
   phone: string;
   note?: string;
+  consultationSlots: string[];
   availabilitySlots: string[];
 };
 
@@ -22,6 +28,7 @@ export async function POST(req: NextRequest) {
       email,
       phone,
       note,
+      consultationSlots,
       availabilitySlots,
     } = body;
 
@@ -29,8 +36,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "缺少必要欄位" }, { status: 400 });
     }
 
+    if (!Array.isArray(consultationSlots) || consultationSlots.length < 2 || consultationSlots.length > 4) {
+      return NextResponse.json({ message: "請提供 2 至 4 個初談時段" }, { status: 400 });
+    }
+
     if (!Array.isArray(availabilitySlots) || availabilitySlots.length < 3 || availabilitySlots.length > 5) {
-      return NextResponse.json({ message: "請提供 3 至 5 個訪談時段" }, { status: 400 });
+      return NextResponse.json({ message: "請提供 3 至 5 個團體可參與時段" }, { status: 400 });
     }
 
     const supabase = getSupabaseAdminClient();
@@ -42,6 +53,7 @@ export async function POST(req: NextRequest) {
       user_email: email.trim().toLowerCase(),
       user_phone: phone.trim(),
       note: note?.trim() || null,
+      consultation_slots: consultationSlots,
       availability_slots: availabilitySlots,
     });
 
@@ -51,11 +63,20 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+      const registrationCopy = normalizeTogethernessRegistrationCopy(
+        await getSiteContentSection(
+          "togetherness_registration_copy",
+          DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
+        ),
+      );
+
       await sendGroupRegistrationEmail({
         to: email.trim().toLowerCase(),
         name: name.trim(),
         groupTitle,
+        consultationSlots,
         availabilitySlots,
+        followUpNote: registrationCopy.followUpNote,
       });
     } catch (emailError) {
       console.error("GROUP_REGISTRATION_EMAIL_ERROR", emailError);

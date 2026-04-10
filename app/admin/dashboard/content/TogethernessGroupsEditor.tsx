@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import type { GroupItem } from "@/app/togetherness/group-data";
+import type { TogethernessRegistrationCopy } from "@/app/togetherness/registration-copy";
 
 type TogethernessGroupsEditorProps = {
   initialGroups: GroupItem[];
+  initialRegistrationCopy: TogethernessRegistrationCopy;
   uploadedUrl?: string;
 };
 
@@ -21,11 +23,21 @@ function createEmptyGroup(): GroupItem {
 
 export default function TogethernessGroupsEditor({
   initialGroups,
+  initialRegistrationCopy,
   uploadedUrl,
 }: TogethernessGroupsEditorProps) {
   const [groups, setGroups] = useState<GroupItem[]>(initialGroups || []);
+  const [registrationCopy, setRegistrationCopy] = useState<TogethernessRegistrationCopy>(
+    initialRegistrationCopy,
+  );
 
-  const payload = useMemo(() => groups, [groups]);
+  const payload = useMemo(
+    () => ({
+      groups,
+      registrationCopy,
+    }),
+    [groups, registrationCopy],
+  );
 
   return (
     <div className="space-y-4">
@@ -45,6 +57,57 @@ export default function TogethernessGroupsEditor({
       </div>
 
       <div className="space-y-4">
+        <article className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+          <h3 className="text-sm font-semibold text-zinc-900">團體頁固定文案（可編輯）</h3>
+          <p className="mt-1 text-xs text-zinc-500">這四段會顯示在團體詳情頁與寄信內容。</p>
+
+          <div className="mt-3 space-y-3">
+            <label className="block text-xs text-zinc-700">
+              帶領方式
+              <textarea
+                value={registrationCopy.approach}
+                onChange={(e) =>
+                  setRegistrationCopy((prev) => ({ ...prev, approach: e.target.value }))
+                }
+                className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+              />
+            </label>
+
+            <label className="block text-xs text-zinc-700">
+              適合族群
+              <textarea
+                value={registrationCopy.suitableFor}
+                onChange={(e) =>
+                  setRegistrationCopy((prev) => ({ ...prev, suitableFor: e.target.value }))
+                }
+                className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+              />
+            </label>
+
+            <label className="block text-xs text-zinc-700">
+              初談說明
+              <textarea
+                value={registrationCopy.consultationNote}
+                onChange={(e) =>
+                  setRegistrationCopy((prev) => ({ ...prev, consultationNote: e.target.value }))
+                }
+                className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+              />
+            </label>
+
+            <label className="block text-xs text-zinc-700">
+              後續聯繫
+              <textarea
+                value={registrationCopy.followUpNote}
+                onChange={(e) =>
+                  setRegistrationCopy((prev) => ({ ...prev, followUpNote: e.target.value }))
+                }
+                className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+              />
+            </label>
+          </div>
+        </article>
+
         {groups.map((group, index) => (
           <article key={`${group.slug}-${index}`} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
             <div className="grid gap-3 md:grid-cols-2">

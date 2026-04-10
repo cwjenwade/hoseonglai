@@ -79,9 +79,9 @@ function createEmptyLecture(): LectureItem {
     type: "LECTURE",
     category: ["Upcoming", "Public Talk"],
     dateMode: "exact",
-    date: "",
-    dateLabel: "",
-    time: "",
+    date: "2026-12-31",
+    dateLabel: "31 Dec 2026",
+    time: "19:00–21:00",
     approxYear: "",
     approxMonth: "",
     titleZh: "",
@@ -177,6 +177,32 @@ export default function FortuneLecturesEditor({ initialLectures }: FortuneLectur
                     setLectures((prev) => prev.map((item, i) => (i === index ? { ...item, titleEn: e.target.value } : item)))
                   }
                   className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                />
+              </label>
+
+              <label className="text-xs text-zinc-700">
+                城市／副標（英文）
+                <input
+                  value={lecture.subtitleEn}
+                  onChange={(e) =>
+                    setLectures((prev) => prev.map((item, i) => (i === index ? { ...item, subtitleEn: e.target.value } : item)))
+                  }
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  placeholder="Hsinchu / Online"
+                />
+              </label>
+            </div>
+
+            <div className="mt-3">
+              <label className="text-xs text-zinc-700">
+                地點（中文）
+                <input
+                  value={lecture.locationZh}
+                  onChange={(e) =>
+                    setLectures((prev) => prev.map((item, i) => (i === index ? { ...item, locationZh: e.target.value } : item)))
+                  }
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  placeholder="新竹 光合 / 線上"
                 />
               </label>
             </div>

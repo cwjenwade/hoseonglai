@@ -14,6 +14,10 @@ import { DEFAULT_RESEARCH_CONSENTS } from "@/app/collaborative-prosperity/consen
 import { LECTURES } from "@/app/fortune-arrives/lectures-data";
 import { HEARTFELT_VIDEOS } from "@/app/heartfelt-momentum/videos-data";
 import { GROUPS } from "@/app/togetherness/group-data";
+import {
+	DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
+	normalizeTogethernessRegistrationCopy,
+} from "@/app/togetherness/registration-copy";
 import BrandEditor from "./BrandEditor";
 import CollaborativeProjectsEditor from "./CollaborativeProjectsEditor";
 import FortuneLecturesEditor from "./FortuneLecturesEditor";
@@ -78,6 +82,12 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 	const fortuneLectures = await getSiteContentSection("fortune_arrives_lectures", LECTURES);
 	const heartfeltVideos = await getSiteContentSection("heartfelt_momentum_videos", HEARTFELT_VIDEOS);
 	const togethernessGroups = await getSiteContentSection("togetherness_groups", GROUPS);
+	const togethernessRegistrationCopy = normalizeTogethernessRegistrationCopy(
+		await getSiteContentSection(
+			"togetherness_registration_copy",
+			DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
+		),
+	);
 	const psychometricScales = await getSiteContentSection(
 		"collaborative_prosperity_assessments",
 		DEFAULT_PSYCHOMETRIC_SCALES,
@@ -384,6 +394,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 					<form action={saveTogethernessGroupsContent} className="space-y-4">
 						<TogethernessGroupsEditor
 							initialGroups={togethernessGroups}
+							initialRegistrationCopy={togethernessRegistrationCopy}
 							uploadedUrl={resolvedSearchParams.uploaded}
 						/>
 

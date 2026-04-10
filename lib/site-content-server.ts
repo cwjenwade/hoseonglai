@@ -14,6 +14,7 @@ export type SiteContentSection =
   | "collaborative_prosperity_assessments"
   | "collaborative_prosperity_consents"
   | "togetherness_groups"
+  | "togetherness_registration_copy"
   | "collaborative_prosperity_projects";
 
 const CONTENT_FILE_PATH = path.join(process.cwd(), "data", "site-content.json");

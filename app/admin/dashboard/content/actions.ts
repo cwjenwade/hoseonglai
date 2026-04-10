@@ -18,6 +18,10 @@ import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-dat
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
 import type { GroupItem } from "@/app/togetherness/group-data";
+import {
+	DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
+	normalizeTogethernessRegistrationCopy,
+} from "@/app/togetherness/registration-copy";
 
 async function requireAdminUser() {
 	const supabase = await getSupabaseServerClient();
@@ -293,6 +297,10 @@ export async function saveFortuneLecturesContent(formData: FormData) {
 				return null;
 			}
 
+			const fallbackDate = "2026-12-31";
+			const fallbackDateLabel = "31 Dec 2026";
+			const fallbackTime = "19:00–21:00";
+
 			if (dateMode === "month") {
 				if (!/^\d{4}$/.test(approxYear)) {
 					return null;
@@ -302,11 +310,11 @@ export async function saveFortuneLecturesContent(formData: FormData) {
 				if (!Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) {
 					return null;
 				}
-			} else {
-				if (!date || !dateLabel || !time) {
-					return null;
-				}
 			}
+
+			const normalizedExactDate = date || fallbackDate;
+			const normalizedExactDateLabel = dateLabel || fallbackDateLabel;
+			const normalizedExactTime = time || fallbackTime;
 
 			return {
 				id,
@@ -314,9 +322,9 @@ export async function saveFortuneLecturesContent(formData: FormData) {
 				type,
 				category: category as LectureItem["category"],
 				dateMode,
-				date: dateMode === "month" ? "" : date,
-				dateLabel,
-				time: dateMode === "month" ? "" : time,
+				date: dateMode === "month" ? "" : normalizedExactDate,
+				dateLabel: dateMode === "month" ? dateLabel : normalizedExactDateLabel,
+				time: dateMode === "month" ? "" : normalizedExactTime,
 				approxYear: dateMode === "month" ? approxYear : undefined,
 				approxMonth: dateMode === "month" ? approxMonth : undefined,
 				titleZh,
@@ -722,14 +730,30 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 		redirect("/admin/dashboard/content?tab=togetherness&error=json");
 	}
 
-	if (!Array.isArray(parsed)) {
+	const rawGroups = Array.isArray(parsed)
+		? parsed
+		: parsed && typeof parsed === "object" && Array.isArray((parsed as { groups?: unknown[] }).groups)
+			? (parsed as { groups: unknown[] }).groups
+			: null;
+
+	if (!rawGroups) {
 		redirect("/admin/dashboard/content?tab=togetherness&error=json");
 	}
 
+	const rawRegistrationCopy =
+		parsed && typeof parsed === "object" && !Array.isArray(parsed)
+			? (parsed as { registrationCopy?: unknown }).registrationCopy
+			: null;
+
+	const cleanedRegistrationCopy = normalizeTogethernessRegistrationCopy(
+		(rawRegistrationCopy as Partial<typeof DEFAULT_TOGETHERNESS_REGISTRATION_COPY> | null) ??
+			DEFAULT_TOGETHERNESS_REGISTRATION_COPY,
+	);
+
 	const cleanedGroups: GroupItem[] = [];
 
-	for (let index = 0; index < parsed.length; index += 1) {
-		const group = parsed[index];
+	for (let index = 0; index < rawGroups.length; index += 1) {
+		const group = rawGroups[index];
 		if (!group || typeof group !== "object") {
 			const detail = encodeURIComponent(`第${index + 1}筆資料格式錯誤`);
 			redirect(`/admin/dashboard/content?tab=togetherness&error=json&detail=${detail}`);
@@ -762,6 +786,7 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 
 	try {
 		await saveSiteContentSection("togetherness_groups", cleanedGroups);
+		await saveSiteContentSection("togetherness_registration_copy", cleanedRegistrationCopy);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=togetherness&error=readonly_fs");

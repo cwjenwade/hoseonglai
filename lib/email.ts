@@ -167,14 +167,18 @@ type SendGroupRegistrationEmailParams = {
   to: string;
   name: string;
   groupTitle: string;
+  consultationSlots: string[];
   availabilitySlots: string[];
+  followUpNote?: string;
 };
 
 export async function sendGroupRegistrationEmail({
   to,
   name,
   groupTitle,
+  consultationSlots,
   availabilitySlots,
+  followUpNote,
 }: SendGroupRegistrationEmailParams): Promise<void> {
   const gmailUser = process.env.GMAIL_USER;
   const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
@@ -193,6 +197,9 @@ export async function sendGroupRegistrationEmail({
   });
 
   const subject = `團體報名確認｜${groupTitle}`;
+  const consultationSlotHtml = consultationSlots
+    .map((slot) => `<li style="margin: 4px 0;">${slot}</li>`)
+    .join("");
   const slotHtml = availabilitySlots
     .map((slot) => `<li style="margin: 4px 0;">${slot}</li>`)
     .join("");
@@ -203,12 +210,14 @@ export async function sendGroupRegistrationEmail({
     subject,
     html: `
       <p>${name} 您好：</p>
-      <p>我們已收到你對以下團體的報名：</p>
+      <p>我們已收到你對以下團體的資料：</p>
       <p><strong>${groupTitle}</strong></p>
-      <p>你提供的可訪談時段如下：</p>
+      <p>初談可約時段如下（約 30 分鐘）：</p>
+      <ul style="padding-left: 20px;">${consultationSlotHtml}</ul>
+      <p>你提供的團體可參與時段如下：</p>
       <ul style="padding-left: 20px;">${slotHtml}</ul>
       <br/>
-      <p>我們會評估後與你聯繫，安排合適的訪談時間。</p>
+      <p>${followUpNote || "我們會先評估並安排初談時間，確認後會再寄送詳細資訊，並以電話再次和你確認。"}</p>
       <p>Ho-Se 團隊 敬上</p>
     `,
   });
