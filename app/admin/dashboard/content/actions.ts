@@ -260,9 +260,12 @@ export async function saveFortuneLecturesContent(formData: FormData) {
 			const id = String(item.id || "").trim();
 			const slug = String(item.slug || "").trim();
 			const type = String(item.type || "").trim() as LectureItem["type"];
+			const dateMode = item.dateMode === "month" ? "month" : "exact";
 			const date = String(item.date || "").trim();
 			const dateLabel = String(item.dateLabel || "").trim();
 			const time = String(item.time || "").trim();
+			const approxYear = String(item.approxYear || "").trim();
+			const approxMonth = String(item.approxMonth || "").trim();
 			const titleZh = String(item.titleZh || "").trim();
 			const titleEn = String(item.titleEn || "").trim();
 			const subtitleEn = String(item.subtitleEn || "").trim();
@@ -278,7 +281,7 @@ export async function saveFortuneLecturesContent(formData: FormData) {
 						.filter(Boolean)
 				: [];
 
-			if (!id || !slug || !date || !dateLabel || !time || !titleZh || !href) {
+			if (!id || !slug || !titleZh || !href) {
 				return null;
 			}
 
@@ -290,14 +293,32 @@ export async function saveFortuneLecturesContent(formData: FormData) {
 				return null;
 			}
 
+			if (dateMode === "month") {
+				if (!/^\d{4}$/.test(approxYear)) {
+					return null;
+				}
+
+				const monthNumber = Number(approxMonth);
+				if (!Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) {
+					return null;
+				}
+			} else {
+				if (!date || !dateLabel || !time) {
+					return null;
+				}
+			}
+
 			return {
 				id,
 				slug,
 				type,
 				category: category as LectureItem["category"],
-				date,
+				dateMode,
+				date: dateMode === "month" ? "" : date,
 				dateLabel,
-				time,
+				time: dateMode === "month" ? "" : time,
+				approxYear: dateMode === "month" ? approxYear : undefined,
+				approxMonth: dateMode === "month" ? approxMonth : undefined,
 				titleZh,
 				titleEn: titleEn || undefined,
 				subtitleEn,

@@ -7,6 +7,7 @@ import {
 } from "next/font/google";
 import Link from "next/link";
 import NewsletterSubscription from "./NewsletterSubscription";
+import SupabaseKeepAlive from "./SupabaseKeepAlive";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -101,6 +102,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSerif.variable} text-zinc-900 antialiased`}
         style={{ backgroundColor: "#f3f3f2" }}
       >
+        <SupabaseKeepAlive />
         <div className="min-h-screen flex flex-col">
 
           {/* HEADER / HERO */}

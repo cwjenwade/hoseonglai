@@ -10,9 +10,12 @@ export type LectureItem = {
   slug: string;
   type: "LECTURE" | "WORKSHOP" | "PUBLIC TALK";
   category: Exclude<LectureCategory, "All">[];
+  dateMode?: "exact" | "month";
   date: string;
   dateLabel: string;
   time: string;
+  approxYear?: string;
+  approxMonth?: string;
   titleZh: string;
   titleEn?: string;
   subtitleEn: string;

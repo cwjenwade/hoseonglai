@@ -36,6 +36,16 @@ function formatZhDate(date: string): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
+function getApproxMonthLabel(lecture: LectureItem): string {
+  if (lecture.dateMode !== "month") return lecture.dateLabel;
+  const year = (lecture.approxYear || "").trim();
+  const month = Number((lecture.approxMonth || "").trim());
+  if (!/^\d{4}$/.test(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return lecture.dateLabel;
+  }
+  return `${year}年${month}月`;
+}
+
 type LectureIndexClientProps = {
   lectures: LectureItem[];
 };
@@ -145,7 +155,10 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
 
         <section aria-label="Lecture archive" className="pb-20 md:pb-24 lg:pb-28">
           <div className="border-t-0 border-black/10 md:border-t">
-            {filteredLectures.map((lecture) => (
+            {filteredLectures.map((lecture) => {
+              const isComingSoon = lecture.dateMode === "month";
+
+              return (
               <article
                 key={lecture.id}
                 className="border-b border-black/10 py-10 md:py-12"
@@ -168,10 +181,10 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                       }}
                     >
                       <p className="text-[30px] leading-[1.1] tracking-[-0.02em] text-[#1a1a1a]">
-                        {formatZhDate(lecture.date)}
+                        {isComingSoon ? "敬請期待" : formatZhDate(lecture.date)}
                       </p>
-                      <p>{lecture.dateLabel}</p>
-                      <p>{lecture.time}</p>
+                      <p>{getApproxMonthLabel(lecture)}</p>
+                      <p>{isComingSoon ? "日期待公布" : lecture.time}</p>
                     </div>
                   </div>
 
@@ -238,7 +251,8 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         </section>
 

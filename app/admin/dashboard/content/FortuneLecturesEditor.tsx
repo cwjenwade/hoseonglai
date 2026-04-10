@@ -39,6 +39,32 @@ function formatDateLabel(date: string): string {
   return `${Number(day)} ${labelMonth} ${year}`;
 }
 
+function formatMonthDateLabel(year: string, month: string): string {
+  const normalizedYear = year.trim();
+  const normalizedMonth = month.trim();
+  if (!/^\d{4}$/.test(normalizedYear)) return "";
+
+  const monthIndex = Number(normalizedMonth) - 1;
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const labelMonth = monthNames[monthIndex];
+  if (!labelMonth) return "";
+
+  return `${labelMonth} ${normalizedYear}`;
+}
+
 function splitTimeRange(value: string): { start: string; end: string } {
   const normalized = value.replace(/\s/g, "");
   const [start = "", end = ""] = normalized.split(/[–-]/);
@@ -52,9 +78,12 @@ function createEmptyLecture(): LectureItem {
     slug,
     type: "LECTURE",
     category: ["Upcoming", "Public Talk"],
+    dateMode: "exact",
     date: "",
     dateLabel: "",
     time: "",
+    approxYear: "",
+    approxMonth: "",
     titleZh: "",
     titleEn: "",
     subtitleEn: "",
@@ -74,7 +103,11 @@ export default function FortuneLecturesEditor({ initialLectures }: FortuneLectur
     () =>
       lectures.map((lecture) => ({
         ...lecture,
-        dateLabel: formatDateLabel(lecture.date),
+        dateMode: lecture.dateMode === "month" ? "month" : "exact",
+        dateLabel:
+          lecture.dateMode === "month"
+            ? formatMonthDateLabel(lecture.approxYear || "", lecture.approxMonth || "")
+            : formatDateLabel(lecture.date),
       })),
     [lectures],
   );
@@ -150,64 +183,142 @@ export default function FortuneLecturesEditor({ initialLectures }: FortuneLectur
 
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <label className="text-xs text-zinc-700">
-                日期（YYYY-MM-DD）
-                <input
-                  type="date"
-                  value={lecture.date}
+                日期模式
+                <select
+                  value={lecture.dateMode === "month" ? "month" : "exact"}
                   onChange={(e) =>
-                    setLectures((prev) => prev.map((item, i) => (i === index ? { ...item, date: e.target.value } : item)))
+                    setLectures((prev) =>
+                      prev.map((item, i) => {
+                        if (i !== index) return item;
+                        const nextMode = e.target.value === "month" ? "month" : "exact";
+                        return {
+                          ...item,
+                          dateMode: nextMode,
+                          date: nextMode === "month" ? "" : item.date,
+                          approxYear: nextMode === "month" ? item.approxYear || "" : "",
+                          approxMonth: nextMode === "month" ? item.approxMonth || "" : "",
+                        };
+                      }),
+                    )
                   }
                   className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                />
+                >
+                  <option value="exact">指定日期</option>
+                  <option value="month">僅年月（顯示敬請期待）</option>
+                </select>
               </label>
+              {lecture.dateMode === "month" ? (
+                <>
+                  <label className="text-xs text-zinc-700">
+                    年份
+                    <input
+                      type="number"
+                      min={2000}
+                      max={2200}
+                      value={lecture.approxYear || ""}
+                      onChange={(e) =>
+                        setLectures((prev) =>
+                          prev.map((item, i) => (i === index ? { ...item, approxYear: e.target.value } : item)),
+                        )
+                      }
+                      className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                      placeholder="2026"
+                    />
+                  </label>
+                  <label className="text-xs text-zinc-700">
+                    月份
+                    <select
+                      value={lecture.approxMonth || ""}
+                      onChange={(e) =>
+                        setLectures((prev) =>
+                          prev.map((item, i) => (i === index ? { ...item, approxMonth: e.target.value } : item)),
+                        )
+                      }
+                      className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                    >
+                      <option value="">請選擇</option>
+                      <option value="1">1 月</option>
+                      <option value="2">2 月</option>
+                      <option value="3">3 月</option>
+                      <option value="4">4 月</option>
+                      <option value="5">5 月</option>
+                      <option value="6">6 月</option>
+                      <option value="7">7 月</option>
+                      <option value="8">8 月</option>
+                      <option value="9">9 月</option>
+                      <option value="10">10 月</option>
+                      <option value="11">11 月</option>
+                      <option value="12">12 月</option>
+                    </select>
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label className="text-xs text-zinc-700">
+                    日期（YYYY-MM-DD）
+                    <input
+                      type="date"
+                      value={lecture.date}
+                      onChange={(e) =>
+                        setLectures((prev) => prev.map((item, i) => (i === index ? { ...item, date: e.target.value } : item)))
+                      }
+                      className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                    />
+                  </label>
+                  <label className="text-xs text-zinc-700">
+                    時間
+                    <div className="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                      <input
+                        type="time"
+                        value={splitTimeRange(lecture.time).start}
+                        onChange={(e) =>
+                          setLectures((prev) =>
+                            prev.map((item, i) => {
+                              if (i !== index) return item;
+                              const current = splitTimeRange(item.time);
+                              return {
+                                ...item,
+                                time: `${e.target.value}${current.end ? `–${current.end}` : ""}`,
+                              };
+                            }),
+                          )
+                        }
+                        className="h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                      />
+                      <span className="text-xs text-zinc-500">至</span>
+                      <input
+                        type="time"
+                        value={splitTimeRange(lecture.time).end}
+                        onChange={(e) =>
+                          setLectures((prev) =>
+                            prev.map((item, i) => {
+                              if (i !== index) return item;
+                              const current = splitTimeRange(item.time);
+                              return {
+                                ...item,
+                                time: `${current.start}${e.target.value ? `–${e.target.value}` : ""}`,
+                              };
+                            }),
+                          )
+                        }
+                        className="h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </label>
+                </>
+              )}
               <label className="text-xs text-zinc-700">
                 日期顯示文字
                 <input
-                  value={formatDateLabel(lecture.date)}
+                  value={
+                    lecture.dateMode === "month"
+                      ? formatMonthDateLabel(lecture.approxYear || "", lecture.approxMonth || "")
+                      : formatDateLabel(lecture.date)
+                  }
                   readOnly
                   className="mt-1 h-10 w-full rounded-lg border border-zinc-200 bg-zinc-100 px-3 text-sm text-zinc-600 outline-none"
                   placeholder="10 Apr 2026"
                 />
-              </label>
-              <label className="text-xs text-zinc-700">
-                時間
-                <div className="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                  <input
-                    type="time"
-                    value={splitTimeRange(lecture.time).start}
-                    onChange={(e) =>
-                      setLectures((prev) =>
-                        prev.map((item, i) => {
-                          if (i !== index) return item;
-                          const current = splitTimeRange(item.time);
-                          return {
-                            ...item,
-                            time: `${e.target.value}${current.end ? `–${current.end}` : ""}`,
-                          };
-                        }),
-                      )
-                    }
-                    className="h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  />
-                  <span className="text-xs text-zinc-500">至</span>
-                  <input
-                    type="time"
-                    value={splitTimeRange(lecture.time).end}
-                    onChange={(e) =>
-                      setLectures((prev) =>
-                        prev.map((item, i) => {
-                          if (i !== index) return item;
-                          const current = splitTimeRange(item.time);
-                          return {
-                            ...item,
-                            time: `${current.start}${e.target.value ? `–${e.target.value}` : ""}`,
-                          };
-                        }),
-                      )
-                    }
-                    className="h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  />
-                </div>
               </label>
             </div>
 

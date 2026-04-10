@@ -21,11 +21,15 @@ export async function generateMetadata({ params }: LectureDetailPageProps): Prom
   }
 
   const title = lecture.titleZh;
-  const speaker = lecture.speaker || "任祈蔚"
+  const speaker = lecture.speaker || "任祈蔚";
+  const isComingSoon = lecture.dateMode === "month";
+  const dateText = isComingSoon
+    ? "敬請期待"
+    : `${lecture.dateLabel} ${lecture.time}`.trim();
 
   return {
     title: `${title}｜講座詳情`,
-    description: `${title}。講師：${speaker}。時間：${lecture.dateLabel} ${lecture.time}。${lecture.locationZh || "活動地點待公布"}。`,
+    description: `${title}。講師：${speaker}。時間：${dateText}。${lecture.locationZh || "活動地點待公布"}。`,
   };
 }
 
@@ -48,6 +52,12 @@ export default async function LectureDetailPage({ params }: LectureDetailPagePro
       </main>
     );
   }
+
+  const isComingSoon = lecture.dateMode === "month";
+  const monthLabel =
+    lecture.dateMode === "month" && lecture.approxYear && lecture.approxMonth
+      ? `${lecture.approxYear}年${Number(lecture.approxMonth)}月`
+      : lecture.dateLabel;
 
   return (
     <main className="min-h-screen bg-[#f6f3ee] text-[#1a1a1a]">
@@ -82,7 +92,8 @@ export default async function LectureDetailPage({ params }: LectureDetailPagePro
                 {lecture.speaker || "待公布"}
                 {lecture.speakerEn ? ` / ${lecture.speakerEn}` : ""}
               </p>
-              <p>時間：{`${lecture.dateLabel} ${lecture.time}`.trim()}</p>
+              <p>時間：{isComingSoon ? "敬請期待" : `${lecture.dateLabel} ${lecture.time}`.trim()}</p>
+              {isComingSoon ? <p>預計月份：{monthLabel || "待公布"}</p> : null}
               <p>地點：{lecture.locationZh || "待公布"}</p>
               <p>地址：{lecture.addressZh || "待公布"}</p>
             </div>
