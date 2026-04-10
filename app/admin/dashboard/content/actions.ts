@@ -17,7 +17,11 @@ import type { PsychometricScale } from "@/app/collaborative-prosperity/assessmen
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
-import type { GroupItem } from "@/app/togetherness/group-data";
+import {
+	normalizeGroupTags,
+	suggestGroupTags,
+	type GroupItem,
+} from "@/app/togetherness/group-data";
 
 async function requireAdminUser() {
 	const supabase = await getSupabaseServerClient();
@@ -741,6 +745,11 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 		const subtitle = String(item.subtitle || "").trim();
 		const description = String(item.description || "").trim();
 		const image = String(item.image || "").trim();
+		const tags = normalizeGroupTags(
+			Array.isArray(item.tags) && item.tags.length > 0
+				? item.tags
+				: suggestGroupTags({ slug, title, subtitle, description }),
+		);
 
 		if (!slug || !title || !subtitle || !description || !image) {
 			const detail = encodeURIComponent(`第${index + 1}筆有未填欄位`);
@@ -753,6 +762,7 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 			subtitle,
 			description,
 			image,
+			tags,
 		});
 	}
 

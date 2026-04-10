@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { GROUPS } from "./group-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
+import TogethernessCatalogClient from "./TogethernessCatalogClient";
 
 export const metadata: Metadata = {
   title: "團團圓圓 | Group Therapy",
 };
 
-export default async function TogethernessPage() {
+type TogethernessPageProps = {
+  searchParams: Promise<{ tag?: string }>;
+};
+
+export default async function TogethernessPage({ searchParams }: TogethernessPageProps) {
   const groups = await getSiteContentSection("togetherness_groups", GROUPS);
+  const resolvedSearchParams = await searchParams;
 
   return (
     <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
@@ -104,56 +108,7 @@ export default async function TogethernessPage() {
           </div>
         </header>
 
-        <section className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-10 xl:gap-y-20">
-          {groups.map((group) => (
-            <article key={group.slug} className="group relative z-0">
-              <Link
-                href={`/togetherness/${group.slug}`}
-                className="relative block p-0 text-left transition-[padding,transform,box-shadow] duration-300 ease-out hover:z-20 hover:-translate-y-2 hover:p-5 hover:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:z-20 focus-visible:-translate-y-2 focus-visible:p-5 focus-visible:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:outline-none"
-              >
-                <div className="relative aspect-[4/5] overflow-hidden bg-neutral-200">
-                  <Image
-                    src={group.image}
-                    alt={group.title}
-                    fill
-                    sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 100vw"
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-                  />
-                </div>
-
-                <div className="mt-5">
-                  <h2
-                    className="mt-1 text-[24px] leading-[1.25] font-medium text-neutral-900"
-                    style={{ fontFamily: "var(--font-noto-serif)" }}
-                  >
-                    {group.title}
-                  </h2>
-
-                  <p
-                    className="mt-1 text-[13px] leading-[1.5] text-neutral-500"
-                    style={{ fontFamily: "var(--font-geist-sans)" }}
-                  >
-                    {group.subtitle}
-                  </p>
-
-                  <p
-                    className="mt-4 max-w-[32ch] text-[15px] leading-[1.75] text-neutral-700 line-clamp-2"
-                    style={{ fontFamily: "var(--font-noto-serif)" }}
-                  >
-                    {group.description}
-                  </p>
-
-                  <span
-                    className="mt-5 inline-block border-b border-neutral-700 pb-[2px] text-[13px] text-neutral-700 transition-opacity duration-200 group-hover:opacity-60"
-                    style={{ fontFamily: "var(--font-geist-sans)" }}
-                  >
-                    View detail / Register
-                  </span>
-                </div>
-              </Link>
-            </article>
-          ))}
-        </section>
+        <TogethernessCatalogClient groups={groups} initialTag={resolvedSearchParams.tag} />
       </div>
     </main>
   );

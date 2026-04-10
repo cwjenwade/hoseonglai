@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import GroupRegistrationForm from "@/app/togetherness/GroupRegistrationForm";
-import { GROUPS } from "@/app/togetherness/group-data";
+import {
+  GROUPS,
+  normalizeGroupTags,
+  suggestGroupTags,
+} from "@/app/togetherness/group-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
 
 type GroupDetailPageProps = {
@@ -36,6 +40,8 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
     notFound();
   }
 
+  const tags = normalizeGroupTags(group.tags?.length ? group.tags : suggestGroupTags(group));
+
   return (
     <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">
       <div className="mx-auto max-w-[1080px] px-8 py-14 md:px-12 md:py-20">
@@ -57,6 +63,19 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
             <p className="mt-2 text-sm uppercase tracking-[0.2em] text-neutral-500">
               {group.subtitle}
             </p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/togetherness?tag=${encodeURIComponent(tag)}`}
+                  className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-neutral-600 transition hover:border-neutral-500 hover:text-neutral-900"
+                  style={{ fontFamily: "var(--font-geist-sans)" }}
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
 
             <p className="mt-7 text-[1rem] leading-[1.9] text-neutral-700">
               {group.description}
