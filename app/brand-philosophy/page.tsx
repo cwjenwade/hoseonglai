@@ -85,7 +85,7 @@ export default async function BrandPhilosophyPage() {
       </section>
 
       {/* BRAND DIRECTOR */}
-      <section id="director" className="mb-14 border-b border-neutral-300/60 pb-10 md:mb-16 md:pb-12">
+      <section id="director" className="mb-14 border-b border-neutral-300/60 bg-[#f3f3f3] pb-10 md:mb-16 md:pb-12">
 
           <div className="md:hidden">
             <div className="mx-auto w-full max-w-[360px] border border-neutral-300/60">
@@ -104,11 +104,11 @@ export default async function BrandPhilosophyPage() {
             </div>
           </div>
 
-          <div className="hidden md:grid gap-12 md:gap-14 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="hidden md:grid gap-10 md:gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
 
             <div>
 
-              <div className="relative aspect-[4/5] w-full bg-neutral-200 flex items-center justify-center overflow-hidden">
+              <div className="relative aspect-[4/5] w-full md:w-[500px] max-w-full bg-neutral-200 flex items-center justify-center overflow-hidden">
                 {director.photo ? (
                   <Image
                     src={director.photo}
@@ -128,42 +128,42 @@ export default async function BrandPhilosophyPage() {
 
             </div>
 
-            <div>
+            <div className="pt-8 md:pt-12">
 
               <p
-                className="text-[0.7rem] uppercase tracking-[0.32em] text-neutral-400"
+                className="text-[0.72rem] uppercase tracking-[0.34em] text-neutral-400"
                 style={{ fontFamily: "var(--font-geist)" }}
               >
                 Branding Director
               </p>
 
               <h2
-                className="mt-6 text-[2.5rem] tracking-[-0.02em] sm:text-[3.1rem]"
+                className="mt-2 text-[3.1rem] leading-[1.08] tracking-[-0.02em] lg:text-[3.4rem]"
                 style={{ fontFamily: "var(--font-noto-serif)" }}
               >
                 {director.nameZh || "-"}
               </h2>
 
               <p
-                className="mt-3 text-[1.75rem] uppercase tracking-[0.08em] text-neutral-600"
+                className="mt-1 text-[2rem] uppercase leading-[1.15] tracking-[0.08em] text-neutral-600"
                 style={{ fontFamily: "var(--font-geist)" }}
               >
                 {director.nameEn || "-"}
               </p>
 
-              <div className="mt-10 grid gap-8 md:gap-10 lg:grid-cols-[0.55fr_1.45fr]">
+              <div className="mt-6 grid gap-8 md:gap-9">
 
                 <div>
 
                   <p
-                    className="text-[0.6rem] uppercase tracking-[0.3em] text-neutral-400"
+                    className="text-[0.68rem] uppercase tracking-[0.34em] text-neutral-400"
                     style={{ fontFamily: "var(--font-geist)" }}
                   >
                     Affiliation
                   </p>
 
-                  <div
-                    className="mt-3 text-[1.08rem] leading-7 text-neutral-700"
+                    <div
+                    className="mt-3 space-y-1 text-[1.08rem] leading-8 text-neutral-700"
                     style={{ fontFamily: "var(--font-geist)" }}
                   >
                     {director.affiliationLines.map((line, index) => {
@@ -186,7 +186,7 @@ export default async function BrandPhilosophyPage() {
 
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-6 pt-1">
 
                   {director.introParagraphs.map((paragraph, index) => (
                     <p
