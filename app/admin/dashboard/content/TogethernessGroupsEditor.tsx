@@ -30,10 +30,11 @@ function createEmptyGroup(): GroupItem {
     leaderNameEn: "",
     leaderTitleZh: "",
     leaderPhoto: "",
-    approach: "",
-    suitableFor: "",
+    introHeading: "",
+    introDescription: "",
     consultationNote: "",
-    followUpNote: "",
+    registrationHeading: "",
+    registrationDescription: "",
   };
 }
 
@@ -221,12 +222,12 @@ export default function TogethernessGroupsEditor({
 
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <label className="block text-xs text-zinc-700">
-                帶領方式（此團體）
+                進入預約前標題
                 <textarea
-                  value={group.approach || ""}
+                  value={group.introHeading || ""}
                   onChange={(e) =>
                     setGroups((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, approach: e.target.value } : item)),
+                      prev.map((item, i) => (i === index ? { ...item, introHeading: e.target.value } : item)),
                     )
                   }
                   className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
@@ -234,12 +235,12 @@ export default function TogethernessGroupsEditor({
               </label>
 
               <label className="block text-xs text-zinc-700">
-                適合族群（此團體）
+                進入預約前內文
                 <textarea
-                  value={group.suitableFor || ""}
+                  value={group.introDescription || ""}
                   onChange={(e) =>
                     setGroups((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, suitableFor: e.target.value } : item)),
+                      prev.map((item, i) => (i === index ? { ...item, introDescription: e.target.value } : item)),
                     )
                   }
                   className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
@@ -249,7 +250,7 @@ export default function TogethernessGroupsEditor({
 
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <label className="block text-xs text-zinc-700">
-                初談說明（此團體）
+                初談說明
                 <textarea
                   value={group.consultationNote || ""}
                   onChange={(e) =>
@@ -262,18 +263,33 @@ export default function TogethernessGroupsEditor({
               </label>
 
               <label className="block text-xs text-zinc-700">
-                後續聯繫（此團體）
+                預約區標題
                 <textarea
-                  value={group.followUpNote || ""}
+                  value={group.registrationHeading || ""}
                   onChange={(e) =>
                     setGroups((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, followUpNote: e.target.value } : item)),
+                      prev.map((item, i) => (i === index ? { ...item, registrationHeading: e.target.value } : item)),
                     )
                   }
                   className="mt-1 h-20 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
                 />
               </label>
             </div>
+
+            <label className="mt-3 block text-xs text-zinc-700">
+              預約區內文
+              <textarea
+                value={group.registrationDescription || ""}
+                onChange={(e) =>
+                  setGroups((prev) =>
+                    prev.map((item, i) =>
+                      i === index ? { ...item, registrationDescription: e.target.value } : item,
+                    ),
+                  )
+                }
+                className="mt-1 h-24 w-full rounded-lg border border-zinc-300 p-3 text-sm outline-none focus:border-amber-400"
+              />
+            </label>
 
             <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
               <label className="text-xs text-zinc-700">

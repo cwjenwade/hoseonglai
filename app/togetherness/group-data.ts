@@ -9,16 +9,19 @@ export type GroupItem = {
   leaderNameEn?: string;
   leaderTitleZh?: string;
   leaderPhoto?: string;
-  approach?: string;
-  suitableFor?: string;
+  introHeading?: string;
+  introDescription?: string;
   consultationNote?: string;
-  followUpNote?: string;
+  registrationHeading?: string;
+  registrationDescription?: string;
 };
 
-export const DEFAULT_GROUP_APPROACH = "我們不急著修好你，而是一起理解你如何在關係裡受傷與靠近。";
-export const DEFAULT_GROUP_SUITABLE_FOR = "適合正在親密關係、人際界線、身份認同中感到拉扯的人。";
+export const DEFAULT_GROUP_INTRO_HEADING = "先理解這個團體，再進入預約流程";
+export const DEFAULT_GROUP_INTRO_DESCRIPTION = "你可以先看團體帶領者與初談說明，再往下填寫初談與參與時段。";
 export const DEFAULT_GROUP_CONSULTATION_NOTE = "初談約 30 分鐘，會在安靜且不受打擾的空間進行。";
-export const DEFAULT_GROUP_FOLLOW_UP_NOTE = "我們確認約談時間後會寄信通知，並再以電話與你確認一次。";
+export const DEFAULT_GROUP_REGISTRATION_HEADING = "請先留下初談與聯絡資料";
+export const DEFAULT_GROUP_REGISTRATION_DESCRIPTION =
+  "初談將由心理與諮商學系研究生或學士班學生進行，並在督導之下，接受過評估與訪談的方法訓練。初談約 30 分鐘，會在安靜且不受打擾的空間進行。";
 export const DEFAULT_GROUP_LEADER_NAME_ZH = "任祈蔚";
 export const DEFAULT_GROUP_LEADER_NAME_EN = "Jen Chi-Wei";
 export const DEFAULT_GROUP_LEADER_TITLE_ZH = "諮商心理師";
@@ -37,10 +40,11 @@ export const GROUPS: GroupItem[] = [
     leaderNameEn: DEFAULT_GROUP_LEADER_NAME_EN,
     leaderTitleZh: DEFAULT_GROUP_LEADER_TITLE_ZH,
     leaderPhoto: "",
-    approach: DEFAULT_GROUP_APPROACH,
-    suitableFor: DEFAULT_GROUP_SUITABLE_FOR,
+    introHeading: DEFAULT_GROUP_INTRO_HEADING,
+    introDescription: DEFAULT_GROUP_INTRO_DESCRIPTION,
     consultationNote: DEFAULT_GROUP_CONSULTATION_NOTE,
-    followUpNote: DEFAULT_GROUP_FOLLOW_UP_NOTE,
+    registrationHeading: DEFAULT_GROUP_REGISTRATION_HEADING,
+    registrationDescription: DEFAULT_GROUP_REGISTRATION_DESCRIPTION,
   },
   {
     slug: "group-psychotherapy",
@@ -55,10 +59,11 @@ export const GROUPS: GroupItem[] = [
     leaderNameEn: DEFAULT_GROUP_LEADER_NAME_EN,
     leaderTitleZh: DEFAULT_GROUP_LEADER_TITLE_ZH,
     leaderPhoto: "",
-    approach: DEFAULT_GROUP_APPROACH,
-    suitableFor: DEFAULT_GROUP_SUITABLE_FOR,
+    introHeading: DEFAULT_GROUP_INTRO_HEADING,
+    introDescription: DEFAULT_GROUP_INTRO_DESCRIPTION,
     consultationNote: DEFAULT_GROUP_CONSULTATION_NOTE,
-    followUpNote: DEFAULT_GROUP_FOLLOW_UP_NOTE,
+    registrationHeading: DEFAULT_GROUP_REGISTRATION_HEADING,
+    registrationDescription: DEFAULT_GROUP_REGISTRATION_DESCRIPTION,
   },
   {
     slug: "interpersonal-group",
@@ -73,9 +78,10 @@ export const GROUPS: GroupItem[] = [
     leaderNameEn: DEFAULT_GROUP_LEADER_NAME_EN,
     leaderTitleZh: DEFAULT_GROUP_LEADER_TITLE_ZH,
     leaderPhoto: "",
-    approach: DEFAULT_GROUP_APPROACH,
-    suitableFor: DEFAULT_GROUP_SUITABLE_FOR,
+    introHeading: DEFAULT_GROUP_INTRO_HEADING,
+    introDescription: DEFAULT_GROUP_INTRO_DESCRIPTION,
     consultationNote: DEFAULT_GROUP_CONSULTATION_NOTE,
-    followUpNote: DEFAULT_GROUP_FOLLOW_UP_NOTE,
+    registrationHeading: DEFAULT_GROUP_REGISTRATION_HEADING,
+    registrationDescription: DEFAULT_GROUP_REGISTRATION_DESCRIPTION,
   },
 ];

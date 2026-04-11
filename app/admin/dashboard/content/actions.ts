@@ -19,13 +19,14 @@ import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
 import {
 	type GroupItem,
-	DEFAULT_GROUP_APPROACH,
 	DEFAULT_GROUP_CONSULTATION_NOTE,
-	DEFAULT_GROUP_FOLLOW_UP_NOTE,
+	DEFAULT_GROUP_INTRO_DESCRIPTION,
+	DEFAULT_GROUP_INTRO_HEADING,
 	DEFAULT_GROUP_LEADER_NAME_EN,
 	DEFAULT_GROUP_LEADER_NAME_ZH,
 	DEFAULT_GROUP_LEADER_TITLE_ZH,
-	DEFAULT_GROUP_SUITABLE_FOR,
+	DEFAULT_GROUP_REGISTRATION_DESCRIPTION,
+	DEFAULT_GROUP_REGISTRATION_HEADING,
 } from "@/app/togetherness/group-data";
 
 async function requireAdminUser() {
@@ -765,11 +766,15 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 		const leaderNameEn = String(item.leaderNameEn || "").trim() || DEFAULT_GROUP_LEADER_NAME_EN;
 		const leaderTitleZh = String(item.leaderTitleZh || "").trim() || DEFAULT_GROUP_LEADER_TITLE_ZH;
 		const leaderPhoto = String(item.leaderPhoto || "").trim();
-		const approach = String(item.approach || "").trim() || DEFAULT_GROUP_APPROACH;
-		const suitableFor = String(item.suitableFor || "").trim() || DEFAULT_GROUP_SUITABLE_FOR;
+		const introHeading = String(item.introHeading || "").trim() || DEFAULT_GROUP_INTRO_HEADING;
+		const introDescription = String(item.introDescription || "").trim() || DEFAULT_GROUP_INTRO_DESCRIPTION;
 		const consultationNote =
 			String(item.consultationNote || "").trim() || DEFAULT_GROUP_CONSULTATION_NOTE;
-		const followUpNote = String(item.followUpNote || "").trim() || DEFAULT_GROUP_FOLLOW_UP_NOTE;
+		const registrationHeading =
+			String(item.registrationHeading || "").trim() || DEFAULT_GROUP_REGISTRATION_HEADING;
+		const registrationDescription =
+			String(item.registrationDescription || "").trim() ||
+			DEFAULT_GROUP_REGISTRATION_DESCRIPTION;
 
 		if (!slug || !title || !subtitle || !description || !image) {
 			const detail = encodeURIComponent(`第${index + 1}筆有未填欄位`);
@@ -787,10 +792,11 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 			leaderNameEn,
 			leaderTitleZh,
 			leaderPhoto: leaderPhoto || undefined,
-			approach,
-			suitableFor,
+			introHeading,
+			introDescription,
 			consultationNote,
-			followUpNote,
+			registrationHeading,
+			registrationDescription,
 		});
 	}
 

@@ -9,10 +9,13 @@ import {
 import {
   GROUPS,
   DEFAULT_GROUP_CONSULTATION_NOTE,
-  DEFAULT_GROUP_FOLLOW_UP_NOTE,
+  DEFAULT_GROUP_INTRO_DESCRIPTION,
+  DEFAULT_GROUP_INTRO_HEADING,
   DEFAULT_GROUP_LEADER_NAME_EN,
   DEFAULT_GROUP_LEADER_NAME_ZH,
   DEFAULT_GROUP_LEADER_TITLE_ZH,
+  DEFAULT_GROUP_REGISTRATION_DESCRIPTION,
+  DEFAULT_GROUP_REGISTRATION_HEADING,
 } from "@/app/togetherness/group-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
 
@@ -61,8 +64,12 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
     notFound();
   }
 
+  const introHeading = group.introHeading || DEFAULT_GROUP_INTRO_HEADING;
+  const introDescription = group.introDescription || DEFAULT_GROUP_INTRO_DESCRIPTION;
   const consultationNote = group.consultationNote || DEFAULT_GROUP_CONSULTATION_NOTE;
-  const followUpNote = group.followUpNote || DEFAULT_GROUP_FOLLOW_UP_NOTE;
+  const registrationHeading = group.registrationHeading || DEFAULT_GROUP_REGISTRATION_HEADING;
+  const registrationDescription =
+    group.registrationDescription || DEFAULT_GROUP_REGISTRATION_DESCRIPTION;
   const leaderNameZh = group.leaderNameZh || DEFAULT_GROUP_LEADER_NAME_ZH;
   const leaderNameEn = group.leaderNameEn || DEFAULT_GROUP_LEADER_NAME_EN;
   const leaderTitleZh = group.leaderTitleZh || DEFAULT_GROUP_LEADER_TITLE_ZH;
@@ -130,10 +137,10 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                   Step 1 / 團體詳情
                 </p>
                 <h2 className="text-[1.42rem] font-medium leading-[1.45] text-neutral-900 md:text-[1.62rem]" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
-                  先理解這個團體，再進入預約流程
+                  {introHeading}
                 </h2>
                 <p className="max-w-[52ch] text-[1.08rem] leading-[1.95] text-neutral-700 md:text-[1.14rem]" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
-                  你可以先看團體帶領者與初談說明，再往下填寫初談與參與時段。
+                  {introDescription}
                 </p>
               </div>
 
@@ -148,8 +155,8 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
               <GroupRegistrationForm
                 groupSlug={group.slug}
                 groupTitle={group.title}
-                consultationNote={consultationNote}
-                followUpNote={followUpNote}
+                registrationHeading={registrationHeading}
+                registrationDescription={registrationDescription}
               />
             </div>
           </section>

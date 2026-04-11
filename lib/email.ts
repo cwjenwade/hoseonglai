@@ -169,7 +169,6 @@ type SendGroupRegistrationEmailParams = {
   groupTitle: string;
   consultationSlots: string[];
   availabilitySlots: string[];
-  followUpNote?: string;
 };
 
 export async function sendGroupRegistrationEmail({
@@ -178,7 +177,6 @@ export async function sendGroupRegistrationEmail({
   groupTitle,
   consultationSlots,
   availabilitySlots,
-  followUpNote,
 }: SendGroupRegistrationEmailParams): Promise<void> {
   const gmailUser = process.env.GMAIL_USER;
   const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
@@ -217,7 +215,7 @@ export async function sendGroupRegistrationEmail({
       <p>你提供的團體可參與時段如下：</p>
       <ul style="padding-left: 20px;">${slotHtml}</ul>
       <br/>
-      <p>${followUpNote || "我們會先評估並安排初談時間，確認後會再寄送詳細資訊，並以電話再次和你確認。"}</p>
+      <p>我們確認約談時間後會寄信通知，並再以電話與你確認一次。</p>
       <p>Ho-Se 團隊 敬上</p>
     `,
   });

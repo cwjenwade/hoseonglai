@@ -5,8 +5,8 @@ import { useMemo, useState } from "react";
 type GroupRegistrationFormProps = {
   groupSlug: string;
   groupTitle: string;
-  consultationNote: string;
-  followUpNote: string;
+  registrationHeading: string;
+  registrationDescription: string;
 };
 
 function buildInterviewSlots(): string[] {
@@ -59,8 +59,8 @@ function buildConsultationSlots(): string[] {
 export default function GroupRegistrationForm({
   groupSlug,
   groupTitle,
-  consultationNote,
-  followUpNote,
+  registrationHeading,
+  registrationDescription,
 }: GroupRegistrationFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -167,9 +167,7 @@ export default function GroupRegistrationForm({
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
         <h3 className="text-xl font-semibold text-emerald-800">已收到你的報名</h3>
-        <p className="mt-2 text-sm leading-7 text-emerald-700">
-          感謝你提供可訪談時段。{followUpNote}
-        </p>
+        <p className="mt-2 text-sm leading-7 text-emerald-700">感謝你提供可訪談時段。</p>
       </div>
     );
   }
@@ -179,11 +177,8 @@ export default function GroupRegistrationForm({
       <div className="space-y-4">
         <div className="space-y-2 border-b border-neutral-200 pb-4">
           <p className="text-xs uppercase tracking-[0.26em] text-neutral-400">Step 2 / 預約初談</p>
-          <h3 className="text-[1.15rem] font-medium text-neutral-900">請先留下初談與聯絡資料</h3>
-          <p className="max-w-[60ch] text-sm leading-7 text-neutral-600">
-            初談將由心理與諮商學系研究生或學士班學生進行，並在督導之下，接受過評估與訪談的方法訓練。
-            {consultationNote}
-          </p>
+          <h3 className="text-[1.15rem] font-medium text-neutral-900">{registrationHeading}</h3>
+          <p className="max-w-[60ch] text-sm leading-7 text-neutral-600">{registrationDescription}</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
