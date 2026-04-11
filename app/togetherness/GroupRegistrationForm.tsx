@@ -47,7 +47,7 @@ function buildConsultationSlots(): string[] {
     for (const [start, end] of ranges) {
       for (let hour = start; hour < end; hour += 1) {
         const from = `${String(hour).padStart(2, "0")}:00`;
-        const to = `${String(hour).padStart(2, "0")}:30`;
+        const to = `${String(hour + 1).padStart(2, "0")}:00`;
         slots.push(`${day} ${from}–${to}`);
       }
     }
@@ -121,8 +121,8 @@ export default function GroupRegistrationForm({
       return;
     }
 
-    if (groupSlotsSelected.length < 3 || groupSlotsSelected.length > 5) {
-      alert("請至少勾選 3 個、最多 5 個團體參與時段");
+    if (groupSlotsSelected.length < 1 || groupSlotsSelected.length > 5) {
+      alert("請至少勾選 1 個、最多 5 個團體參與時段");
       return;
     }
 
@@ -212,7 +212,7 @@ export default function GroupRegistrationForm({
 
       <div>
         <p className="text-[18.4px] font-medium text-zinc-900">
-          初談可約時段（30 分鐘，至少 2 個，最多 4 個）
+          初談可約時段（60 分鐘，至少 2 個，最多 4 個）
         </p>
         <div className="mt-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -258,8 +258,8 @@ export default function GroupRegistrationForm({
       </div>
 
       <div id="schedule">
-        <p className="text-sm font-medium text-zinc-900">
-          團體可參與時段（90 分鐘為單位，至少 3 個，最多 5 個）
+        <p className="text-[18.4px] font-medium text-zinc-900">
+          團體可參與時段（90 分鐘，請至少選 1 個，最多 5 個）
         </p>
         <div className="mt-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">

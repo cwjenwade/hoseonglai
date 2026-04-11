@@ -89,17 +89,17 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
               </div>
 
               <div className="mx-auto w-full max-w-[420px] rounded-[2.2rem] border border-neutral-300/70 bg-white/85 px-6 py-8 text-center shadow-[0_12px_40px_-28px_rgba(0,0,0,0.45)]">
-                <div className="relative mx-auto h-[350px] w-[350px] max-w-full overflow-hidden rounded-full border border-neutral-300 bg-neutral-100">
-                  {leaderPhoto ? (
-                    <Image
-                      src={leaderPhoto}
-                      alt={leaderNameZh}
-                      fill
-                      sizes="350px"
-                      className="object-cover"
-                    />
-                  ) : null}
-                </div>
+                <div className="relative mx-auto h-[250px] w-[250px] max-w-full overflow-hidden rounded-full border border-neutral-300 bg-neutral-100">
+                    {leaderPhoto ? (
+                      <Image
+                        src={leaderPhoto}
+                        alt={leaderNameZh}
+                        fill
+                        sizes="250px"
+                        className="object-cover"
+                      />
+                    ) : null}
+                  </div>
                 <div className="mt-6 border-y border-neutral-200 py-5">
                   <p className="text-[20px] leading-[1.2] tracking-[0.01em] text-neutral-900" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
                     {leaderTitleZh}
@@ -117,7 +117,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 {titleLines.map((line, idx) => (
                   <h1
                     key={`${line}-${idx}`}
-                    className="text-[36px] leading-[1.08] tracking-[-0.02em] text-neutral-900"
+                    className="text-[28px] leading-[1.08] tracking-[-0.02em] text-neutral-900"
                     style={{ fontFamily: "var(--font-noto-serif), serif" }}
                   >
                     {line}
@@ -126,6 +126,10 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
               </div>
               <p className="text-[1.08rem] leading-[1.45] tracking-[0.02em] text-neutral-600 md:text-[1.22rem]" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
                 {group.subtitle}
+              </p>
+
+              <p className="mt-4 text-[16px] leading-[1.6] text-neutral-700" style={{ fontFamily: "var(--font-noto-serif), serif" }}>
+                {group.description}
               </p>
             </div>
           </aside>

@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "請提供 2 至 4 個初談時段" }, { status: 400 });
     }
 
-    if (!Array.isArray(availabilitySlots) || availabilitySlots.length < 3 || availabilitySlots.length > 5) {
-      return NextResponse.json({ message: "請提供 3 至 5 個團體可參與時段" }, { status: 400 });
+    if (!Array.isArray(availabilitySlots) || availabilitySlots.length < 1 || availabilitySlots.length > 5) {
+      return NextResponse.json({ message: "請提供 1 至 5 個團體可參與時段" }, { status: 400 });
     }
 
     const supabase = getSupabaseAdminClient();
