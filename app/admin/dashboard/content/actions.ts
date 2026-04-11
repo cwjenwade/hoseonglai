@@ -761,6 +761,7 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 		const subtitle = String(item.subtitle || "").trim();
 		const description = String(item.description || "").trim();
 		const image = String(item.image || "").trim();
+		const isVisible = item.isVisible !== false;
 		const leaderProfileId = String(item.leaderProfileId || "").trim();
 		const leaderNameZh = String(item.leaderNameZh || "").trim() || DEFAULT_GROUP_LEADER_NAME_ZH;
 		const leaderNameEn = String(item.leaderNameEn || "").trim() || DEFAULT_GROUP_LEADER_NAME_EN;
@@ -787,6 +788,7 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 			subtitle,
 			description,
 			image,
+			isVisible,
 			leaderProfileId: leaderProfileId || undefined,
 			leaderNameZh,
 			leaderNameEn,

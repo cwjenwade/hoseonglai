@@ -4,6 +4,7 @@ export type GroupItem = {
   subtitle: string;
   description: string;
   image: string;
+  isVisible?: boolean;
   leaderProfileId?: string;
   leaderNameZh?: string;
   leaderNameEn?: string;
@@ -35,6 +36,7 @@ export const GROUPS: GroupItem[] = [
       "在安全且保密的團體中探索情緒與關係。透過傾聽與回饋逐漸理解自己。",
     image:
       "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1600&auto=format&fit=crop",
+    isVisible: true,
     leaderProfileId: "director",
     leaderNameZh: DEFAULT_GROUP_LEADER_NAME_ZH,
     leaderNameEn: DEFAULT_GROUP_LEADER_NAME_EN,
@@ -54,6 +56,7 @@ export const GROUPS: GroupItem[] = [
       "深入探索依附、情緒與關係模式。在互動中建立新的心理經驗。",
     image:
       "https://images.unsplash.com/photo-1511988617509-a57c8a288659?q=80&w=1600&auto=format&fit=crop",
+    isVisible: true,
     leaderProfileId: "director",
     leaderNameZh: DEFAULT_GROUP_LEADER_NAME_ZH,
     leaderNameEn: DEFAULT_GROUP_LEADER_NAME_EN,
@@ -73,6 +76,7 @@ export const GROUPS: GroupItem[] = [
       "透過即時互動理解人際模式。練習新的表達與關係方式。",
     image:
       "https://images.unsplash.com/photo-1529336953121-a0ce2d6a5c6d?q=80&w=1600&auto=format&fit=crop",
+    isVisible: true,
     leaderProfileId: "director",
     leaderNameZh: DEFAULT_GROUP_LEADER_NAME_ZH,
     leaderNameEn: DEFAULT_GROUP_LEADER_NAME_EN,
@@ -85,3 +89,7 @@ export const GROUPS: GroupItem[] = [
     registrationDescription: DEFAULT_GROUP_REGISTRATION_DESCRIPTION,
   },
 ];
+
+export function isGroupVisible(group: GroupItem): boolean {
+  return group.isVisible !== false;
+}

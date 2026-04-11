@@ -25,6 +25,7 @@ function createEmptyGroup(): GroupItem {
     subtitle: "",
     description: "",
     image: "",
+    isVisible: true,
     leaderProfileId: "",
     leaderNameZh: "",
     leaderNameEn: "",
@@ -80,6 +81,22 @@ export default function TogethernessGroupsEditor({
                   className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
                   placeholder="group-counseling"
                 />
+              </label>
+
+              <label className="flex items-center gap-2 self-end rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-xs text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={group.isVisible !== false}
+                  onChange={(e) =>
+                    setGroups((prev) =>
+                      prev.map((item, i) =>
+                        i === index ? { ...item, isVisible: e.target.checked } : item,
+                      ),
+                    )
+                  }
+                  className="h-4 w-4 accent-emerald-600"
+                />
+                <span>前台顯示（關閉後前台不顯示）</span>
               </label>
 
               <label className="text-xs text-zinc-700">

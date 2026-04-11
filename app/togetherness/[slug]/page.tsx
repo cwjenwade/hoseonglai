@@ -8,6 +8,7 @@ import {
 } from "@/app/brand-philosophy/brand-content";
 import {
   GROUPS,
+  isGroupVisible,
   DEFAULT_GROUP_CONSULTATION_NOTE,
   DEFAULT_GROUP_INTRO_DESCRIPTION,
   DEFAULT_GROUP_INTRO_HEADING,
@@ -36,7 +37,7 @@ function splitGroupTitle(title: string): string[] {
 
 export async function generateMetadata({ params }: GroupDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const groups = await getSiteContentSection("togetherness_groups", GROUPS);
+  const groups = (await getSiteContentSection("togetherness_groups", GROUPS)).filter(isGroupVisible);
   const group = groups.find((item) => item.slug === slug);
 
   if (!group) {
@@ -54,7 +55,7 @@ export async function generateMetadata({ params }: GroupDetailPageProps): Promis
 
 export default async function GroupDetailPage({ params }: GroupDetailPageProps) {
   const { slug } = await params;
-  const groups = await getSiteContentSection("togetherness_groups", GROUPS);
+  const groups = (await getSiteContentSection("togetherness_groups", GROUPS)).filter(isGroupVisible);
   const brandContent = normalizeBrandPageContent(
     await getSiteContentSection("brand_philosophy_page", DEFAULT_BRAND_PAGE_CONTENT),
   );

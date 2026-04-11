@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { GROUPS } from "./group-data";
+import { GROUPS, isGroupVisible } from "./group-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ type TogethernessPageProps = {
 };
 
 export default async function TogethernessPage({ searchParams }: TogethernessPageProps) {
-  const groups = await getSiteContentSection("togetherness_groups", GROUPS);
+  const groups = (await getSiteContentSection("togetherness_groups", GROUPS)).filter(isGroupVisible);
   const resolvedSearchParams = await searchParams;
 
   return (
