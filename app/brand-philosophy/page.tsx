@@ -87,7 +87,24 @@ export default async function BrandPhilosophyPage() {
       {/* BRAND DIRECTOR */}
       <section id="director" className="mb-14 border-b border-neutral-300/60 pb-10 md:mb-16 md:pb-12">
 
-          <div className="grid gap-12 md:gap-14 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="md:hidden">
+            <div className="mx-auto w-full max-w-[360px] border border-neutral-300/60">
+              <TeamCard
+                member={{
+                  id: "director-mobile",
+                  nameZh: director.nameZh || "-",
+                  nameEn: director.nameEn || "-",
+                  role:
+                    director.affiliationLines.find((line) => /[\u4e00-\u9fff]/.test(line)) ||
+                    "Branding Director",
+                  bio: director.introParagraphs.join(" "),
+                  photo: director.photo,
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="hidden md:grid gap-12 md:gap-14 lg:grid-cols-[0.85fr_1.15fr]">
 
             <div>
 
@@ -187,7 +204,7 @@ export default async function BrandPhilosophyPage() {
 
             </div>
 
-          </div>
+            </div>
       </section>
 
       {/* TEAM */}
