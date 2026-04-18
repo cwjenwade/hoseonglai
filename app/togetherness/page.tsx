@@ -15,7 +15,7 @@ type TogethernessPageProps = {
 
 export default async function TogethernessPage({ searchParams }: TogethernessPageProps) {
   const groups = (await getSiteContentSection("togetherness_groups", GROUPS)).filter(isGroupVisible);
-  const resolvedSearchParams = await searchParams;
+  await searchParams;
 
   return (
     <main className="min-h-screen bg-[#f2f7f6] text-[#171717]">

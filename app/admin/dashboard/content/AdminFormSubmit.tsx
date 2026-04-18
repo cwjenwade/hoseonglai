@@ -3,11 +3,10 @@
 import { useActionState } from "react";
 
 type AdminFormSubmitProps = {
-  label: string;
   onValidate?: () => string | null;
 };
 
-export default function AdminFormSubmit({ label, onValidate }: AdminFormSubmitProps) {
+export default function AdminFormSubmit({ onValidate }: AdminFormSubmitProps) {
   const [, , isPending] = useActionState(async () => {}, null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

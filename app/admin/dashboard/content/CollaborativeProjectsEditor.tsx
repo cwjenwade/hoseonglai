@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import {
@@ -18,6 +18,13 @@ type CollaborativeProjectsEditorProps = {
   initialProjects: ResearchProject[];
   scales: PsychometricScale[];
   consents: ResearchConsent[];
+};
+
+type ValidationIssue = {
+  projectId: string;
+  projectTitle: string;
+  field: string;
+  label: string;
 };
 
 const STATUS_LABELS: Record<ResearchProjectStatus, string> = {
@@ -137,17 +144,56 @@ function getVisibleConsentOptions(
   return [selfOption, ...externalOptions];
 }
 
+function validateProjects(projects: ResearchProject[]): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  projects.forEach((project) => {
+    const projectTitle = project.title || project.id || "未命名專案";
+
+    const checks: Array<[string, string, string]> = [
+      ["id", "專案 ID", project.id],
+      ["title", "中文標題", project.title],
+      ["subtitle", "英文副標", project.subtitle],
+      ["description", "卡片描述", project.description],
+      ["topic", "A. 研究主題", project.topic],
+      ["purpose", "B. 研究目的", project.purpose],
+      ["duration", "C. 需要時間", project.duration],
+      ["participationMethod", "D. 參與方式", project.participationMethod],
+      ["summary", "E. 簡要說明", project.summary],
+    ];
+
+    if (project.status === "quantitative" || project.status === "qualitative") {
+      checks.push(["pdfUrl", "PDF 連結", project.pdfUrl]);
+    }
+
+    checks.forEach(([field, label, value]) => {
+      if (!String(value || "").trim()) {
+        issues.push({
+          projectId: project.id,
+          projectTitle,
+          field,
+          label,
+        });
+      }
+    });
+  });
+
+  return issues;
+}
+
 export default function CollaborativeProjectsEditor({
   initialProjects,
   scales,
   consents,
 }: CollaborativeProjectsEditorProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [projects, setProjects] = useState<ResearchProject[]>(
     initialProjects.length > 0 ? initialProjects : [createEmptyProject()],
   );
   const [activeProjectId, setActiveProjectId] = useState<string>(
     initialProjects[0]?.id || "",
   );
+  const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
 
   const payload = useMemo(() => projects, [projects]);
   const resolvedActiveProjectId = projects.some(
@@ -159,6 +205,15 @@ export default function CollaborativeProjectsEditor({
     (project) => project.id === resolvedActiveProjectId,
   );
   const activeProject = activeIndex >= 0 ? projects[activeIndex] : projects[0] || null;
+  const activeProjectIssues = useMemo(
+    () =>
+      validationIssues.filter((issue) => issue.projectId === activeProject?.id),
+    [activeProject?.id, validationIssues],
+  );
+  const activeProjectIssueFields = useMemo(
+    () => new Set(activeProjectIssues.map((issue) => issue.field)),
+    [activeProjectIssues],
+  );
 
   const stats = useMemo(() => {
     const preparing = projects.filter((project) => project.status === "preparing").length;
@@ -166,6 +221,26 @@ export default function CollaborativeProjectsEditor({
     const qualitative = projects.filter((project) => project.status === "qualitative").length;
     return { preparing, quantitative, qualitative };
   }, [projects]);
+
+  useEffect(() => {
+    const form = rootRef.current?.closest("form");
+    if (!form) return;
+
+    const handleSubmit = (event: Event) => {
+      const issues = validateProjects(projects);
+      if (issues.length === 0) {
+        setValidationIssues([]);
+        return;
+      }
+
+      event.preventDefault();
+      setValidationIssues(issues);
+      setActiveProjectId(issues[0]?.projectId || activeProjectId);
+    };
+
+    form.addEventListener("submit", handleSubmit);
+    return () => form.removeEventListener("submit", handleSubmit);
+  }, [activeProjectId, projects]);
 
   function updateProject(
     index: number,
@@ -181,6 +256,11 @@ export default function CollaborativeProjectsEditor({
   function updateActiveProject(updater: (project: ResearchProject) => ResearchProject) {
     if (activeIndex < 0) return;
     updateProject(activeIndex, updater);
+    if (validationIssues.length > 0) {
+      setValidationIssues(validateProjects(projects.map((project, index) =>
+        index === activeIndex ? updater(project) : project,
+      )));
+    }
   }
 
   function handleStatusChange(nextStatus: ResearchProjectStatus) {
@@ -219,7 +299,24 @@ export default function CollaborativeProjectsEditor({
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={rootRef} className="space-y-6">
+      {validationIssues.length > 0 ? (
+        <div className="rounded-[28px] border border-red-200 bg-red-50 p-5 text-red-700">
+          <p className="text-sm font-semibold">還有欄位沒有補齊，已幫你留在原頁面。</p>
+          <p className="mt-2 text-sm">請先補完以下欄位再儲存：</p>
+          <div className="mt-3 grid gap-2">
+            {validationIssues.slice(0, 8).map((issue) => (
+              <p key={`${issue.projectId}-${issue.field}`} className="text-sm">
+                {issue.projectTitle}：{issue.label}
+              </p>
+            ))}
+            {validationIssues.length > 8 ? (
+              <p className="text-sm">另外還有 {validationIssues.length - 8} 個欄位未填。</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <div className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -376,7 +473,12 @@ export default function CollaborativeProjectsEditor({
                       <input
                         value={activeProject.id}
                         onChange={(event) => handleProjectIdChange(event.target.value)}
-                        className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
+                        className={
+                          "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                          (activeProjectIssueFields.has("id")
+                            ? "border border-red-400 bg-red-50"
+                            : "border border-zinc-300")
+                        }
                         placeholder="emotion-patterns"
                       />
                     </label>
@@ -418,7 +520,12 @@ export default function CollaborativeProjectsEditor({
                             title: event.target.value,
                           }))
                         }
-                        className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
+                        className={
+                          "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                          (activeProjectIssueFields.has("title")
+                            ? "border border-red-400 bg-red-50"
+                            : "border border-zinc-300")
+                        }
                       />
                     </label>
 
@@ -432,7 +539,12 @@ export default function CollaborativeProjectsEditor({
                             subtitle: event.target.value,
                           }))
                         }
-                        className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
+                        className={
+                          "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                          (activeProjectIssueFields.has("subtitle")
+                            ? "border border-red-400 bg-red-50"
+                            : "border border-zinc-300")
+                        }
                       />
                     </label>
                   </div>
@@ -447,7 +559,12 @@ export default function CollaborativeProjectsEditor({
                           description: event.target.value,
                         }))
                       }
-                      className="mt-1 h-24 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none transition focus:border-zinc-900"
+                      className={
+                        "mt-1 h-24 w-full rounded-xl p-3 text-sm outline-none transition focus:border-zinc-900 " +
+                        (activeProjectIssueFields.has("description")
+                          ? "border border-red-400 bg-red-50"
+                          : "border border-zinc-300")
+                      }
                     />
                   </label>
                 </article>
@@ -465,7 +582,12 @@ export default function CollaborativeProjectsEditor({
                             topic: event.target.value,
                           }))
                         }
-                        className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
+                        className={
+                          "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                          (activeProjectIssueFields.has("topic")
+                            ? "border border-red-400 bg-red-50"
+                            : "border border-zinc-300")
+                        }
                       />
                     </label>
 
@@ -479,7 +601,12 @@ export default function CollaborativeProjectsEditor({
                             duration: event.target.value,
                           }))
                         }
-                        className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
+                        className={
+                          "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                          (activeProjectIssueFields.has("duration")
+                            ? "border border-red-400 bg-red-50"
+                            : "border border-zinc-300")
+                        }
                         placeholder="約 10–12 分鐘"
                       />
                     </label>
@@ -495,7 +622,12 @@ export default function CollaborativeProjectsEditor({
                           purpose: event.target.value,
                         }))
                       }
-                      className="mt-1 h-24 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none transition focus:border-zinc-900"
+                      className={
+                        "mt-1 h-24 w-full rounded-xl p-3 text-sm outline-none transition focus:border-zinc-900 " +
+                        (activeProjectIssueFields.has("purpose")
+                          ? "border border-red-400 bg-red-50"
+                          : "border border-zinc-300")
+                      }
                     />
                   </label>
 
@@ -509,7 +641,12 @@ export default function CollaborativeProjectsEditor({
                           participationMethod: event.target.value,
                         }))
                       }
-                      className="mt-1 h-24 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none transition focus:border-zinc-900"
+                      className={
+                        "mt-1 h-24 w-full rounded-xl p-3 text-sm outline-none transition focus:border-zinc-900 " +
+                        (activeProjectIssueFields.has("participationMethod")
+                          ? "border border-red-400 bg-red-50"
+                          : "border border-zinc-300")
+                      }
                     />
                   </label>
 
@@ -523,7 +660,12 @@ export default function CollaborativeProjectsEditor({
                           summary: event.target.value,
                         }))
                       }
-                      className="mt-1 h-24 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none transition focus:border-zinc-900"
+                      className={
+                        "mt-1 h-24 w-full rounded-xl p-3 text-sm outline-none transition focus:border-zinc-900 " +
+                        (activeProjectIssueFields.has("summary")
+                          ? "border border-red-400 bg-red-50"
+                          : "border border-zinc-300")
+                      }
                     />
                   </label>
                 </article>
@@ -550,15 +692,20 @@ export default function CollaborativeProjectsEditor({
                       activeProject.status === "qualitative") ? (
                       <label className="text-xs font-medium text-zinc-700">
                         PDF 連結
-                        <input
-                          value={activeProject.pdfUrl}
+                      <input
+                        value={activeProject.pdfUrl}
                           onChange={(event) =>
                             updateActiveProject((project) => ({
                               ...project,
                               pdfUrl: event.target.value,
                             }))
                           }
-                          className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
+                          className={
+                            "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                            (activeProjectIssueFields.has("pdfUrl")
+                              ? "border border-red-400 bg-red-50"
+                              : "border border-zinc-300")
+                          }
                           placeholder="https://..."
                         />
                       </label>
