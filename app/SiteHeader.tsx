@@ -1,5 +1,6 @@
 "use client";
 
+import HomeMobileMenu from "./HomeMobileMenu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,7 +22,59 @@ export default function SiteHeader() {
 
   return (
     <header className="border-b border-[#e6e2da]">
-      <div className="w-full px-6 py-8 lg:px-12 lg:py-10">
+      <div className="sm:hidden">
+        <div className="relative w-full px-6 py-7">
+          <div className="absolute right-6 top-6">
+            <HomeMobileMenu variant="light" />
+          </div>
+
+          <Link href="/" className="block pr-16">
+            <div className="space-y-4">
+              <p
+                className="text-[0.72rem] uppercase tracking-[0.28em] text-zinc-500"
+                style={{ fontFamily: "var(--font-geist-sans)" }}
+              >
+                Brand Platform
+              </p>
+
+              <div className="space-y-1">
+                <h1
+                  className="text-[2.6rem] leading-none tracking-[-0.04em] text-zinc-950"
+                  style={{ fontFamily: "var(--font-playfair)" }}
+                >
+                  Ho-Se 好勢
+                </h1>
+
+                <h2
+                  className="text-[2.6rem] leading-none tracking-[-0.04em] text-zinc-950"
+                  style={{ fontFamily: "var(--font-playfair)" }}
+                >
+                  Ong-Lai 旺來
+                </h2>
+                <span className="sr-only">任祈蔚</span>
+              </div>
+
+              <div className="max-w-[18rem] space-y-2 pt-1">
+                <p
+                  className="text-[0.98rem] tracking-[0.08em] text-zinc-700"
+                  style={{ fontFamily: "var(--font-noto-serif)" }}
+                >
+                  以心聚勢，以運旺來，團圓共好
+                </p>
+
+                <p
+                  className="max-w-[15rem] text-[0.76rem] uppercase tracking-[0.22em] text-zinc-400"
+                  style={{ fontFamily: "var(--font-geist-sans)" }}
+                >
+                  Research, creative content, community, and collaborative practice
+                </p>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
+
+      <div className="hidden w-full px-6 py-8 sm:block lg:px-12 lg:py-10">
         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
           <div className="min-w-0">
             <Link href="/" className="block">

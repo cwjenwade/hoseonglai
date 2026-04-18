@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 const links = [
+  { href: "/", zh: "首頁", en: "Home" },
   { href: "/brand-philosophy", zh: "品牌理念", en: "Identity" },
   { href: "/heartfelt-momentum", zh: "有心好勢", en: "Research" },
   { href: "/fortune-arrives", zh: "有運旺來", en: "Programs" },
@@ -11,8 +12,15 @@ const links = [
   { href: "/collaborative-prosperity", zh: "協力招來", en: "Collaborations" },
 ];
 
-export default function HomeMobileMenu() {
+type HomeMobileMenuProps = {
+  variant?: "dark" | "light";
+};
+
+export default function HomeMobileMenu({
+  variant = "dark",
+}: HomeMobileMenuProps) {
   const [open, setOpen] = useState(false);
+  const isLight = variant === "light";
 
   return (
     <>
@@ -21,7 +29,12 @@ export default function HomeMobileMenu() {
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/24 bg-black/18 text-white backdrop-blur-md transition hover:bg-black/28 sm:hidden"
+        className={[
+          "inline-flex h-11 w-11 items-center justify-center rounded-full transition sm:hidden",
+          isLight
+            ? "border border-zinc-300/80 bg-white/88 text-zinc-900 hover:bg-white"
+            : "border border-white/24 bg-black/18 text-white backdrop-blur-md hover:bg-black/28",
+        ].join(" ")}
       >
         <span className="flex flex-col gap-[4px]">
           <span className="block h-[1.5px] w-4 rounded-full bg-current" />
