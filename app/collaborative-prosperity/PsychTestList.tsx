@@ -55,13 +55,13 @@ export default async function PsychTestList() {
                   className="text-[0.62rem] uppercase tracking-[0.32em] text-neutral-400"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  Duration
+                  計畫主持人
                 </p>
                 <p
                   className="mt-2 text-neutral-700"
                   style={{ fontFamily: "var(--font-serif)" }}
                 >
-                  {project.duration}
+                  {project.principalInvestigator}
                 </p>
               </div>
 
@@ -70,13 +70,13 @@ export default async function PsychTestList() {
                   className="text-[0.62rem] uppercase tracking-[0.32em] text-neutral-400"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  Participation
+                  參與方式與時間
                 </p>
                 <p
                   className="mt-2 text-neutral-700"
                   style={{ fontFamily: "var(--font-serif)" }}
                 >
-                  {project.participationMethod}
+                  {project.participationDetails}
                 </p>
               </div>
             </div>

@@ -21,16 +21,23 @@ export type ResearchProject = {
   description: string;
   status: ResearchProjectStatus;
   topic: string;
-  purpose: string;
-  duration: string;
-  participationMethod: string;
-  summary: string;
-  target: string;
-  pdfUrl: string;
+  principalInvestigator: string;
+  researchContact: string;
+  participationDetails: string;
+  researchAudiencePurpose: string;
   testUrl: string;
   assessmentSourceProjectId?: string;
   consentSourceProjectId?: string;
   contactVisibility: ProjectContactVisibility;
+};
+
+type LegacyResearchProjectFields = {
+  purpose?: string;
+  duration?: string;
+  participationMethod?: string;
+  summary?: string;
+  target?: string;
+  pdfUrl?: string;
 };
 
 function defaultContactVisibility(
@@ -66,7 +73,7 @@ export function getResearchProjectConsentSourceId(
 }
 
 export function normalizeResearchProject(
-  project: Partial<ResearchProject>,
+  project: Partial<ResearchProject> & LegacyResearchProjectFields,
 ): ResearchProject | null {
   const id = String(project.id || "").trim();
   const title = String(project.title || "").trim();
@@ -84,13 +91,25 @@ export function normalizeResearchProject(
     : "quantitative";
 
   const description = String(project.description || "").trim();
-  const duration = String(project.duration || "").trim();
-  const target = String(project.target || "").trim();
-  const participationMethod = String(project.participationMethod || target).trim();
-  const summary = String(project.summary || description).trim();
   const topic = String(project.topic || title).trim();
-  const purpose = String(project.purpose || description).trim();
-  const pdfUrl = String(project.pdfUrl || "").trim();
+  const principalInvestigator = String(project.principalInvestigator || "").trim();
+  const researchContact = String(project.researchContact || "").trim();
+  const legacyDuration = String(project.duration || "").trim();
+  const legacyTarget = String(project.target || "").trim();
+  const legacyParticipationMethod = String(
+    project.participationMethod || legacyTarget,
+  ).trim();
+  const participationDetails = String(
+    project.participationDetails ||
+      [legacyParticipationMethod, legacyDuration].filter(Boolean).join(" / ") ||
+      legacyDuration ||
+      legacyParticipationMethod,
+  ).trim();
+  const legacyPurpose = String(project.purpose || "").trim();
+  const legacySummary = String(project.summary || description || legacyPurpose).trim();
+  const researchAudiencePurpose = String(
+    project.researchAudiencePurpose || legacySummary || legacyPurpose || description,
+  ).trim();
   const rawAssessmentSourceProjectId = String(
     project.assessmentSourceProjectId || "",
   ).trim();
@@ -109,15 +128,13 @@ export function normalizeResearchProject(
     id,
     title,
     subtitle,
-    description: description || summary || purpose,
+    description: description || researchAudiencePurpose,
     status,
     topic,
-    purpose: purpose || description,
-    duration,
-    participationMethod: participationMethod || "線上填寫",
-    summary: summary || description || purpose,
-    target,
-    pdfUrl,
+    principalInvestigator,
+    researchContact,
+    participationDetails: participationDetails || "閱讀研究說明後依指示參與。",
+    researchAudiencePurpose: researchAudiencePurpose || description,
     testUrl,
     assessmentSourceProjectId:
       status === "quantitative" && rawAssessmentSourceProjectId !== id
@@ -171,13 +188,11 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
       "探索個體在日常生活中的情緒感受、調節方式與反應傾向，理解情緒經驗與心理狀態之間的關係。",
     status: "quantitative",
     topic: "情緒模式與日常經驗",
-    purpose: "理解情緒感受、調節方式與心理狀態之間的關係。",
-    duration: "約 12–15 分鐘",
-    participationMethod: "閱讀研究說明後，線上完成同意與心理量表填答。",
-    summary:
-      "本研究聚焦情緒經驗與調節傾向，完成同意後可直接進入量表填答流程。",
-    target: "一般成人",
-    pdfUrl: "",
+    principalInvestigator: "Ho-Se 好勢｜Ong-Lai 旺來 研究團隊",
+    researchContact: "Ho-Se 好勢｜Ong-Lai 旺來 研究聯絡窗口",
+    participationDetails: "閱讀研究說明後，線上完成同意與心理量表填答，約 12–15 分鐘。",
+    researchAudiencePurpose:
+      "以年滿 18 歲成人為對象，探討日常情緒感受、調節方式與心理狀態之間的關聯。",
     testUrl: "/collaborative-prosperity/tests/emotion-patterns",
     assessmentSourceProjectId: "",
     consentSourceProjectId: "",
@@ -191,13 +206,11 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
       "聚焦壓力來源、身心反應與調適資源，理解人們如何在高壓環境中維持生活與心理平衡。",
     status: "quantitative",
     topic: "壓力與調適資源",
-    purpose: "理解在高壓情境下的身心反應與調適模式。",
-    duration: "約 10–12 分鐘",
-    participationMethod: "閱讀研究說明後，線上完成同意與心理量表填答。",
-    summary:
-      "本研究將收集壓力來源、調適策略與心理感受資料，作為後續分析基礎。",
-    target: "學生與上班族",
-    pdfUrl: "",
+    principalInvestigator: "Ho-Se 好勢｜Ong-Lai 旺來 研究團隊",
+    researchContact: "Ho-Se 好勢｜Ong-Lai 旺來 研究聯絡窗口",
+    participationDetails: "閱讀研究說明後，線上完成同意與心理量表填答，約 10–12 分鐘。",
+    researchAudiencePurpose:
+      "以年滿 18 歲成人為對象，探討壓力經驗、調適資源與心理狀態之間的關聯。",
     testUrl: "/collaborative-prosperity/tests/stress-adaptation",
     assessmentSourceProjectId: "",
     consentSourceProjectId: "",
@@ -211,13 +224,11 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
       "了解在親密關係、友誼與社交互動中的依附、安全感與互動風格，作為心理與社會連結的研究基礎。",
     status: "quantitative",
     topic: "人際關係與依附風格",
-    purpose: "探索關係中的安全感、依附模式與互動風格。",
-    duration: "約 15–18 分鐘",
-    participationMethod: "閱讀研究說明後，線上完成同意與心理量表填答。",
-    summary:
-      "本研究以親密關係與社交互動經驗為核心，蒐集作答資料作為研究分析使用。",
-    target: "一般成人",
-    pdfUrl: "",
+    principalInvestigator: "Ho-Se 好勢｜Ong-Lai 旺來 研究團隊",
+    researchContact: "Ho-Se 好勢｜Ong-Lai 旺來 研究聯絡窗口",
+    participationDetails: "閱讀研究說明後，線上完成同意與心理量表填答，約 15–18 分鐘。",
+    researchAudiencePurpose:
+      "以年滿 18 歲成人為對象，探討人際互動、依附風格與心理狀態之間的關聯。",
     testUrl: "/collaborative-prosperity/tests/relationship-style",
     assessmentSourceProjectId: "",
     consentSourceProjectId: "",

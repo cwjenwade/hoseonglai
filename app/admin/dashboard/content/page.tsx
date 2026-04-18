@@ -32,7 +32,7 @@ import {
 	saveResearchConsentsContent,
 	savePsychometricScalesContent,
 	saveTogethernessGroupsContent,
-	uploadCollaborativePdf,
+	uploadResearchConsentPdf,
 	uploadHeartfeltImage,
 	uploadTogethernessImage,
 	uploadBrandImage,
@@ -289,33 +289,11 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "collaborative" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-					<div className="mb-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-						<p className="mb-2 text-xs text-zinc-600">PDF 上傳（研究計劃書 / 同意書附件）</p>
-						<form action={uploadCollaborativePdf} className="flex flex-wrap items-center gap-3">
-							<input type="file" name="pdfFile" accept="application/pdf,.pdf" className="text-xs text-zinc-700" required />
-							<button
-								type="submit"
-								className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100"
-							>
-								上傳 PDF
-							</button>
-						</form>
-						{resolvedSearchParams.uploadedPdf ? (
-							<p className="mt-3 text-xs text-sky-700">
-								已上傳：
-								<a className="ml-1 underline" href={resolvedSearchParams.uploadedPdf} target="_blank">
-									{resolvedSearchParams.uploadedPdf}
-								</a>
-							</p>
-						) : null}
-					</div>
-
 					<form action={saveCollaborativeProjectsContent} className="space-y-4">
 						<CollaborativeProjectsEditor
 							initialProjects={collaborativeProjects}
 							scales={psychometricScales}
 							consents={researchConsents}
-							uploadedPdfUrl={resolvedSearchParams.uploadedPdf}
 						/>
 
 						<div className="mt-5 flex justify-end gap-3">
@@ -351,8 +329,32 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "consent" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<div className="mb-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+						<p className="mb-2 text-xs text-zinc-600">PDF 上傳（研究計劃書 / 同意書附件）</p>
+						<form action={uploadResearchConsentPdf} className="flex flex-wrap items-center gap-3">
+							<input type="file" name="pdfFile" accept="application/pdf,.pdf" className="text-xs text-zinc-700" required />
+							<button
+								type="submit"
+								className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100"
+							>
+								上傳 PDF
+							</button>
+						</form>
+						{resolvedSearchParams.uploadedPdf ? (
+							<p className="mt-3 text-xs text-sky-700">
+								已上傳：
+								<a className="ml-1 underline" href={resolvedSearchParams.uploadedPdf} target="_blank">
+									{resolvedSearchParams.uploadedPdf}
+								</a>
+							</p>
+						) : null}
+					</div>
+
 					<form action={saveResearchConsentsContent} className="space-y-4">
-						<ResearchConsentsEditor initialConsents={researchConsents} />
+						<ResearchConsentsEditor
+							initialConsents={researchConsents}
+							uploadedPdfUrl={resolvedSearchParams.uploadedPdf}
+						/>
 
 						<div className="mt-5 flex justify-end gap-3">
 							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>

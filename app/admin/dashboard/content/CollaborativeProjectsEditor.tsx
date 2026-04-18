@@ -5,6 +5,7 @@ import type { PsychometricScale } from "@/app/collaborative-prosperity/assessmen
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import {
   getResearchProjectTestUrl,
+  normalizeResearchProject,
   type ProjectContactVisibility,
   PROJECT_CONTACT_VISIBILITIES,
   RESEARCH_PROJECT_STATUSES,
@@ -16,7 +17,6 @@ type CollaborativeProjectsEditorProps = {
   initialProjects: ResearchProject[];
   scales: PsychometricScale[];
   consents: ResearchConsent[];
-  uploadedPdfUrl?: string;
 };
 
 type ValidationIssue = {
@@ -61,12 +61,10 @@ function createEmptyProject(): ResearchProject {
     description: "",
     status: "preparing",
     topic: "",
-    purpose: "",
-    duration: "",
-    participationMethod: "",
-    summary: "",
-    target: "",
-    pdfUrl: "",
+    principalInvestigator: "",
+    researchContact: "",
+    participationDetails: "",
+    researchAudiencePurpose: "",
     testUrl: "",
     assessmentSourceProjectId: "",
     consentSourceProjectId: "",
@@ -121,6 +119,29 @@ function getVisibleConsentOptions(
   }));
 }
 
+function normalizeDraftProject(
+  project: Partial<ResearchProject>,
+  scales: PsychometricScale[],
+  consents: ResearchConsent[],
+): ResearchProject | null {
+  const normalized = normalizeResearchProject(project);
+  if (!normalized) return null;
+
+  return {
+    ...normalized,
+    assessmentSourceProjectId:
+      normalized.status === "quantitative"
+        ? String(normalized.assessmentSourceProjectId || "").trim() ||
+          (scales.some((scale) => scale.projectId === normalized.id) ? String(normalized.id) : "")
+        : "",
+    consentSourceProjectId:
+      normalized.status !== "preparing"
+        ? String(normalized.consentSourceProjectId || "").trim() ||
+          (consents.some((consent) => consent.projectId === normalized.id) ? String(normalized.id) : "")
+        : "",
+  };
+}
+
 function validateProjects(
   projects: ResearchProject[],
   scales: PsychometricScale[],
@@ -139,15 +160,11 @@ function validateProjects(
       ["subtitle", "英文副標", project.subtitle],
       ["description", "卡片描述", project.description],
       ["topic", "A. 研究主題", project.topic],
-      ["purpose", "B. 研究目的", project.purpose],
-      ["duration", "C. 需要時間", project.duration],
-      ["participationMethod", "D. 參與方式", project.participationMethod],
-      ["summary", "E. 簡要說明", project.summary],
+      ["principalInvestigator", "B. 計畫主持人", project.principalInvestigator],
+      ["researchContact", "C. 研究聯絡人", project.researchContact],
+      ["participationDetails", "D. 參與方式與時間", project.participationDetails],
+      ["researchAudiencePurpose", "E. 研究對象與目的", project.researchAudiencePurpose],
     ];
-
-    if (project.status === "quantitative" || project.status === "qualitative") {
-      checks.push(["pdfUrl", "PDF 連結", project.pdfUrl]);
-    }
 
     if (project.status === "quantitative") {
       checks.push([
@@ -210,12 +227,51 @@ export default function CollaborativeProjectsEditor({
   initialProjects,
   scales,
   consents,
-  uploadedPdfUrl,
 }: CollaborativeProjectsEditorProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const [projects, setProjects] = useState<ResearchProject[]>(
-    initialProjects.length > 0 ? initialProjects : [createEmptyProject()],
-  );
+  const [projects, setProjects] = useState<ResearchProject[]>(() => {
+    const storageKey = "collaborative-projects-draft-v3";
+    if (typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem(storageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            const draftProjects = parsed
+              .map((project) =>
+                project && typeof project === "object"
+                  ? normalizeDraftProject(project as Partial<ResearchProject>, scales, consents)
+                  : null,
+              )
+              .filter((project): project is ResearchProject => project !== null);
+
+            if (draftProjects.length > 0) {
+              return draftProjects;
+            }
+          }
+        }
+      } catch {
+        // ignore corrupted local draft
+      }
+    }
+
+    const nextProjects =
+      initialProjects.length > 0 ? initialProjects : [createEmptyProject()];
+
+    return nextProjects.map((project) => ({
+      ...project,
+      assessmentSourceProjectId:
+        project.status === "quantitative"
+          ? project.assessmentSourceProjectId ||
+            (scales.some((scale) => scale.projectId === project.id) ? project.id : "")
+          : "",
+      consentSourceProjectId:
+        project.status !== "preparing"
+          ? project.consentSourceProjectId ||
+            (consents.some((consent) => consent.projectId === project.id) ? project.id : "")
+          : "",
+    }));
+  });
   const [activeProjectId, setActiveProjectId] = useState<string>(
     initialProjects[0]?.id || "",
   );
@@ -246,6 +302,11 @@ export default function CollaborativeProjectsEditor({
     const quantitative = projects.filter((project) => project.status === "quantitative").length;
     const qualitative = projects.filter((project) => project.status === "qualitative").length;
     return { preparing, quantitative, qualitative };
+  }, [projects]);
+
+  useEffect(() => {
+    const storageKey = "collaborative-projects-draft-v3";
+    window.localStorage.setItem(storageKey, JSON.stringify(projects));
   }, [projects]);
 
   useEffect(() => {
@@ -620,144 +681,91 @@ export default function CollaborativeProjectsEditor({
                     </label>
 
                     <label className="text-xs font-medium text-zinc-700">
-                      C. 需要時間
+                      B. 計畫主持人
                       <input
-                        value={activeProject.duration}
+                        value={activeProject.principalInvestigator}
                         onChange={(event) =>
                           updateActiveProject((project) => ({
                             ...project,
-                            duration: event.target.value,
+                            principalInvestigator: event.target.value,
                           }))
                         }
                         className={
                           "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
-                          (activeProjectIssueFields.has("duration")
+                          (activeProjectIssueFields.has("principalInvestigator")
                             ? "border border-red-400 bg-red-50"
                             : "border border-zinc-300")
                         }
-                        placeholder="約 10–12 分鐘"
+                        placeholder="請填計畫主持人"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <label className="text-xs font-medium text-zinc-700">
+                      C. 研究聯絡人
+                      <input
+                        value={activeProject.researchContact}
+                        onChange={(event) =>
+                          updateActiveProject((project) => ({
+                            ...project,
+                            researchContact: event.target.value,
+                          }))
+                        }
+                        className={
+                          "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                          (activeProjectIssueFields.has("researchContact")
+                            ? "border border-red-400 bg-red-50"
+                            : "border border-zinc-300")
+                        }
+                        placeholder="請填研究聯絡人"
+                      />
+                    </label>
+
+                    <label className="text-xs font-medium text-zinc-700">
+                      D. 參與方式與時間
+                      <textarea
+                        value={activeProject.participationDetails}
+                        onChange={(event) =>
+                          updateActiveProject((project) => ({
+                            ...project,
+                            participationDetails: event.target.value,
+                          }))
+                        }
+                        className={
+                          "mt-1 h-24 w-full rounded-xl p-3 text-sm outline-none transition focus:border-zinc-900 " +
+                          (activeProjectIssueFields.has("participationDetails")
+                            ? "border border-red-400 bg-red-50"
+                            : "border border-zinc-300")
+                        }
+                        placeholder="例如：閱讀研究說明後線上填答，約 10–15 分鐘。"
                       />
                     </label>
                   </div>
 
                   <label className="mt-4 block text-xs font-medium text-zinc-700">
-                    B. 研究目的
+                    E. 研究對象與目的
                     <textarea
-                      value={activeProject.purpose}
+                      value={activeProject.researchAudiencePurpose}
                       onChange={(event) =>
                         updateActiveProject((project) => ({
                           ...project,
-                          purpose: event.target.value,
+                          researchAudiencePurpose: event.target.value,
                         }))
                       }
                       className={
                         "mt-1 h-24 w-full rounded-xl p-3 text-sm outline-none transition focus:border-zinc-900 " +
-                        (activeProjectIssueFields.has("purpose")
+                        (activeProjectIssueFields.has("researchAudiencePurpose")
                           ? "border border-red-400 bg-red-50"
                           : "border border-zinc-300")
                       }
-                    />
-                  </label>
-
-                  <label className="mt-4 block text-xs font-medium text-zinc-700">
-                    D. 參與方式
-                    <textarea
-                      value={activeProject.participationMethod}
-                      onChange={(event) =>
-                        updateActiveProject((project) => ({
-                          ...project,
-                          participationMethod: event.target.value,
-                        }))
-                      }
-                      className={
-                        "mt-1 h-24 w-full rounded-xl p-3 text-sm outline-none transition focus:border-zinc-900 " +
-                        (activeProjectIssueFields.has("participationMethod")
-                          ? "border border-red-400 bg-red-50"
-                          : "border border-zinc-300")
-                      }
-                    />
-                  </label>
-
-                  <label className="mt-4 block text-xs font-medium text-zinc-700">
-                    E. 簡要說明
-                    <textarea
-                      value={activeProject.summary}
-                      onChange={(event) =>
-                        updateActiveProject((project) => ({
-                          ...project,
-                          summary: event.target.value,
-                        }))
-                      }
-                      className={
-                        "mt-1 h-24 w-full rounded-xl p-3 text-sm outline-none transition focus:border-zinc-900 " +
-                        (activeProjectIssueFields.has("summary")
-                          ? "border border-red-400 bg-red-50"
-                          : "border border-zinc-300")
-                      }
+                      placeholder="以年滿 18 歲成人為對象，探討日常情緒感受、調節方式與心理狀態之間的關聯。"
                     />
                   </label>
                 </article>
 
                 <article className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
                   <h4 className="text-base font-semibold text-zinc-900">3. 參與與聯繫設定</h4>
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    <label className="text-xs font-medium text-zinc-700">
-                      參與對象（選填）
-                      <input
-                        value={activeProject.target}
-                        onChange={(event) =>
-                          updateActiveProject((project) => ({
-                            ...project,
-                            target: event.target.value,
-                          }))
-                        }
-                        className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
-                        placeholder="一般成人、學生、上班族"
-                      />
-                    </label>
-
-                    {(activeProject.status === "quantitative" ||
-                      activeProject.status === "qualitative") ? (
-                      <label className="text-xs font-medium text-zinc-700">
-                        PDF 連結
-                        <input
-                          value={activeProject.pdfUrl}
-                          onChange={(event) =>
-                            updateActiveProject((project) => ({
-                              ...project,
-                              pdfUrl: event.target.value,
-                            }))
-                          }
-                          className={
-                            "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
-                            (activeProjectIssueFields.has("pdfUrl")
-                              ? "border border-red-400 bg-red-50"
-                              : "border border-zinc-300")
-                          }
-                          placeholder="https://..."
-                        />
-                        {uploadedPdfUrl ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateActiveProject((project) => ({
-                                ...project,
-                                pdfUrl: uploadedPdfUrl,
-                              }))
-                            }
-                            className="mt-2 inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs text-sky-700 transition hover:bg-sky-100"
-                          >
-                            使用剛上傳的 PDF
-                          </button>
-                        ) : null}
-                      </label>
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-4 text-sm text-zinc-500">
-                        Preparing 狀態不需要 PDF。這裡會只保留 waiting list email 蒐集。
-                      </div>
-                    )}
-                  </div>
-
                   {activeProject.status !== "preparing" ? (
                     <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4">
                       <p className="text-xs uppercase tracking-[0.18em] text-violet-700">
@@ -806,6 +814,11 @@ export default function CollaborativeProjectsEditor({
                             </div>
                           ))}
                       </div>
+
+                      <p className="mt-3 text-xs leading-6 text-violet-700">
+                        PDF 也跟著這份 consent 資料走，請到 consent 模組上傳或指定 PDF，
+                        collaborative 不再單獨要求 PDF 連結。
+                      </p>
 
                       <a
                         href="/admin/dashboard/content?tab=consent"
@@ -942,7 +955,9 @@ export default function CollaborativeProjectsEditor({
                         PDF
                       </p>
                       <p className="mt-2 break-all text-zinc-900">
-                        {activeProject.pdfUrl || "未設定"}
+                        {consents.find(
+                          (consent) => consent.projectId === (activeProject.consentSourceProjectId || ""),
+                        )?.pdfUrl || "跟隨 consent 模組 / 尚未設定"}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">

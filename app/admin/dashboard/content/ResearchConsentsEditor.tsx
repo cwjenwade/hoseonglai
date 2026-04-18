@@ -5,6 +5,7 @@ import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-dat
 
 type ResearchConsentsEditorProps = {
   initialConsents: ResearchConsent[];
+  uploadedPdfUrl?: string;
 };
 
 function createEmptyConsent(): ResearchConsent {
@@ -12,13 +13,17 @@ function createEmptyConsent(): ResearchConsent {
     projectId: `consent-${Date.now().toString(36)}`,
     projectTitleZh: "",
     projectTitleEn: "",
+    pdfUrl: "",
     principalInvestigator: "",
     researchUnit: "Ho-Se 好勢旺來研究團隊",
     researchDescription: "",
   };
 }
 
-export default function ResearchConsentsEditor({ initialConsents }: ResearchConsentsEditorProps) {
+export default function ResearchConsentsEditor({
+  initialConsents,
+  uploadedPdfUrl,
+}: ResearchConsentsEditorProps) {
   const [consents, setConsents] = useState<ResearchConsent[]>(initialConsents || []);
 
   const payload = useMemo(() => consents, [consents]);
@@ -88,6 +93,37 @@ export default function ResearchConsentsEditor({ initialConsents }: ResearchCons
                   }
                   className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
                 />
+              </label>
+
+              <label className="text-xs text-zinc-700">
+                PDF 連結
+                <input
+                  value={consent.pdfUrl || ""}
+                  onChange={(e) =>
+                    setConsents((prev) =>
+                      prev.map((item, i) =>
+                        i === index ? { ...item, pdfUrl: e.target.value } : item,
+                      ),
+                    )
+                  }
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
+                  placeholder="https://..."
+                />
+                {uploadedPdfUrl ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setConsents((prev) =>
+                        prev.map((item, i) =>
+                          i === index ? { ...item, pdfUrl: uploadedPdfUrl } : item,
+                        ),
+                      )
+                    }
+                    className="mt-2 inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs text-sky-700 transition hover:bg-sky-100"
+                  >
+                    使用剛上傳的 PDF
+                  </button>
+                ) : null}
               </label>
 
               <label className="text-xs text-zinc-700">

@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSiteContentSection } from "@/lib/site-content-server";
+import {
+  DEFAULT_RESEARCH_CONSENTS,
+  type ResearchConsent,
+} from "../consent-data";
 import PreparingWaitingListForm from "../PreparingWaitingListForm";
 import ResearchEnrollForm from "../ResearchEnrollForm";
 import {
   RESEARCH_PROJECTS,
+  getResearchProjectConsentSourceId,
   getProjectContactVisibilityLabel,
   getProjectStatusLabel,
   normalizeResearchProjects,
@@ -24,6 +29,10 @@ export default async function CollaborativeProjectDetailPage({
     "collaborative_prosperity_projects",
     RESEARCH_PROJECTS,
   );
+  const consents = await getSiteContentSection<ResearchConsent[]>(
+    "collaborative_prosperity_consents",
+    DEFAULT_RESEARCH_CONSENTS,
+  );
   const projects = normalizeResearchProjects(rawProjects, RESEARCH_PROJECTS);
   const project = projects.find((item) => item.id === projectId);
 
@@ -31,9 +40,18 @@ export default async function CollaborativeProjectDetailPage({
     notFound();
   }
 
+  const consentSourceId = getResearchProjectConsentSourceId(project);
+  const consent =
+    consents.find((item) => item.projectId === consentSourceId) ||
+    DEFAULT_RESEARCH_CONSENTS.find((item) => item.projectId === consentSourceId);
+  const projectPdfUrl = consent?.pdfUrl || "";
+  const principalInvestigator =
+    project.principalInvestigator || consent?.principalInvestigator || "待補充";
+  const researchContact = project.researchContact || consent?.researchUnit || "待補充";
+
   const showPdfReader =
     (project.status === "quantitative" || project.status === "qualitative") &&
-    Boolean(project.pdfUrl);
+    Boolean(projectPdfUrl);
 
   return (
     <div className="w-full bg-[#f3f3f2] text-neutral-900">
@@ -98,13 +116,13 @@ export default async function CollaborativeProjectDetailPage({
                     className="text-[0.64rem] uppercase tracking-[0.28em] text-neutral-400"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
-                    B. 研究目的
+                    B. 計畫主持人
                   </p>
                   <p
                     className="mt-3 text-[1rem] leading-[1.8] text-neutral-800"
                     style={{ fontFamily: "var(--font-serif)" }}
                   >
-                    {project.purpose}
+                    {principalInvestigator}
                   </p>
                 </div>
 
@@ -113,13 +131,13 @@ export default async function CollaborativeProjectDetailPage({
                     className="text-[0.64rem] uppercase tracking-[0.28em] text-neutral-400"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
-                    C. 需要時間
+                    C. 研究聯絡人
                   </p>
                   <p
                     className="mt-3 text-[1rem] leading-[1.8] text-neutral-800"
                     style={{ fontFamily: "var(--font-serif)" }}
                   >
-                    {project.duration}
+                    {researchContact}
                   </p>
                 </div>
 
@@ -128,13 +146,13 @@ export default async function CollaborativeProjectDetailPage({
                     className="text-[0.64rem] uppercase tracking-[0.28em] text-neutral-400"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
-                    D. 參與方式
+                    D. 參與方式與時間
                   </p>
                   <p
                     className="mt-3 text-[1rem] leading-[1.8] text-neutral-800"
                     style={{ fontFamily: "var(--font-serif)" }}
                   >
-                    {project.participationMethod}
+                    {project.participationDetails}
                   </p>
                 </div>
               </div>
@@ -144,13 +162,13 @@ export default async function CollaborativeProjectDetailPage({
                   className="text-[0.64rem] uppercase tracking-[0.28em] text-neutral-400"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  E. 簡要說明
+                  E. 研究對象與目的
                 </p>
                 <p
                   className="mt-3 text-[1rem] leading-[1.9] text-neutral-800"
                   style={{ fontFamily: "var(--font-serif)" }}
                 >
-                  {project.summary}
+                  {project.researchAudiencePurpose}
                 </p>
               </div>
 
@@ -173,7 +191,7 @@ export default async function CollaborativeProjectDetailPage({
 
                   <div className="overflow-hidden rounded-2xl border border-neutral-300/60 bg-white">
                     <iframe
-                      src={project.pdfUrl}
+                      src={projectPdfUrl}
                       title={`${project.title} PDF`}
                       className="h-[640px] w-full"
                     />

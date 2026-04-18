@@ -169,26 +169,46 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
 	}
 
-	const hasInvalidProject = cleanedProjects.some((project) => {
+	const currentScales = await getSiteContentSection<PsychometricScale[]>(
+		"collaborative_prosperity_assessments",
+		[],
+	);
+	const currentConsents = await getSiteContentSection<ResearchConsent[]>(
+		"collaborative_prosperity_consents",
+		[],
+	);
+	const scaleIds = new Set(currentScales.map((scale) => scale.projectId));
+	const consentIds = new Set(currentConsents.map((consent) => consent.projectId));
+
+	const linkedProjects = cleanedProjects.map((project) => ({
+		...project,
+		assessmentSourceProjectId:
+			project.status === "quantitative"
+				? String(project.assessmentSourceProjectId || "").trim() ||
+					(scaleIds.has(project.id) ? project.id : "")
+				: "",
+		consentSourceProjectId:
+			project.status !== "preparing"
+				? String(project.consentSourceProjectId || "").trim() ||
+					(consentIds.has(project.id) ? project.id : "")
+				: "",
+	}));
+
+	const hasInvalidProject = linkedProjects.some((project) => {
 		if (
 			!project.description ||
 			!project.topic ||
-			!project.purpose ||
-			!project.duration ||
-			!project.participationMethod ||
-			!project.summary
+			!project.principalInvestigator ||
+			!project.researchContact ||
+			!project.participationDetails ||
+			!project.researchAudiencePurpose
 		) {
 			return true;
 		}
 
 		if (
-			(project.status === "quantitative" || project.status === "qualitative") &&
-			!project.pdfUrl
+			project.status === "quantitative" && !project.testUrl
 		) {
-			return true;
-		}
-
-		if (project.status === "quantitative" && !project.testUrl) {
 			return true;
 		}
 
@@ -213,18 +233,7 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
 	}
 
-	const currentScales = await getSiteContentSection<PsychometricScale[]>(
-		"collaborative_prosperity_assessments",
-		[],
-	);
-	const currentConsents = await getSiteContentSection<ResearchConsent[]>(
-		"collaborative_prosperity_consents",
-		[],
-	);
-	const scaleIds = new Set(currentScales.map((scale) => scale.projectId));
-	const consentIds = new Set(currentConsents.map((consent) => consent.projectId));
-
-	const hasInvalidLinks = cleanedProjects.some((project) => {
+	const hasInvalidLinks = linkedProjects.some((project) => {
 		if (
 			project.status === "quantitative" &&
 			!scaleIds.has(String(project.assessmentSourceProjectId || "").trim())
@@ -247,7 +256,7 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 	}
 
 	try {
-		await saveSiteContentSection("collaborative_prosperity_projects", cleanedProjects);
+		await saveSiteContentSection("collaborative_prosperity_projects", linkedProjects);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=collaborative&error=readonly_fs");
@@ -265,41 +274,41 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 	redirect("/admin/dashboard");
 }
 
-export async function uploadCollaborativePdf(formData: FormData) {
+export async function uploadResearchConsentPdf(formData: FormData) {
 	await requireAdminUser();
 
 	const file = formData.get("pdfFile");
 
 	if (!(file instanceof File) || file.size <= 0) {
-		redirect("/admin/dashboard/content?tab=collaborative&error=upload");
+		redirect("/admin/dashboard/content?tab=consent&error=upload");
 	}
 
 	const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 	if (!isPdf) {
-		redirect("/admin/dashboard/content?tab=collaborative&error=upload_type");
+		redirect("/admin/dashboard/content?tab=consent&error=upload_type");
 	}
 
 	if (file.size > 15 * 1024 * 1024) {
-		redirect("/admin/dashboard/content?tab=collaborative&error=upload_size");
+		redirect("/admin/dashboard/content?tab=consent&error=upload_size");
 	}
 
 	let url = "";
 	try {
-		url = await saveSiteContentDocument("collaborative_prosperity_projects", file);
+		url = await saveSiteContentDocument("collaborative_prosperity_consents", file);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
-			redirect("/admin/dashboard/content?tab=collaborative&error=readonly_upload");
+			redirect("/admin/dashboard/content?tab=consent&error=readonly_upload");
 		}
 
 		const detail = encodeURIComponent(
 			error instanceof Error ? error.message : "unknown_upload_error",
 		);
-		console.error("COLLABORATIVE_PDF_UPLOAD_ERROR", error);
-		redirect(`/admin/dashboard/content?tab=collaborative&error=upload&detail=${detail}`);
+		console.error("CONSENT_PDF_UPLOAD_ERROR", error);
+		redirect(`/admin/dashboard/content?tab=consent&error=upload&detail=${detail}`);
 	}
 
 	revalidatePath("/admin/dashboard/content");
-	redirect(`/admin/dashboard/content?tab=collaborative&uploadedPdf=${encodeURIComponent(url)}`);
+	redirect(`/admin/dashboard/content?tab=consent&uploadedPdf=${encodeURIComponent(url)}`);
 }
 
 export async function saveFortuneLecturesContent(formData: FormData) {
@@ -641,6 +650,7 @@ export async function saveResearchConsentsContent(formData: FormData) {
 			const projectId = String(item.projectId || "").trim();
 			const projectTitleZh = String(item.projectTitleZh || "").trim();
 			const projectTitleEn = String(item.projectTitleEn || "").trim();
+			const pdfUrl = String(item.pdfUrl || "").trim();
 			const principalInvestigator = String(item.principalInvestigator || "").trim();
 			const researchUnit = String(item.researchUnit || "").trim();
 			const researchDescription = String(item.researchDescription || "").trim();
@@ -653,6 +663,7 @@ export async function saveResearchConsentsContent(formData: FormData) {
 				projectId,
 				projectTitleZh,
 				projectTitleEn,
+				pdfUrl,
 				principalInvestigator,
 				researchUnit,
 				researchDescription,
