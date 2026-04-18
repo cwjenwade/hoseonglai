@@ -74,7 +74,7 @@ export default function TeamCard({ member }: { member: Member }) {
 
           {member.bio ? (
             <p
-              className="mt-5 text-[15px] leading-[1.8] text-zinc-600"
+              className="mt-5 whitespace-pre-line text-[15px] leading-[1.8] text-zinc-600"
               style={{ fontFamily: "var(--font-noto-serif)" }}
             >
               {member.bio}
