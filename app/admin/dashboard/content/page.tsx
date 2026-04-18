@@ -77,6 +77,7 @@ type PageProps = {
 		uploadedPdf?: string;
 		detail?: string;
 		failedProject?: string;
+		clearDraft?: string;
 	}>;
 };
 
@@ -1103,6 +1104,11 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 										initialScheduling={currentScheduling}
 										activeTab={activeResearchTab}
 										uploadedPdfUrl={resolvedSearchParams.uploadedPdf}
+										draftKey={activeItem || "new"}
+										shouldClearDraft={
+											resolvedSearchParams.saved === "research-projects" ||
+											resolvedSearchParams.clearDraft === "1"
+										}
 									/>
 
 									<div className="flex justify-end">

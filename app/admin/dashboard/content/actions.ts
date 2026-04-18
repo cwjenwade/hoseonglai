@@ -1597,6 +1597,7 @@ export async function saveResearchWorkspaceEntry(formData: FormData) {
 	revalidatePath("/admin/dashboard/content");
 	redirect(buildContentHref("research-projects", project.id, {
 		saved: "research-projects",
+		clearDraft: "1",
 		researchTab: currentTab,
 	}));
 }

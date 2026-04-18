@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import type { ResearchScheduling } from "@/app/collaborative-prosperity/scheduling-data";
@@ -22,7 +22,42 @@ type ResearchWorkspaceEditorProps = {
   initialScheduling: ResearchScheduling | null;
   activeTab: "project" | "consent" | "flow";
   uploadedPdfUrl?: string;
+  draftKey: string;
+  shouldClearDraft?: boolean;
 };
+
+const DRAFT_STORAGE_KEY = "research-workspace-draft-v1";
+
+type ResearchWorkspaceDraft = {
+  draftKey: string;
+  project: ResearchProject;
+  consent: ResearchConsent;
+  assessment: PsychometricScale | null;
+  scheduling: ResearchScheduling | null;
+};
+
+function readWorkspaceDraft(draftKey: string): ResearchWorkspaceDraft | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<ResearchWorkspaceDraft>;
+    if (!parsed || parsed.draftKey !== draftKey) return null;
+    if (!parsed.project || !parsed.consent) return null;
+
+    return {
+      draftKey,
+      project: parsed.project as ResearchProject,
+      consent: parsed.consent as ResearchConsent,
+      assessment: (parsed.assessment as PsychometricScale | null) || null,
+      scheduling: (parsed.scheduling as ResearchScheduling | null) || null,
+    };
+  } catch {
+    return null;
+  }
+}
 
 function syncTitles(project: ResearchProject, consent: ResearchConsent, assessment: PsychometricScale | null, scheduling: ResearchScheduling | null) {
   const nextConsent: ResearchConsent = {
@@ -64,11 +99,21 @@ export default function ResearchWorkspaceEditor({
   initialScheduling,
   activeTab,
   uploadedPdfUrl,
+  draftKey,
+  shouldClearDraft = false,
 }: ResearchWorkspaceEditorProps) {
-  const [project, setProject] = useState<ResearchProject>(initialProject);
-  const [consent, setConsent] = useState<ResearchConsent>(initialConsent);
-  const [assessment, setAssessment] = useState<PsychometricScale | null>(initialAssessment);
-  const [scheduling, setScheduling] = useState<ResearchScheduling | null>(initialScheduling);
+  const draft = readWorkspaceDraft(draftKey);
+  const [project, setProject] = useState<ResearchProject>(draft?.project || initialProject);
+  const [consent, setConsent] = useState<ResearchConsent>(() => ({
+    ...(draft?.consent || initialConsent),
+    pdfUrl: uploadedPdfUrl || draft?.consent?.pdfUrl || initialConsent.pdfUrl,
+  }));
+  const [assessment, setAssessment] = useState<PsychometricScale | null>(
+    draft?.assessment || initialAssessment,
+  );
+  const [scheduling, setScheduling] = useState<ResearchScheduling | null>(
+    draft?.scheduling || initialScheduling,
+  );
 
   const researchType = (project.researchType || project.status || "quantitative") as ResearchProjectType;
   const publishStatus = (project.publishStatus || "preparing") as ResearchPublishStatus;
@@ -137,6 +182,24 @@ export default function ResearchWorkspaceEditor({
       contactVisibility: nextType === "qualitative" ? "share_with_pi" : "admin_only",
     }));
   }
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (shouldClearDraft) {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+      return;
+    }
+
+    const payload: ResearchWorkspaceDraft = {
+      draftKey,
+      project,
+      consent,
+      assessment,
+      scheduling,
+    };
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+  }, [assessment, consent, draftKey, project, scheduling, shouldClearDraft]);
 
   return (
     <div className="space-y-5">
@@ -243,14 +306,22 @@ export default function ResearchWorkspaceEditor({
       {activeTab === "consent" ? (
         <>
           <EditorSection title="Consent" description="Consent 是所有 published research 的必要子區塊。">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="text-xs font-medium text-zinc-700">
+                projectId
+                <input
+                  value={project.id}
+                  readOnly
+                  className="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-600 outline-none"
+                />
+              </label>
               <label className="text-xs font-medium text-zinc-700">
                 中文標題
-                <input value={consent.projectTitleZh} onChange={(event) => setConsent((prev) => ({ ...prev, projectTitleZh: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900" />
+                <input value={project.title} readOnly className="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-600 outline-none" />
               </label>
               <label className="text-xs font-medium text-zinc-700">
                 英文標題
-                <input value={consent.projectTitleEn} onChange={(event) => setConsent((prev) => ({ ...prev, projectTitleEn: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900" />
+                <input value={project.subtitle} readOnly className="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-600 outline-none" />
               </label>
               <label className="text-xs font-medium text-zinc-700">
                 計畫主持人
