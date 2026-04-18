@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { DEFAULT_BRAND_PAGE_CONTENT, normalizeBrandPageContent } from "@/app/brand-philosophy/brand-content";
+import HomeMobileMenu from "@/app/HomeMobileMenu";
 import {
   LECTURES,
   type LectureItem,
@@ -92,6 +93,10 @@ export default async function Home() {
           </video>
 
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/12 to-black/18" />
+
+          <div className="absolute right-4 top-4 z-10 md:right-6 md:top-6">
+            <HomeMobileMenu />
+          </div>
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 px-6 pb-6 md:px-10 md:pb-10">
             <p
