@@ -28,6 +28,8 @@ export type ResearchProject = {
   target: string;
   pdfUrl: string;
   testUrl: string;
+  assessmentSourceProjectId?: string;
+  consentSourceProjectId?: string;
   contactVisibility: ProjectContactVisibility;
 };
 
@@ -35,6 +37,32 @@ function defaultContactVisibility(
   status: ResearchProjectStatus,
 ): ProjectContactVisibility {
   return status === "qualitative" ? "share_with_pi" : "admin_only";
+}
+
+export function getResearchProjectTestUrl(projectId: string): string {
+  return `/collaborative-prosperity/tests/${projectId}`;
+}
+
+export function getResearchProjectAssessmentSourceId(
+  project: Pick<ResearchProject, "id" | "status" | "assessmentSourceProjectId">,
+): string {
+  if (project.status !== "quantitative") {
+    return "";
+  }
+
+  const sourceId = String(project.assessmentSourceProjectId || "").trim();
+  return sourceId || project.id;
+}
+
+export function getResearchProjectConsentSourceId(
+  project: Pick<ResearchProject, "id" | "status" | "consentSourceProjectId">,
+): string {
+  if (project.status === "preparing") {
+    return "";
+  }
+
+  const sourceId = String(project.consentSourceProjectId || "").trim();
+  return sourceId || project.id;
 }
 
 export function normalizeResearchProject(
@@ -63,7 +91,12 @@ export function normalizeResearchProject(
   const topic = String(project.topic || title).trim();
   const purpose = String(project.purpose || description).trim();
   const pdfUrl = String(project.pdfUrl || "").trim();
-  const testUrl = String(project.testUrl || "").trim();
+  const rawAssessmentSourceProjectId = String(
+    project.assessmentSourceProjectId || "",
+  ).trim();
+  const rawConsentSourceProjectId = String(project.consentSourceProjectId || "").trim();
+  const testUrl =
+    status === "quantitative" ? getResearchProjectTestUrl(id) : "";
   const rawVisibility = String(project.contactVisibility || "").trim();
   const contactVisibility: ProjectContactVisibility =
     PROJECT_CONTACT_VISIBILITIES.includes(
@@ -86,6 +119,14 @@ export function normalizeResearchProject(
     target,
     pdfUrl,
     testUrl,
+    assessmentSourceProjectId:
+      status === "quantitative" && rawAssessmentSourceProjectId !== id
+        ? rawAssessmentSourceProjectId
+        : "",
+    consentSourceProjectId:
+      status !== "preparing" && rawConsentSourceProjectId !== id
+        ? rawConsentSourceProjectId
+        : "",
     contactVisibility,
   };
 }
@@ -138,6 +179,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     target: "一般成人",
     pdfUrl: "",
     testUrl: "/collaborative-prosperity/tests/emotion-patterns",
+    assessmentSourceProjectId: "",
+    consentSourceProjectId: "",
     contactVisibility: "admin_only",
   },
   {
@@ -156,6 +199,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     target: "學生與上班族",
     pdfUrl: "",
     testUrl: "/collaborative-prosperity/tests/stress-adaptation",
+    assessmentSourceProjectId: "",
+    consentSourceProjectId: "",
     contactVisibility: "admin_only",
   },
   {
@@ -174,6 +219,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     target: "一般成人",
     pdfUrl: "",
     testUrl: "/collaborative-prosperity/tests/relationship-style",
+    assessmentSourceProjectId: "",
+    consentSourceProjectId: "",
     contactVisibility: "admin_only",
   },
 ];

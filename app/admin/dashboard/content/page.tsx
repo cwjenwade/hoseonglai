@@ -285,7 +285,11 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 			{activeTab === "collaborative" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
 					<form action={saveCollaborativeProjectsContent} className="space-y-4">
-						<CollaborativeProjectsEditor initialProjects={collaborativeProjects} />
+						<CollaborativeProjectsEditor
+							initialProjects={collaborativeProjects}
+							scales={psychometricScales}
+							consents={researchConsents}
+						/>
 
 						<div className="mt-5 flex justify-end gap-3">
 							<p className="text-xs text-zinc-500 flex items-center">按儲存後會自動保存，請勿重複按</p>

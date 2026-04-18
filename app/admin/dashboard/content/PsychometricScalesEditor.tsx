@@ -27,8 +27,10 @@ export default function PsychometricScalesEditor({ initialScales }: Psychometric
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-zinc-900">心理量表編輯器</h2>
-          <p className="mt-1 text-sm text-zinc-600">管理受試者填答題項與量尺選項（對應協力招來測驗頁）。</p>
+          <h2 className="text-xl font-semibold text-zinc-900">心理量表資料庫</h2>
+          <p className="mt-1 text-sm text-zinc-600">
+            管理量表題項與量尺選項。Collaborative Prosperity 的 Quantitative 專案可直接選用這裡的既有量表。
+          </p>
         </div>
 
         <button

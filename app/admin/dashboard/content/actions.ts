@@ -15,6 +15,8 @@ import {
 	type BrandPageContent,
 } from "@/app/brand-philosophy/brand-content";
 import {
+	getResearchProjectAssessmentSourceId,
+	getResearchProjectConsentSourceId,
 	normalizeResearchProject,
 	normalizeResearchProjects,
 	type ResearchProject,
@@ -209,25 +211,33 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 		const quantitativeProjects = cleanedProjects.filter(
 			(project) => project.status === "quantitative",
 		);
-		const nextScales: PsychometricScale[] = quantitativeProjects.map((project) => {
-			const existing = currentScales.find((scale) => scale.projectId === project.id);
+		const usedScaleIds = new Set(
+			quantitativeProjects.map((project) => getResearchProjectAssessmentSourceId(project)),
+		);
+		const nextScales: PsychometricScale[] = currentScales.filter((scale) =>
+			usedScaleIds.has(scale.projectId),
+		);
+
+		quantitativeProjects.forEach((project) => {
+			const scaleId = getResearchProjectAssessmentSourceId(project);
+			const existing = nextScales.find((scale) => scale.projectId === scaleId);
+
 			if (existing) {
-				return {
-					...existing,
-					projectId: project.id,
-					projectTitleZh: existing.projectTitleZh || project.title,
-					projectTitleEn: existing.projectTitleEn || project.subtitle,
-				};
+				if (scaleId === project.id) {
+					existing.projectTitleZh = existing.projectTitleZh || project.title;
+					existing.projectTitleEn = existing.projectTitleEn || project.subtitle;
+				}
+				return;
 			}
 
-			return {
-				projectId: project.id,
+			nextScales.push({
+				projectId: scaleId,
 				projectTitleZh: project.title,
 				projectTitleEn: project.subtitle,
 				scalePrompt: "請根據最近兩週的經驗，選擇最符合你的選項。",
 				options: ["非常不同意", "不同意", "普通", "同意", "非常同意"],
 				questions: ["請填寫第一題"],
-			};
+			});
 		});
 		await saveSiteContentSection("collaborative_prosperity_assessments", nextScales);
 
@@ -235,26 +245,38 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 			"collaborative_prosperity_consents",
 			[],
 		);
-		const nextConsents: ResearchConsent[] = cleanedProjects.map((project) => {
-			const existing = currentConsents.find((consent) => consent.projectId === project.id);
-			if (existing) {
-				return {
-					...existing,
-					projectId: project.id,
-					projectTitleZh: existing.projectTitleZh || project.title,
-					projectTitleEn: existing.projectTitleEn || project.subtitle,
-				};
-			}
+		const usedConsentIds = new Set(
+			cleanedProjects
+				.filter((project) => project.status !== "preparing")
+				.map((project) => getResearchProjectConsentSourceId(project)),
+		);
+		const nextConsents: ResearchConsent[] = currentConsents.filter((consent) =>
+			usedConsentIds.has(consent.projectId),
+		);
 
-			return {
-				projectId: project.id,
-				projectTitleZh: project.title,
-				projectTitleEn: project.subtitle,
-				principalInvestigator: "待填寫",
-				researchUnit: "Ho-Se 好勢旺來研究團隊",
-				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
-			};
-		});
+		cleanedProjects
+			.filter((project) => project.status !== "preparing")
+			.forEach((project) => {
+				const consentId = getResearchProjectConsentSourceId(project);
+				const existing = nextConsents.find((consent) => consent.projectId === consentId);
+
+				if (existing) {
+					if (consentId === project.id) {
+						existing.projectTitleZh = existing.projectTitleZh || project.title;
+						existing.projectTitleEn = existing.projectTitleEn || project.subtitle;
+					}
+					return;
+				}
+
+				nextConsents.push({
+					projectId: consentId,
+					projectTitleZh: project.title,
+					projectTitleEn: project.subtitle,
+					principalInvestigator: "待填寫",
+					researchUnit: "Ho-Se 好勢旺來研究團隊",
+					researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
+				});
+			});
 		await saveSiteContentSection("collaborative_prosperity_consents", nextConsents);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
@@ -567,46 +589,51 @@ export async function savePsychometricScalesContent(formData: FormData) {
 			await getSiteContentSection("collaborative_prosperity_projects", []),
 			[],
 		);
-		const quantitativeProjectIds = new Set(
-			projects
-				.filter((project) => project.status === "quantitative")
-				.map((project) => project.id),
-		);
-		const scopedScales = cleanedScales.filter((scale) =>
-			quantitativeProjectIds.has(scale.projectId),
-		);
-
-		if (scopedScales.length === 0) {
+		if (cleanedScales.length === 0) {
 			redirect("/admin/dashboard/content?tab=psychometrics&error=missing");
 		}
 
-		await saveSiteContentSection("collaborative_prosperity_assessments", scopedScales);
+		await saveSiteContentSection("collaborative_prosperity_assessments", cleanedScales);
 
 		const currentConsents = await getSiteContentSection<ResearchConsent[]>(
 			"collaborative_prosperity_consents",
 			[],
 		);
-		const nextConsents: ResearchConsent[] = projects.map((project) => {
-			const matchingScale = scopedScales.find((scale) => scale.projectId === project.id);
-			const existing = currentConsents.find((consent) => consent.projectId === project.id);
-			if (existing) {
-				return {
-					...existing,
-					projectId: project.id,
-					projectTitleZh: project.title,
-					projectTitleEn: project.subtitle,
-				};
-			}
+		const usedConsentIds = new Set(
+			projects
+				.filter((project) => project.status !== "preparing")
+				.map((project) => getResearchProjectConsentSourceId(project)),
+		);
+		const nextConsents: ResearchConsent[] = currentConsents.filter((consent) =>
+			usedConsentIds.has(consent.projectId),
+		);
 
-			return {
-				projectId: project.id,
-				projectTitleZh: matchingScale?.projectTitleZh || project.title,
-				projectTitleEn: matchingScale?.projectTitleEn || project.subtitle,
-				principalInvestigator: "待填寫",
-				researchUnit: "Ho-Se 好勢旺來研究團隊",
-				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
-			};
-		});
+		projects
+			.filter((project) => project.status !== "preparing")
+			.forEach((project) => {
+				const consentId = getResearchProjectConsentSourceId(project);
+				const matchingScale = cleanedScales.find(
+					(scale) => scale.projectId === getResearchProjectAssessmentSourceId(project),
+				);
+				const existing = nextConsents.find((consent) => consent.projectId === consentId);
+
+				if (existing) {
+					if (consentId === project.id) {
+						existing.projectTitleZh = project.title;
+						existing.projectTitleEn = project.subtitle;
+					}
+					return;
+				}
+
+				nextConsents.push({
+					projectId: consentId,
+					projectTitleZh: matchingScale?.projectTitleZh || project.title,
+					projectTitleEn: matchingScale?.projectTitleEn || project.subtitle,
+					principalInvestigator: "待填寫",
+					researchUnit: "Ho-Se 好勢旺來研究團隊",
+					researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
+				});
+			});
 		await saveSiteContentSection("collaborative_prosperity_consents", nextConsents);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {

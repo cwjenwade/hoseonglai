@@ -10,6 +10,7 @@ import {
   type ResearchConsent,
 } from "@/app/collaborative-prosperity/consent-data";
 import {
+  getResearchProjectConsentSourceId,
   RESEARCH_PROJECTS,
   normalizeResearchProjects,
 } from "@/app/collaborative-prosperity/projects";
@@ -144,9 +145,12 @@ export default async function ResearchStartPage({ searchParams }: PageProps) {
     );
   }
 
+  const consentSourceId = getResearchProjectConsentSourceId(project);
   const mappedConsent =
-    consents.find((consentItem) => consentItem.projectId === payload.projectId) ||
-    DEFAULT_RESEARCH_CONSENTS.find((consentItem) => consentItem.projectId === payload.projectId);
+    consents.find((consentItem) => consentItem.projectId === consentSourceId) ||
+    DEFAULT_RESEARCH_CONSENTS.find(
+      (consentItem) => consentItem.projectId === consentSourceId,
+    );
 
   const consent = mappedConsent || {
     projectTitleZh: registration.video_title,

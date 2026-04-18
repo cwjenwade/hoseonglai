@@ -6,6 +6,7 @@ import {
 } from "@/app/collaborative-prosperity/assessment-data";
 import {
   RESEARCH_PROJECTS,
+  getResearchProjectAssessmentSourceId,
   normalizeResearchProjects,
 } from "@/app/collaborative-prosperity/projects";
 
@@ -34,13 +35,16 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const matched = (scales as PsychometricScale[]).find((scale) => scale.projectId === projectId);
+    const scaleSourceId = getResearchProjectAssessmentSourceId(project);
+    const matched = (scales as PsychometricScale[]).find(
+      (scale) => scale.projectId === scaleSourceId,
+    );
     if (!matched) {
       return NextResponse.json({
         ok: true,
-        projectId,
-        projectTitleZh: projectId,
-        projectTitleEn: projectId,
+        projectId: scaleSourceId || projectId,
+        projectTitleZh: project.title,
+        projectTitleEn: project.subtitle,
         scalePrompt: "請依照實際情況作答。",
         options: ["非常不同意", "不同意", "普通", "同意", "非常同意"],
         questions: [],

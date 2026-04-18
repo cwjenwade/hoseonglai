@@ -12,6 +12,11 @@ import {
   DEFAULT_RESEARCH_CONSENTS,
   type ResearchConsent,
 } from "@/app/collaborative-prosperity/consent-data";
+import {
+  getResearchProjectConsentSourceId,
+  RESEARCH_PROJECTS,
+  normalizeResearchProjects,
+} from "@/app/collaborative-prosperity/projects";
 
 type SubmitPayload = {
   token: string;
@@ -100,9 +105,18 @@ export async function POST(req: NextRequest) {
         "collaborative_prosperity_consents",
         DEFAULT_RESEARCH_CONSENTS,
       );
+      const rawProjects = await getSiteContentSection(
+        "collaborative_prosperity_projects",
+        RESEARCH_PROJECTS,
+      );
+      const projects = normalizeResearchProjects(rawProjects, RESEARCH_PROJECTS);
+      const project = projects.find((item) => item.id === payload.projectId);
+      const consentSourceId = project
+        ? getResearchProjectConsentSourceId(project)
+        : payload.projectId;
       const mappedConsent =
-        consents.find((consent) => consent.projectId === payload.projectId) ||
-        DEFAULT_RESEARCH_CONSENTS.find((consent) => consent.projectId === payload.projectId);
+        consents.find((consent) => consent.projectId === consentSourceId) ||
+        DEFAULT_RESEARCH_CONSENTS.find((consent) => consent.projectId === consentSourceId);
 
       await sendResearchCompletionEmail({
         to: registration.user_email,
