@@ -14,6 +14,7 @@ export type SiteContentSection =
   | "fortune_arrives_lectures"
   | "collaborative_prosperity_assessments"
   | "collaborative_prosperity_consents"
+  | "collaborative_prosperity_scheduling"
   | "togetherness_groups"
   | "collaborative_prosperity_projects";
 

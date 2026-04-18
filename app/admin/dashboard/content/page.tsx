@@ -16,7 +16,14 @@ import {
 	type ResearchConsent,
 } from "@/app/collaborative-prosperity/consent-data";
 import {
+	DEFAULT_RESEARCH_SCHEDULING,
+	type ResearchScheduling,
+} from "@/app/collaborative-prosperity/scheduling-data";
+import {
 	RESEARCH_PROJECTS,
+	getResearchProjectPublishStatus,
+	getResearchProjectType,
+	getResearchPublishStatusLabel,
 	normalizeResearchProjects,
 } from "@/app/collaborative-prosperity/projects";
 import { LECTURES, type LectureItem } from "@/app/fortune-arrives/lectures-data";
@@ -30,9 +37,8 @@ import {
 	saveFortuneLectureEntry,
 	saveHeartfeltVideoEntry,
 	saveHomePageContent,
-	savePsychometricScaleEntry,
-	saveResearchConsentEntry,
-	saveResearchProjectEntry,
+	saveResearchWorkspaceEntry,
+	setResearchWorkspacePublishStatus,
 	saveTogethernessGroupEntry,
 	uploadModuleImage,
 	uploadModulePdf,
@@ -42,11 +48,10 @@ import {
 	GroupItemEditor,
 	HomePageEditor,
 	LectureItemEditor,
-	PsychometricScaleItemEditor,
-	ResearchConsentItemEditor,
-	ResearchProjectItemEditor,
 	ResearchVideoItemEditor,
 } from "./ModuleItemEditors";
+import ResearchWorkspaceEditor from "./ResearchWorkspaceEditor";
+import { buildResearchWorkspace } from "./research-workspace";
 import { CONTENT_MODULES, isContentModuleKey, type ContentModuleKey } from "./module-config";
 import { ContentListTable } from "./ui/ContentListTable";
 import { ModuleHeader } from "./ui/ModuleHeader";
@@ -65,11 +70,13 @@ type PageProps = {
 		module?: string;
 		item?: string;
 		tab?: string;
+		researchTab?: string;
 		saved?: string;
 		error?: string;
 		uploaded?: string;
 		uploadedPdf?: string;
 		detail?: string;
+		failedProject?: string;
 	}>;
 };
 
@@ -88,8 +95,6 @@ const LEGACY_TAB_MAP: Record<string, ContentModuleKey> = {
 	fortune: "lectures",
 	togetherness: "groups",
 	collaborative: "research-projects",
-	psychometrics: "psychometrics",
-	consent: "consents",
 };
 
 function withGovernance<T extends { updatedAt?: string; displayOrder?: number; isPublished?: boolean; internalNote?: string }>(
@@ -130,11 +135,32 @@ function normalizeModuleFromParams(module?: string, tab?: string): ContentModule
 
 export default async function AdminContentPage({ searchParams }: PageProps) {
 	const resolvedSearchParams = await searchParams;
+	if (
+		resolvedSearchParams.module === "psychometrics" ||
+		resolvedSearchParams.module === "consents"
+	) {
+		const nextParams = new URLSearchParams();
+		nextParams.set("module", "research-projects");
+		if (resolvedSearchParams.item) nextParams.set("item", resolvedSearchParams.item);
+		if (resolvedSearchParams.module === "psychometrics") {
+			nextParams.set("researchTab", "flow");
+		}
+		if (resolvedSearchParams.module === "consents") {
+			nextParams.set("researchTab", "consent");
+		}
+		redirect(`/admin/dashboard/content?${nextParams.toString()}`);
+	}
+
 	const activeModule = normalizeModuleFromParams(
 		resolvedSearchParams.module,
 		resolvedSearchParams.tab,
 	);
 	const activeItem = String(resolvedSearchParams.item || "").trim();
+	const activeResearchTab =
+		resolvedSearchParams.researchTab === "consent" ||
+		resolvedSearchParams.researchTab === "flow"
+			? resolvedSearchParams.researchTab
+			: "project";
 
 	const supabase = await getSupabaseServerClient();
 	const {
@@ -177,6 +203,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		normalizeResearchProjects(
 			await getSiteContentSection("collaborative_prosperity_projects", RESEARCH_PROJECTS),
 			RESEARCH_PROJECTS,
+			{ includeUnpublished: true },
 		),
 	);
 	const psychometrics = withGovernance(
@@ -190,6 +217,15 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 			"collaborative_prosperity_consents",
 			DEFAULT_RESEARCH_CONSENTS,
 		)) as ResearchConsent[],
+	);
+	const schedulingConfigs = withGovernance(
+		(await getSiteContentSection(
+			"collaborative_prosperity_scheduling",
+			DEFAULT_RESEARCH_SCHEDULING,
+		)) as ResearchScheduling[],
+	);
+	const researchWorkspaces = researchProjects.map((project) =>
+		buildResearchWorkspace(project, consents, psychometrics, schedulingConfigs),
 	);
 
 	const leaderOptions = [
@@ -252,26 +288,10 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		},
 		{
 			key: "research-projects",
-			title: "Research Projects",
-			description: "研究流程模組與參與設定。",
-			count: researchProjects.length,
+			title: "Research Workspace",
+			description: "整合同一研究的 project settings、consent、assessment / scheduling。",
+			count: researchWorkspaces.length,
 			lastUpdated: getLatestUpdated(researchProjects),
-			singleton: false,
-		},
-		{
-			key: "psychometrics",
-			title: "Psychometrics",
-			description: "量表題庫與量尺設定。",
-			count: psychometrics.length,
-			lastUpdated: getLatestUpdated(psychometrics),
-			singleton: false,
-		},
-		{
-			key: "consents",
-			title: "Consents",
-			description: "研究同意書與 PDF。",
-			count: consents.length,
-			lastUpdated: getLatestUpdated(consents),
 			singleton: false,
 		},
 	];
@@ -279,19 +299,23 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 	const activeModuleMeta = activeModule
 		? CONTENT_MODULES.find((module) => module.key === activeModule) || null
 		: null;
+	if (activeModule && activeModuleMeta?.singleton && !activeItem) {
+		redirect(`/admin/dashboard/content?module=${activeModule}&item=${activeModule}`);
+	}
 	const errorDetails = resolvedSearchParams.detail
 		? resolvedSearchParams.detail
 				.split("；")
 				.map((item) => item.trim())
 				.filter(Boolean)
 		: [];
+	const failedProjectId = String(resolvedSearchParams.failedProject || "").trim();
 
 	return (
 		<div className="space-y-6">
 			<ModuleHeader
 				eyebrow="Admin Content"
 				title="內容模組管理"
-				description="後台現在依照前台內容模組來管理，不再用頁面 tab 堆在一起。先選模組，再進列表，再編輯單筆內容。"
+				description="後台現在依照前台內容模組來管理：singleton 模組直接進 editor，collection 模組先看列表再編輯單筆內容。"
 				backHref="/admin/dashboard"
 				backLabel="返回儀表板"
 				actions={[]}
@@ -369,12 +393,14 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 								<p>最後更新：{formatAdminTimestamp(module.lastUpdated)}</p>
 							</div>
 							<div className="mt-5 flex flex-wrap gap-2">
-								<Link
-									href={`/admin/dashboard/content?module=${module.key}`}
-									className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
-								>
-									查看列表
-								</Link>
+								{module.singleton ? null : (
+									<Link
+										href={`/admin/dashboard/content?module=${module.key}`}
+										className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
+									>
+										查看列表
+									</Link>
+								)}
 								<Link
 									href={
 										module.singleton
@@ -586,97 +612,107 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 							columns={[
 								{ key: "title", label: "Title" },
 								{ key: "status", label: "Status" },
+								{ key: "completion", label: "Readiness" },
 								{ key: "updatedAt", label: "最後更新" },
 								{ key: "displayOrder", label: "排序" },
 							]}
-							rows={researchProjects.map((item, index) => ({
-								id: item.id,
-								href: `/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(item.id)}`,
+							rows={researchWorkspaces.map((workspace, index) => ({
+								id: workspace.projectId,
+								href: `/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(workspace.projectId)}`,
 								values: {
 									title: (
 										<div>
-											<p className="font-medium text-zinc-900">{item.title}</p>
-											<p className="text-xs text-zinc-500">{item.id}</p>
+											<p className="font-medium text-zinc-900">{workspace.project.title}</p>
+											<p className="text-xs text-zinc-500">{workspace.projectId}</p>
 										</div>
 									),
 									status: (
 										<div className="flex flex-wrap gap-2">
 											<StatusBadge
-												tone={item.isPublished === false ? "draft" : "published"}
-												label={item.isPublished === false ? "Draft" : "Published"}
+												tone={workspace.publishStatus === "published" ? "published" : "draft"}
+												label={getResearchPublishStatusLabel(workspace.publishStatus)}
 											/>
-											<StatusBadge tone="linked" label={item.status} />
+											<StatusBadge tone="linked" label={workspace.researchType} />
 										</div>
 									),
-									updatedAt: formatAdminTimestamp(item.updatedAt),
-									displayOrder: item.displayOrder || index + 1,
-								},
-							}))}
-							emptyLabel="尚無 Research Projects。"
-						/>
-					) : null}
-
-					{activeModule === "psychometrics" ? (
-						<ContentListTable
-							columns={[
-								{ key: "title", label: "Title" },
-								{ key: "status", label: "Status" },
-								{ key: "updatedAt", label: "最後更新" },
-								{ key: "displayOrder", label: "排序" },
-							]}
-							rows={psychometrics.map((item, index) => ({
-								id: item.projectId,
-								href: `/admin/dashboard/content?module=psychometrics&item=${encodeURIComponent(item.projectId)}`,
-								values: {
-									title: (
-										<div>
-											<p className="font-medium text-zinc-900">{item.projectTitleZh}</p>
-											<p className="text-xs text-zinc-500">{item.projectId}</p>
+									completion: (
+										<div className="space-y-3">
+											<div className="flex flex-wrap gap-2">
+												<StatusBadge
+													tone={workspace.readiness.consentComplete ? "visible" : "draft"}
+													label={workspace.readiness.consentComplete ? "Consent ready" : "Consent missing"}
+												/>
+												<StatusBadge
+													tone={workspace.readiness.flowComplete ? "visible" : "draft"}
+													label={
+														workspace.readiness.flowComplete
+															? workspace.researchType === "quantitative"
+																? "Assessment ready"
+																: "Scheduling ready"
+															: workspace.researchType === "quantitative"
+																? "Assessment missing"
+																: "Scheduling missing"
+													}
+												/>
+												<StatusBadge
+													tone={workspace.readiness.missingFields.length === 0 ? "published" : "draft"}
+													label={
+														workspace.readiness.missingFields.length === 0
+															? "Publish ready"
+															: `Publish blocked (${workspace.readiness.missingFields.length})`
+													}
+												/>
+											</div>
+											{failedProjectId === workspace.projectId && errorDetails.length > 0 ? (
+												<div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+													{errorDetails.map((item, errorIndex) => (
+														<p key={`${workspace.projectId}-${errorIndex}`}>- {item}</p>
+													))}
+												</div>
+											) : null}
 										</div>
 									),
-									status: (
-										<StatusBadge
-											tone={item.isPublished === false ? "draft" : "published"}
-											label={item.isPublished === false ? "Draft" : "Published"}
-										/>
-									),
-									updatedAt: formatAdminTimestamp(item.updatedAt),
-									displayOrder: item.displayOrder || index + 1,
+									updatedAt: formatAdminTimestamp(workspace.project.updatedAt),
+									displayOrder: workspace.project.displayOrder || index + 1,
 								},
+								actions: (
+									<div className="flex flex-wrap justify-end gap-2">
+										<form action={setResearchWorkspacePublishStatus}>
+											<input type="hidden" name="projectId" value={workspace.projectId} />
+											<input
+												type="hidden"
+												name="targetStatus"
+												value={workspace.publishStatus === "published" ? "preparing" : "published"}
+											/>
+											<button
+												type="submit"
+												className="inline-flex rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+											>
+												{workspace.publishStatus === "published" ? "Move to Preparing" : "Publish"}
+											</button>
+										</form>
+										<Link
+											href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(workspace.projectId)}&researchTab=project`}
+											className="inline-flex rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+										>
+											Edit Project
+										</Link>
+										<Link
+											href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(workspace.projectId)}&researchTab=consent`}
+											className="inline-flex rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+										>
+											Edit Consent
+										</Link>
+										<Link
+											href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(workspace.projectId)}&researchTab=flow`}
+											className="inline-flex rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+										>
+											Edit {workspace.researchType === "quantitative" ? "Flow" : "Schedule"}
+										</Link>
+									</div>
+								),
 							}))}
-							emptyLabel="尚無 Psychometric scales。"
-						/>
-					) : null}
-
-					{activeModule === "consents" ? (
-						<ContentListTable
-							columns={[
-								{ key: "title", label: "Title" },
-								{ key: "status", label: "Status" },
-								{ key: "updatedAt", label: "最後更新" },
-								{ key: "displayOrder", label: "排序" },
-							]}
-							rows={consents.map((item, index) => ({
-								id: item.projectId,
-								href: `/admin/dashboard/content?module=consents&item=${encodeURIComponent(item.projectId)}`,
-								values: {
-									title: (
-										<div>
-											<p className="font-medium text-zinc-900">{item.projectTitleZh}</p>
-											<p className="text-xs text-zinc-500">{item.projectId}</p>
-										</div>
-									),
-									status: (
-										<StatusBadge
-											tone={item.isPublished === false ? "draft" : "published"}
-											label={item.isPublished === false ? "Draft" : "Published"}
-										/>
-									),
-									updatedAt: formatAdminTimestamp(item.updatedAt),
-									displayOrder: item.displayOrder || index + 1,
-								},
-							}))}
-							emptyLabel="尚無 Consents。"
+							emptyLabel="尚無 Research Workspace。"
 						/>
 					) : null}
 				</>
@@ -865,169 +901,217 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 						</>
 					) : null}
 
-					{activeModule === "psychometrics" ? (
-						<form action={savePsychometricScaleEntry} className="space-y-5">
-							<input type="hidden" name="entryKey" value={activeItem === "new" ? "" : activeItem} />
-							<PsychometricScaleItemEditor
-								initialItem={
-									psychometrics.find((item) => item.projectId === activeItem) || {
-										projectId: "",
-										projectTitleZh: "",
-										projectTitleEn: "",
-										scalePrompt: "請依照實際情況作答。",
-										options: ["非常不同意", "不同意", "普通", "同意", "非常同意"],
-										questions: [""],
-										isPublished: true,
-										displayOrder: psychometrics.length + 1,
-										updatedAt: "",
-										internalNote: "",
-									}
-								}
-							/>
-							<div className="flex justify-end">
-								<button type="submit" className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800">
-									儲存 Psychometric Scale
-								</button>
-							</div>
-						</form>
-					) : null}
-
-					{activeModule === "consents" ? (
-						<>
-							<section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm">
-								<form action={uploadModulePdf} className="flex flex-wrap items-center gap-3">
-									<input type="hidden" name="module" value="consents" />
-									<input type="hidden" name="item" value={activeItem} />
-									<input type="file" name="pdfFile" accept="application/pdf,.pdf" className="text-xs text-zinc-700" required />
-									<button type="submit" className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100">
-										上傳 PDF
-									</button>
-								</form>
-							</section>
-							<form action={saveResearchConsentEntry} className="space-y-5">
-								<input type="hidden" name="entryKey" value={activeItem === "new" ? "" : activeItem} />
-								<ResearchConsentItemEditor
-									initialItem={
-										consents.find((item) => item.projectId === activeItem) || {
-											projectId: "",
-											projectTitleZh: "",
-											projectTitleEn: "",
-											pdfUrl: "",
-											principalInvestigator: "",
-											researchUnit: "Ho-Se 好勢旺來研究團隊",
-											researchDescription: "",
-											isPublished: true,
-											displayOrder: consents.length + 1,
-											updatedAt: "",
-											internalNote: "",
-										}
-									}
-									uploadedPdfUrl={resolvedSearchParams.uploadedPdf}
-								/>
-								<div className="flex justify-end">
-									<button type="submit" className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800">
-										儲存 Consent
-									</button>
-								</div>
-							</form>
-						</>
-					) : null}
-
 					{activeModule === "research-projects" ? (
 						(() => {
-							const currentProject =
-								researchProjects.find((item) => item.id === activeItem) || {
-									id: "",
-									title: "",
-									subtitle: "",
-									description: "",
-									status: "preparing" as const,
-									topic: "",
-									principalInvestigator: "",
-									researchContact: "",
-									participationDetails: "",
-									researchAudiencePurpose: "",
-									testUrl: "",
-									assessmentSourceProjectId: "",
-									consentSourceProjectId: "",
-									contactVisibility: "admin_only" as const,
-									isPublished: true,
-									displayOrder: researchProjects.length + 1,
-									updatedAt: "",
-									internalNote: "",
-								};
-							const linkedAssessment = psychometrics.find(
-								(item) => item.projectId === currentProject.assessmentSourceProjectId,
-							);
-							const linkedConsent = consents.find(
-								(item) => item.projectId === currentProject.consentSourceProjectId,
-							);
+							const workspace =
+								researchWorkspaces.find((item) => item.projectId === activeItem) || null;
+							const currentProject = workspace?.project || {
+								id: "",
+								title: "",
+								subtitle: "",
+								description: "",
+								status: "quantitative" as const,
+								publishStatus: "preparing" as const,
+								researchType: "quantitative" as const,
+								topic: "",
+								principalInvestigator: "",
+								researchContact: "",
+								participationDetails: "",
+								researchAudiencePurpose: "",
+								testUrl: "",
+								assessmentSourceProjectId: "",
+								consentSourceProjectId: "",
+								contactVisibility: "admin_only" as const,
+								isPublished: false,
+								displayOrder: researchProjects.length + 1,
+								updatedAt: "",
+								internalNote: "",
+							};
+							const currentConsent = workspace?.consent || {
+								projectId: currentProject.id,
+								projectTitleZh: currentProject.title,
+								projectTitleEn: currentProject.subtitle,
+								pdfUrl: "",
+								principalInvestigator: currentProject.principalInvestigator,
+								researchUnit: "Ho-Se 好勢旺來研究團隊",
+								researchDescription: "",
+								isPublished: false,
+								displayOrder: currentProject.displayOrder,
+								updatedAt: "",
+								internalNote: "",
+							};
+							const currentAssessment = workspace?.assessment || null;
+							const currentScheduling = workspace?.scheduling || null;
+							const summaryPublishStatus = getResearchProjectPublishStatus(currentProject);
+							const summaryResearchType = getResearchProjectType(currentProject);
+							const workspaceMissingFields =
+								failedProjectId === currentProject.id && errorDetails.length > 0
+									? errorDetails
+									: workspace?.readiness.missingFields || [];
+							const groupedMissingFields = {
+								project: workspaceMissingFields.filter((item) => item.startsWith("Project Settings")),
+								consent: workspaceMissingFields.filter((item) => item.startsWith("Consent")),
+								flow: workspaceMissingFields.filter(
+									(item) =>
+										item.startsWith("Assessment") || item.startsWith("Scheduling"),
+								),
+							};
 
 							return (
-								<form action={saveResearchProjectEntry} className="space-y-5">
-									<input type="hidden" name="entryKey" value={activeItem === "new" ? "" : activeItem} />
-									<ResearchProjectItemEditor
-										initialItem={currentProject}
-										scaleOptions={psychometrics.map((item) => ({
-											value: item.projectId,
-											label: `${item.projectTitleZh} / ${item.projectTitleEn}`,
-											description: item.projectId,
-										}))}
-										consentOptions={consents.map((item) => ({
-											value: item.projectId,
-											label: `${item.projectTitleZh} / ${item.projectTitleEn}`,
-											description: item.pdfUrl || item.projectId,
-										}))}
-									/>
+								<>
+									<section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
+										<div className="flex flex-wrap items-start justify-between gap-4">
+											<div>
+												<p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+													Research Workspace
+												</p>
+												<h2 className="mt-3 text-2xl font-semibold text-zinc-900">
+													{currentProject.title || "未命名研究"}
+												</h2>
+												<p className="mt-2 text-sm text-zinc-600">
+													projectId: {currentProject.id || "(待填)"}
+												</p>
+											</div>
 
-									<section className="grid gap-4 lg:grid-cols-2">
-										<div className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
-											<p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
-												Linked Assessment
-											</p>
-											<p className="mt-3 text-lg font-semibold text-zinc-900">
-												{linkedAssessment?.projectTitleZh || "尚未指定量表"}
-											</p>
-											<p className="mt-2 text-sm text-zinc-600">
-												{linkedAssessment?.projectId || "請先從 psychometrics 選擇量表來源。"}
-											</p>
-											<div className="mt-4">
-												<Link
-													href={`/admin/dashboard/content?module=psychometrics${linkedAssessment ? `&item=${encodeURIComponent(linkedAssessment.projectId)}` : ""}`}
-													className="inline-flex rounded-full border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
-												>
-													前往 Psychometrics
-												</Link>
+											<div className="flex flex-wrap gap-2">
+												<StatusBadge
+													tone={summaryPublishStatus === "published" ? "published" : "draft"}
+													label={getResearchPublishStatusLabel(summaryPublishStatus)}
+												/>
+												<StatusBadge tone="linked" label={summaryResearchType} />
+												<StatusBadge
+													tone={summaryPublishStatus === "published" ? "visible" : "hidden"}
+													label={summaryPublishStatus === "published" ? "Frontend visible" : "Frontend hidden"}
+												/>
+												<StatusBadge
+													tone={workspaceMissingFields.length === 0 ? "published" : "draft"}
+													label={
+														workspaceMissingFields.length === 0
+															? "Publish ready"
+															: `Missing ${workspaceMissingFields.length}`
+													}
+												/>
 											</div>
 										</div>
 
-										<div className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
-											<p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
-												Linked Consent
-											</p>
-											<p className="mt-3 text-lg font-semibold text-zinc-900">
-												{linkedConsent?.projectTitleZh || "尚未指定 consent"}
-											</p>
-											<p className="mt-2 text-sm text-zinc-600">
-												{linkedConsent?.pdfUrl || "請先從 consents 選擇研究計畫書來源。"}
-											</p>
-											<div className="mt-4">
-												<Link
-													href={`/admin/dashboard/content?module=consents${linkedConsent ? `&item=${encodeURIComponent(linkedConsent.projectId)}` : ""}`}
-													className="inline-flex rounded-full border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
-												>
-													前往 Consents
-												</Link>
-											</div>
+										<div className="mt-5 flex flex-wrap gap-2 border-t border-zinc-200 pt-4">
+											<Link
+												href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(activeItem)}&researchTab=project`}
+												className={`rounded-full px-4 py-2 text-sm transition ${
+													activeResearchTab === "project"
+														? "bg-zinc-900 text-white"
+														: "border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+												}`}
+											>
+												Project Settings
+											</Link>
+											<Link
+												href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(activeItem)}&researchTab=consent`}
+												className={`rounded-full px-4 py-2 text-sm transition ${
+													activeResearchTab === "consent"
+														? "bg-zinc-900 text-white"
+														: "border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+												}`}
+											>
+												Consent
+											</Link>
+											<Link
+												href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(activeItem)}&researchTab=flow`}
+												className={`rounded-full px-4 py-2 text-sm transition ${
+													activeResearchTab === "flow"
+														? "bg-zinc-900 text-white"
+														: "border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+												}`}
+											>
+												{summaryResearchType === "quantitative"
+													? "Assessment"
+													: "Scheduling / Time Selection"}
+											</Link>
 										</div>
 									</section>
 
+									{workspaceMissingFields.length > 0 ? (
+										<section className="rounded-[28px] border border-red-200 bg-red-50 p-5 shadow-sm">
+											<div className="flex flex-wrap items-start justify-between gap-4">
+												<div>
+													<p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-500">
+														Missing Fields
+													</p>
+													<p className="mt-2 text-sm text-red-700">
+														點擊下方按鈕可直接切到對應 tab 補齊缺漏。
+													</p>
+												</div>
+												<div className="flex flex-wrap gap-2">
+													{groupedMissingFields.project.length > 0 ? (
+														<Link
+															href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(activeItem)}&researchTab=project`}
+															className="rounded-full border border-red-300 px-3 py-1.5 text-xs text-red-700 transition hover:bg-red-100"
+														>
+															Project Settings ({groupedMissingFields.project.length})
+														</Link>
+													) : null}
+													{groupedMissingFields.consent.length > 0 ? (
+														<Link
+															href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(activeItem)}&researchTab=consent`}
+															className="rounded-full border border-red-300 px-3 py-1.5 text-xs text-red-700 transition hover:bg-red-100"
+														>
+															Consent ({groupedMissingFields.consent.length})
+														</Link>
+													) : null}
+													{groupedMissingFields.flow.length > 0 ? (
+														<Link
+															href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(activeItem)}&researchTab=flow`}
+															className="rounded-full border border-red-300 px-3 py-1.5 text-xs text-red-700 transition hover:bg-red-100"
+														>
+															{summaryResearchType === "quantitative" ? "Assessment" : "Scheduling"} ({groupedMissingFields.flow.length})
+														</Link>
+													) : null}
+												</div>
+											</div>
+											<div className="mt-4 space-y-1 text-sm text-red-700">
+												{workspaceMissingFields.map((item, missingIndex) => (
+													<p key={`${item}-${missingIndex}`}>- {item}</p>
+												))}
+											</div>
+										</section>
+									) : null}
+
+									{activeResearchTab === "consent" ? (
+										<section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm">
+											<p className="text-sm text-zinc-600">
+												Consent PDF 上傳已整合到 Consent 任務流程中，完成上傳後可直接在下方套用。
+											</p>
+											<form action={uploadModulePdf} className="mt-4 flex flex-wrap items-center gap-3">
+												<input type="hidden" name="module" value="research-projects" />
+												<input type="hidden" name="item" value={activeItem} />
+												<input type="hidden" name="researchTab" value={activeResearchTab} />
+												<input type="file" name="pdfFile" accept="application/pdf,.pdf" className="text-xs text-zinc-700" required />
+												<button type="submit" className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100">
+													上傳 Consent PDF
+												</button>
+											</form>
+										</section>
+									) : null}
+
+									<form action={saveResearchWorkspaceEntry} className="space-y-5">
+									<input type="hidden" name="entryKey" value={activeItem === "new" ? "" : activeItem} />
+									<input type="hidden" name="researchTab" value={activeResearchTab} />
+									<ResearchWorkspaceEditor
+										initialProject={currentProject}
+										initialConsent={currentConsent}
+										initialAssessment={currentAssessment}
+										initialScheduling={currentScheduling}
+										activeTab={activeResearchTab}
+										uploadedPdfUrl={resolvedSearchParams.uploadedPdf}
+									/>
+
 									<div className="flex justify-end">
 										<button type="submit" className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800">
-											儲存 Research Project
+											儲存 Research Workspace
 										</button>
 									</div>
-								</form>
+									</form>
+								</>
 							);
 						})()
 					) : null}

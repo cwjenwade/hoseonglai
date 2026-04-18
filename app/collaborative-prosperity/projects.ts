@@ -8,6 +8,21 @@ export const RESEARCH_PROJECT_STATUSES = [
 
 export type ResearchProjectStatus = (typeof RESEARCH_PROJECT_STATUSES)[number];
 
+export const RESEARCH_PUBLISH_STATUSES = [
+  "preparing",
+  "published",
+] as const;
+
+export type ResearchPublishStatus =
+  (typeof RESEARCH_PUBLISH_STATUSES)[number];
+
+export const RESEARCH_PROJECT_TYPES = [
+  "quantitative",
+  "qualitative",
+] as const;
+
+export type ResearchProjectType = (typeof RESEARCH_PROJECT_TYPES)[number];
+
 export const PROJECT_CONTACT_VISIBILITIES = [
   "admin_only",
   "share_with_pi",
@@ -22,6 +37,8 @@ export type ResearchProject = ContentGovernanceFields & {
   subtitle: string;
   description: string;
   status: ResearchProjectStatus;
+  publishStatus?: ResearchPublishStatus;
+  researchType?: ResearchProjectType;
   topic: string;
   principalInvestigator: string;
   researchContact: string;
@@ -43,9 +60,9 @@ type LegacyResearchProjectFields = {
 };
 
 function defaultContactVisibility(
-  status: ResearchProjectStatus,
+  researchType: ResearchProjectType,
 ): ProjectContactVisibility {
-  return status === "qualitative" ? "share_with_pi" : "admin_only";
+  return researchType === "qualitative" ? "share_with_pi" : "admin_only";
 }
 
 export function getResearchProjectTestUrl(projectId: string): string {
@@ -53,9 +70,13 @@ export function getResearchProjectTestUrl(projectId: string): string {
 }
 
 export function getResearchProjectAssessmentSourceId(
-  project: Pick<ResearchProject, "id" | "status" | "assessmentSourceProjectId">,
+  project: Pick<
+    ResearchProject,
+    "id" | "status" | "assessmentSourceProjectId" | "researchType"
+  >,
 ): string {
-  if (project.status !== "quantitative") {
+  const researchType = getResearchProjectType(project);
+  if (researchType !== "quantitative") {
     return "";
   }
 
@@ -64,14 +85,43 @@ export function getResearchProjectAssessmentSourceId(
 }
 
 export function getResearchProjectConsentSourceId(
-  project: Pick<ResearchProject, "id" | "status" | "consentSourceProjectId">,
+  project: Pick<
+    ResearchProject,
+    "id" | "status" | "consentSourceProjectId" | "publishStatus"
+  >,
 ): string {
-  if (project.status === "preparing") {
+  if (getResearchProjectPublishStatus(project) === "preparing") {
     return "";
   }
 
   const sourceId = String(project.consentSourceProjectId || "").trim();
   return sourceId || project.id;
+}
+
+export function getResearchProjectType(
+  project: Pick<ResearchProject, "status" | "researchType">,
+): ResearchProjectType {
+  const rawType = String(project.researchType || "").trim();
+  if (RESEARCH_PROJECT_TYPES.includes(rawType as ResearchProjectType)) {
+    return rawType as ResearchProjectType;
+  }
+
+  return project.status === "qualitative" ? "qualitative" : "quantitative";
+}
+
+export function getResearchProjectPublishStatus(
+  project: Pick<ResearchProject, "publishStatus"> & Partial<Pick<ResearchProject, "status" | "isPublished">>,
+): ResearchPublishStatus {
+  const rawStatus = String(project.publishStatus || "").trim();
+  if (RESEARCH_PUBLISH_STATUSES.includes(rawStatus as ResearchPublishStatus)) {
+    return rawStatus as ResearchPublishStatus;
+  }
+
+  if (project.status === "preparing") {
+    return "preparing";
+  }
+
+  return project.isPublished === false ? "preparing" : "published";
 }
 
 export function normalizeResearchProject(
@@ -85,12 +135,25 @@ export function normalizeResearchProject(
     return null;
   }
 
-  const rawStatus = String(project.status || "").trim();
-  const status: ResearchProjectStatus = RESEARCH_PROJECT_STATUSES.includes(
-    rawStatus as ResearchProjectStatus,
+  const rawLegacyStatus = String(project.status || "").trim();
+  const rawResearchType = String(project.researchType || rawLegacyStatus || "").trim();
+  const researchType: ResearchProjectType = RESEARCH_PROJECT_TYPES.includes(
+    rawResearchType as ResearchProjectType,
   )
-    ? (rawStatus as ResearchProjectStatus)
+    ? (rawResearchType as ResearchProjectType)
     : "quantitative";
+  const rawPublishStatus = String(project.publishStatus || "").trim();
+  const publishStatus: ResearchPublishStatus = RESEARCH_PUBLISH_STATUSES.includes(
+    rawPublishStatus as ResearchPublishStatus,
+  )
+    ? (rawPublishStatus as ResearchPublishStatus)
+    : rawLegacyStatus === "preparing"
+      ? "preparing"
+      : project.isPublished === false
+        ? "preparing"
+        : "published";
+  const status: ResearchProjectStatus =
+    publishStatus === "preparing" ? "preparing" : researchType;
 
   const description = String(project.description || "").trim();
   const topic = String(project.topic || title).trim();
@@ -124,10 +187,11 @@ export function normalizeResearchProject(
       rawVisibility as ProjectContactVisibility,
     )
       ? (rawVisibility as ProjectContactVisibility)
-      : defaultContactVisibility(status);
+      : defaultContactVisibility(researchType);
 
   return {
-    isPublished: project.isPublished !== false,
+    isPublished:
+      publishStatus === "published" ? project.isPublished !== false : false,
     displayOrder:
       Number.isFinite(Number(project.displayOrder))
         ? Number(project.displayOrder)
@@ -139,18 +203,20 @@ export function normalizeResearchProject(
     subtitle,
     description: description || researchAudiencePurpose,
     status,
+    publishStatus,
+    researchType,
     topic,
     principalInvestigator,
     researchContact,
     participationDetails: participationDetails || "閱讀研究說明後依指示參與。",
     researchAudiencePurpose: researchAudiencePurpose || description,
-    testUrl,
+    testUrl: researchType === "quantitative" ? testUrl : "",
     assessmentSourceProjectId:
-      status === "quantitative" && rawAssessmentSourceProjectId !== id
+      researchType === "quantitative" && rawAssessmentSourceProjectId !== id
         ? rawAssessmentSourceProjectId
         : "",
     consentSourceProjectId:
-      status !== "preparing" && rawConsentSourceProjectId !== id
+      publishStatus !== "preparing" && rawConsentSourceProjectId !== id
         ? rawConsentSourceProjectId
         : "",
     contactVisibility,
@@ -160,6 +226,9 @@ export function normalizeResearchProject(
 export function normalizeResearchProjects(
   projects: unknown,
   fallback: ResearchProject[] = [],
+  options?: {
+    includeUnpublished?: boolean;
+  },
 ): ResearchProject[] {
   if (!Array.isArray(projects)) {
     return fallback;
@@ -173,13 +242,26 @@ export function normalizeResearchProjects(
     )
     .filter((project): project is ResearchProject => project !== null);
 
-  return normalized.length > 0 ? normalized : fallback;
+  const visibleProjects =
+    options?.includeUnpublished === true
+      ? normalized
+      : normalized.filter(
+          (project) => getResearchProjectPublishStatus(project) === "published",
+        );
+
+  return visibleProjects;
 }
 
 export function getProjectStatusLabel(status: ResearchProjectStatus): string {
   if (status === "preparing") return "Preparing";
   if (status === "qualitative") return "Qualitative";
   return "Quantitative";
+}
+
+export function getResearchPublishStatusLabel(
+  publishStatus: ResearchPublishStatus,
+): string {
+  return publishStatus === "published" ? "Published" : "Preparing";
 }
 
 export function getProjectContactVisibilityLabel(
@@ -196,6 +278,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     description:
       "探索個體在日常生活中的情緒感受、調節方式與反應傾向，理解情緒經驗與心理狀態之間的關係。",
     status: "quantitative",
+    publishStatus: "published",
+    researchType: "quantitative",
     topic: "情緒模式與日常經驗",
     principalInvestigator: "Ho-Se 好勢｜Ong-Lai 旺來 研究團隊",
     researchContact: "Ho-Se 好勢｜Ong-Lai 旺來 研究聯絡窗口",
@@ -214,6 +298,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     description:
       "聚焦壓力來源、身心反應與調適資源，理解人們如何在高壓環境中維持生活與心理平衡。",
     status: "quantitative",
+    publishStatus: "published",
+    researchType: "quantitative",
     topic: "壓力與調適資源",
     principalInvestigator: "Ho-Se 好勢｜Ong-Lai 旺來 研究團隊",
     researchContact: "Ho-Se 好勢｜Ong-Lai 旺來 研究聯絡窗口",
@@ -232,6 +318,8 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     description:
       "了解在親密關係、友誼與社交互動中的依附、安全感與互動風格，作為心理與社會連結的研究基礎。",
     status: "quantitative",
+    publishStatus: "published",
+    researchType: "quantitative",
     topic: "人際關係與依附風格",
     principalInvestigator: "Ho-Se 好勢｜Ong-Lai 旺來 研究團隊",
     researchContact: "Ho-Se 好勢｜Ong-Lai 旺來 研究聯絡窗口",

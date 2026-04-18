@@ -20,11 +20,15 @@ import {
 	type HomePageContent,
 } from "@/app/home-content";
 import {
+	getResearchProjectTestUrl,
+	getResearchProjectType,
+	normalizeResearchProjects,
 	normalizeResearchProject,
 	type ResearchProject,
 } from "@/app/collaborative-prosperity/projects";
 import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
+import type { ResearchScheduling } from "@/app/collaborative-prosperity/scheduling-data";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
 import {
@@ -43,6 +47,7 @@ import {
 	sortByDisplayOrder,
 	type ContentGovernanceFields,
 } from "@/lib/content-governance";
+import { buildResearchWorkspace, validateResearchWorkspace } from "./research-workspace";
 
 async function requireAdminUser() {
 	const requestHeaders = await headers();
@@ -237,15 +242,16 @@ export async function uploadModuleImage(formData: FormData) {
 
 	const moduleKey = String(formData.get("module") || "").trim();
 	const itemKey = String(formData.get("item") || "").trim();
+	const researchTab = String(formData.get("researchTab") || "").trim();
 	const section = String(formData.get("section") || "").trim();
 	const file = formData.get("imageFile");
 
 	if (!(file instanceof File) || file.size <= 0) {
-		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload" }));
+		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload", researchTab }));
 	}
 
 	if (!file.type.startsWith("image/")) {
-		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload_type" }));
+		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload_type", researchTab }));
 	}
 
 	const allowedSections = new Set([
@@ -254,7 +260,7 @@ export async function uploadModuleImage(formData: FormData) {
 		"togetherness_groups",
 	]);
 	if (!allowedSections.has(section)) {
-		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload" }));
+		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload", researchTab }));
 	}
 
 	let url = "";
@@ -262,14 +268,14 @@ export async function uploadModuleImage(formData: FormData) {
 		url = await saveSiteContentImage(section as Parameters<typeof saveSiteContentImage>[0], file);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
-			redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "readonly_upload" }));
+			redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "readonly_upload", researchTab }));
 		}
 		const detail = encodeURIComponent(error instanceof Error ? error.message : "unknown_upload_error");
-		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload", detail }));
+		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload", detail, researchTab }));
 	}
 
 	revalidatePath("/admin/dashboard/content");
-	redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { uploaded: url }));
+	redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { uploaded: url, researchTab }));
 }
 
 export async function uploadModulePdf(formData: FormData) {
@@ -277,15 +283,16 @@ export async function uploadModulePdf(formData: FormData) {
 
 	const moduleKey = String(formData.get("module") || "").trim() || "consents";
 	const itemKey = String(formData.get("item") || "").trim();
+	const researchTab = String(formData.get("researchTab") || "").trim();
 	const file = formData.get("pdfFile");
 
 	if (!(file instanceof File) || file.size <= 0) {
-		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload" }));
+		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload", researchTab }));
 	}
 
 	const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 	if (!isPdf) {
-		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload_type" }));
+		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload_type", researchTab }));
 	}
 
 	let url = "";
@@ -293,14 +300,14 @@ export async function uploadModulePdf(formData: FormData) {
 		url = await saveSiteContentDocument("collaborative_prosperity_consents", file);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
-			redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "readonly_upload" }));
+			redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "readonly_upload", researchTab }));
 		}
 		const detail = encodeURIComponent(error instanceof Error ? error.message : "unknown_upload_error");
-		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload", detail }));
+		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload", detail, researchTab }));
 	}
 
 	revalidatePath("/admin/dashboard/content");
-	redirect(buildContentHref(moduleKey, itemKey || undefined, { uploadedPdf: url }));
+	redirect(buildContentHref(moduleKey, itemKey || undefined, { uploadedPdf: url, researchTab }));
 }
 
 export async function saveCollaborativeProjectsContent(formData: FormData) {
@@ -1409,4 +1416,265 @@ export async function saveResearchProjectEntry(formData: FormData) {
 	revalidatePath(`/collaborative-prosperity/${parsed.id}`);
 	revalidatePath("/admin/dashboard/content");
 	redirect(buildContentHref("research-projects", parsed.id, { saved: "research-projects" }));
+}
+
+export async function saveResearchWorkspaceEntry(formData: FormData) {
+	await requireAdminUser();
+
+	const originalKey = String(formData.get("entryKey") || "").trim();
+	const currentTab = String(formData.get("researchTab") || "project").trim() || "project";
+	const projectPayload = String(formData.get("projectPayload") || "").trim();
+	const consentPayload = String(formData.get("consentPayload") || "").trim();
+	const assessmentPayload = String(formData.get("assessmentPayload") || "").trim();
+	const schedulingPayload = String(formData.get("schedulingPayload") || "").trim();
+
+	if (!projectPayload || !consentPayload) {
+		redirect(buildContentHref("research-projects", originalKey || undefined, {
+			error: "missing",
+			researchTab: currentTab,
+		}));
+	}
+
+	let project: ResearchProject;
+	let consent: ResearchConsent;
+	let assessment: PsychometricScale | null = null;
+	let scheduling: ResearchScheduling | null = null;
+
+	try {
+		const normalizedProject = normalizeResearchProject(
+			JSON.parse(projectPayload) as Partial<ResearchProject>,
+		);
+		if (!normalizedProject) {
+			redirect(buildContentHref("research-projects", originalKey || undefined, {
+				error: "missing",
+				researchTab: currentTab,
+			}));
+		}
+
+		const parsedConsent = JSON.parse(consentPayload) as Partial<ResearchConsent>;
+		const normalizedConsent = touchGovernance(
+			{
+				projectId: String(parsedConsent.projectId || normalizedProject.id).trim(),
+				projectTitleZh:
+					String(parsedConsent.projectTitleZh || normalizedProject.title).trim(),
+				projectTitleEn:
+					String(parsedConsent.projectTitleEn || normalizedProject.subtitle).trim(),
+				pdfUrl: String(parsedConsent.pdfUrl || "").trim() || undefined,
+				principalInvestigator:
+					String(parsedConsent.principalInvestigator || normalizedProject.principalInvestigator).trim(),
+				researchUnit: String(parsedConsent.researchUnit || "").trim(),
+				researchDescription: String(parsedConsent.researchDescription || "").trim(),
+				isPublished: parsedConsent.isPublished !== false,
+				displayOrder: parsedConsent.displayOrder,
+				updatedAt: String(parsedConsent.updatedAt || "").trim(),
+				internalNote: String(parsedConsent.internalNote || "").trim(),
+			},
+			Number(normalizedProject.displayOrder || 0),
+		);
+
+		project = touchGovernance(normalizedProject, Number(normalizedProject.displayOrder || 0));
+		project.publishStatus = project.publishStatus || "preparing";
+		project.researchType = project.researchType || getResearchProjectType(project);
+		project.status =
+			project.publishStatus === "published" ? project.researchType : "preparing";
+		project.isPublished = project.publishStatus === "published";
+		project.testUrl = project.researchType === "quantitative" ? getResearchProjectTestUrl(project.id) : "";
+		project.contactVisibility =
+			project.researchType === "qualitative" ? "share_with_pi" : "admin_only";
+		project.assessmentSourceProjectId = "";
+		project.consentSourceProjectId = project.publishStatus === "published" ? "" : "";
+
+		consent = normalizedConsent;
+
+		if (project.researchType === "quantitative") {
+			const parsedAssessment = assessmentPayload
+				? (JSON.parse(assessmentPayload) as Partial<PsychometricScale> | null)
+				: null;
+			assessment = touchGovernance(
+				{
+					projectId: project.id,
+					projectTitleZh: project.title,
+					projectTitleEn: project.subtitle,
+					scalePrompt: String(parsedAssessment?.scalePrompt || "").trim(),
+					options: Array.isArray(parsedAssessment?.options)
+						? parsedAssessment?.options.map((value) => String(value || "").trim()).filter(Boolean)
+						: [],
+					questions: Array.isArray(parsedAssessment?.questions)
+						? parsedAssessment?.questions.map((value) => String(value || "").trim()).filter(Boolean)
+						: [],
+					isPublished: parsedAssessment?.isPublished !== false,
+					displayOrder: parsedAssessment?.displayOrder,
+					updatedAt: String(parsedAssessment?.updatedAt || "").trim(),
+					internalNote: String(parsedAssessment?.internalNote || "").trim(),
+				},
+				Number(project.displayOrder || 0),
+			);
+		}
+
+		if (project.researchType === "qualitative") {
+			const parsedScheduling = schedulingPayload
+				? (JSON.parse(schedulingPayload) as Partial<ResearchScheduling> | null)
+				: null;
+			scheduling = touchGovernance(
+				{
+					projectId: project.id,
+					projectTitleZh: project.title,
+					projectTitleEn: project.subtitle,
+					schedulingPrompt: String(parsedScheduling?.schedulingPrompt || "").trim(),
+					selectionNote: String(parsedScheduling?.selectionNote || "").trim(),
+					allowMultiple: parsedScheduling?.allowMultiple !== false,
+					availabilitySlots: Array.isArray(parsedScheduling?.availabilitySlots)
+						? parsedScheduling?.availabilitySlots
+								.map((value) => String(value || "").trim())
+								.filter(Boolean)
+						: [],
+					isPublished: parsedScheduling?.isPublished !== false,
+					displayOrder: parsedScheduling?.displayOrder,
+					updatedAt: String(parsedScheduling?.updatedAt || "").trim(),
+					internalNote: String(parsedScheduling?.internalNote || "").trim(),
+				},
+				Number(project.displayOrder || 0),
+			);
+		}
+	} catch {
+		redirect(buildContentHref("research-projects", originalKey || undefined, {
+			error: "json",
+			researchTab: currentTab,
+		}));
+	}
+
+	if (project.publishStatus === "published") {
+		const missingFields = validateResearchWorkspace(project, consent, assessment, scheduling);
+		if (missingFields.length > 0) {
+			redirect(buildContentHref("research-projects", originalKey || project.id, {
+				error: "missing",
+				detail: missingFields.join("；"),
+				researchTab: currentTab,
+			}));
+		}
+	}
+
+	const [currentProjects, currentConsents, currentAssessments, currentScheduling] =
+		await Promise.all([
+			getSiteContentSection<ResearchProject[]>("collaborative_prosperity_projects", []),
+			getSiteContentSection<ResearchConsent[]>("collaborative_prosperity_consents", []),
+			getSiteContentSection<PsychometricScale[]>("collaborative_prosperity_assessments", []),
+			getSiteContentSection<ResearchScheduling[]>("collaborative_prosperity_scheduling", []),
+		]);
+
+	const nextProjects = sortByDisplayOrder(
+		upsertByKey(currentProjects, project, (item) => String(item.id || "").trim(), originalKey),
+	);
+	const nextConsents = sortByDisplayOrder(
+		upsertByKey(currentConsents, consent, (item) => String(item.projectId || "").trim(), originalKey),
+	);
+
+	let nextAssessments = currentAssessments.filter(
+		(item) => String(item.projectId || "").trim() !== String(originalKey || project.id),
+	);
+	let nextScheduling = currentScheduling.filter(
+		(item) => String(item.projectId || "").trim() !== String(originalKey || project.id),
+	);
+
+	if (assessment) {
+		nextAssessments = sortByDisplayOrder([...nextAssessments, assessment]);
+	}
+	if (scheduling) {
+		nextScheduling = sortByDisplayOrder([...nextScheduling, scheduling]);
+	}
+
+	await Promise.all([
+		saveSiteContentSection("collaborative_prosperity_projects", nextProjects),
+		saveSiteContentSection("collaborative_prosperity_consents", nextConsents),
+		saveSiteContentSection("collaborative_prosperity_assessments", nextAssessments),
+		saveSiteContentSection("collaborative_prosperity_scheduling", nextScheduling),
+	]);
+
+	revalidatePath("/collaborative-prosperity");
+	revalidatePath(`/collaborative-prosperity/${project.id}`);
+	revalidatePath("/collaborative-prosperity/start");
+	revalidatePath(`/collaborative-prosperity/tests/${project.id}`);
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("research-projects", project.id, {
+		saved: "research-projects",
+		researchTab: currentTab,
+	}));
+}
+
+export async function setResearchWorkspacePublishStatus(formData: FormData) {
+	await requireAdminUser();
+
+	const projectId = String(formData.get("projectId") || "").trim();
+	const rawTargetStatus = String(formData.get("targetStatus") || "").trim();
+
+	if (!projectId || (rawTargetStatus !== "preparing" && rawTargetStatus !== "published")) {
+		redirect(buildContentHref("research-projects", undefined, { error: "missing" }));
+	}
+	const targetStatus = rawTargetStatus as "preparing" | "published";
+
+	const [rawProjects, currentConsents, currentAssessments, currentScheduling] = await Promise.all([
+		getSiteContentSection<ResearchProject[]>("collaborative_prosperity_projects", []),
+		getSiteContentSection<ResearchConsent[]>("collaborative_prosperity_consents", []),
+		getSiteContentSection<PsychometricScale[]>("collaborative_prosperity_assessments", []),
+		getSiteContentSection<ResearchScheduling[]>("collaborative_prosperity_scheduling", []),
+	]);
+
+	const projects = normalizeResearchProjects(rawProjects, [], {
+		includeUnpublished: true,
+	});
+	const currentProject = projects.find((item) => item.id === projectId);
+
+	if (!currentProject) {
+		redirect(buildContentHref("research-projects", undefined, { error: "missing" }));
+	}
+
+	const nextProject = touchGovernance(
+		{
+			...currentProject,
+			publishStatus: targetStatus,
+			status:
+				(targetStatus === "published"
+					? getResearchProjectType(currentProject)
+					: "preparing") as ResearchProject["status"],
+			isPublished: targetStatus === "published",
+		},
+		Number(currentProject.displayOrder || 0),
+	);
+
+	if (targetStatus === "published") {
+		const workspace = buildResearchWorkspace(
+			nextProject,
+			currentConsents,
+			currentAssessments,
+			currentScheduling,
+		);
+		const missingFields = validateResearchWorkspace(
+			workspace.project,
+			workspace.consent,
+			workspace.researchType === "quantitative" ? workspace.assessment : null,
+			workspace.researchType === "qualitative" ? workspace.scheduling : null,
+		);
+
+		if (missingFields.length > 0) {
+			redirect(
+				buildContentHref("research-projects", undefined, {
+					error: "missing",
+					detail: missingFields.join("；"),
+					failedProject: projectId,
+				}),
+			);
+		}
+	}
+
+	const nextProjects = sortByDisplayOrder(
+		upsertByKey(rawProjects, nextProject, (item) => String(item.id || "").trim(), projectId),
+	);
+	await saveSiteContentSection("collaborative_prosperity_projects", nextProjects);
+
+	revalidatePath("/collaborative-prosperity");
+	revalidatePath(`/collaborative-prosperity/${projectId}`);
+	revalidatePath(`/collaborative-prosperity/tests/${projectId}`);
+	revalidatePath("/collaborative-prosperity/start");
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("research-projects", undefined, { saved: "research-projects" }));
 }

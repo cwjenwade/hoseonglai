@@ -36,24 +36,10 @@ export const CONTENT_MODULES = [
   },
   {
     key: "research-projects",
-    title: "Research Projects",
-    description: "研究流程模組與參與設定。",
+    title: "Research Workspace",
+    description: "單一研究工作台，整合 project settings、consent、assessment / scheduling。",
     singleton: false,
     createLabel: "新增研究專案",
-  },
-  {
-    key: "psychometrics",
-    title: "Psychometrics",
-    description: "量表題庫與量尺設定。",
-    singleton: false,
-    createLabel: "新增量表",
-  },
-  {
-    key: "consents",
-    title: "Consents",
-    description: "研究同意書與 PDF 資料。",
-    singleton: false,
-    createLabel: "新增同意書",
   },
 ] as const;
 

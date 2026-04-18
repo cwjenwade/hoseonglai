@@ -12,6 +12,7 @@ type ContentListTableRow = {
   id: string;
   values: Record<string, ReactNode>;
   href: string;
+  actions?: ReactNode;
 };
 
 type ContentListTableProps = {
@@ -63,12 +64,14 @@ export function ContentListTable({
                     </td>
                   ))}
                   <td className="px-4 py-4 text-right">
-                    <Link
-                      href={row.href}
-                      className="inline-flex rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
-                    >
-                      編輯
-                    </Link>
+                    {row.actions || (
+                      <Link
+                        href={row.href}
+                        className="inline-flex rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100"
+                      >
+                        編輯
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))
