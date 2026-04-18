@@ -1,6 +1,8 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { enforceRateLimit, getIpFromHeaders } from "@/lib/rate-limit";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 const DELETE_CONFIRM_CODE = "DELETETHESEDATA";
@@ -21,26 +23,50 @@ function toCsvList(value: FormDataEntryValue | null): string[] {
 }
 
 export async function deleteProjectData(formData: FormData) {
+  const requestHeaders = await headers();
+  const rateLimit = await enforceRateLimit({
+    scope: "admin_delete_project_data",
+    identifier: getIpFromHeaders(requestHeaders),
+    maxRequests: 20,
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.ok) {
+    redirect("/admin/dashboard?deleteError=rate_limited");
+  }
+
   const tab = String(formData.get("tab") || "lectures");
+  const researchView = String(formData.get("researchView") || "").trim();
   const table = String(formData.get("table") || "").trim();
   const projectKey = String(formData.get("projectKey") || "").trim();
   const confirmCode = String(formData.get("confirmCode") || "").trim();
   const ids = toCsvList(formData.get("ids"));
+  const researchViewQuery = researchView
+    ? `&researchView=${encodeURIComponent(researchView)}`
+    : "";
 
   if (!ALLOWED_TABLES.has(table)) {
-    redirect(`/admin/dashboard?tab=${encodeURIComponent(tab)}&deleteError=invalid_table`);
+    redirect(
+      `/admin/dashboard?tab=${encodeURIComponent(tab)}${researchViewQuery}&deleteError=invalid_table`,
+    );
   }
 
   if (!projectKey) {
-    redirect(`/admin/dashboard?tab=${encodeURIComponent(tab)}&deleteError=missing_project`);
+    redirect(
+      `/admin/dashboard?tab=${encodeURIComponent(tab)}${researchViewQuery}&deleteError=missing_project`,
+    );
   }
 
   if (confirmCode !== DELETE_CONFIRM_CODE) {
-    redirect(`/admin/dashboard?tab=${encodeURIComponent(tab)}&deleteError=invalid_code`);
+    redirect(
+      `/admin/dashboard?tab=${encodeURIComponent(tab)}${researchViewQuery}&deleteError=invalid_code`,
+    );
   }
 
   if (ids.length === 0) {
-    redirect(`/admin/dashboard?tab=${encodeURIComponent(tab)}&deleteError=empty_ids`);
+    redirect(
+      `/admin/dashboard?tab=${encodeURIComponent(tab)}${researchViewQuery}&deleteError=empty_ids`,
+    );
   }
 
   const supabase = await getSupabaseServerClient();
@@ -59,7 +85,9 @@ export async function deleteProjectData(formData: FormData) {
     .maybeSingle();
 
   if (!adminRow) {
-    redirect(`/admin/dashboard?tab=${encodeURIComponent(tab)}&deleteError=forbidden`);
+    redirect(
+      `/admin/dashboard?tab=${encodeURIComponent(tab)}${researchViewQuery}&deleteError=forbidden`,
+    );
   }
 
   const { error: deleteRowsError } = await supabase
@@ -68,7 +96,9 @@ export async function deleteProjectData(formData: FormData) {
     .in("id", ids);
 
   if (deleteRowsError) {
-    redirect(`/admin/dashboard?tab=${encodeURIComponent(tab)}&deleteError=delete_failed`);
+    redirect(
+      `/admin/dashboard?tab=${encodeURIComponent(tab)}${researchViewQuery}&deleteError=delete_failed`,
+    );
   }
 
   if (table === "psych_test_results") {
@@ -78,11 +108,13 @@ export async function deleteProjectData(formData: FormData) {
       .eq("test_id", projectKey);
 
     if (deleteAnswerMapError) {
-      redirect(`/admin/dashboard?tab=${encodeURIComponent(tab)}&deleteError=delete_answer_map_failed`);
+      redirect(
+        `/admin/dashboard?tab=${encodeURIComponent(tab)}${researchViewQuery}&deleteError=delete_answer_map_failed`,
+      );
     }
   }
 
   redirect(
-    `/admin/dashboard?tab=${encodeURIComponent(tab)}&deleted=1&project=${encodeURIComponent(projectKey)}`,
+    `/admin/dashboard?tab=${encodeURIComponent(tab)}${researchViewQuery}&deleted=1&project=${encodeURIComponent(projectKey)}`,
   );
 }

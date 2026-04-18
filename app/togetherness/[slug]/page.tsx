@@ -43,13 +43,13 @@ export async function generateMetadata({ params }: GroupDetailPageProps): Promis
   if (!group) {
     return {
       title: "團體諮商",
-      description: "任祈蔚的團體諮商與團體心理治療資訊。",
+      description: "Ho-Se 好勢・Ong-Lai 旺來的團體諮商與團體心理治療資訊。",
     };
   }
 
   return {
     title: `${group.title}｜團體諮商`,
-    description: `${group.title}｜${group.subtitle}。${group.description} 任祈蔚團體諮商與團體心理治療資訊。`,
+    description: `${group.title}｜${group.subtitle}。${group.description} Ho-Se 好勢・Ong-Lai 旺來的團體諮商與團體心理治療資訊。`,
   };
 }
 

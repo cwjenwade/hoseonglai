@@ -4,6 +4,10 @@ import {
   DEFAULT_PSYCHOMETRIC_SCALES,
   type PsychometricScale,
 } from "@/app/collaborative-prosperity/assessment-data";
+import {
+  RESEARCH_PROJECTS,
+  normalizeResearchProjects,
+} from "@/app/collaborative-prosperity/projects";
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,6 +20,19 @@ export async function GET(req: NextRequest) {
       "collaborative_prosperity_assessments",
       DEFAULT_PSYCHOMETRIC_SCALES,
     );
+    const rawProjects = await getSiteContentSection(
+      "collaborative_prosperity_projects",
+      RESEARCH_PROJECTS,
+    );
+    const projects = normalizeResearchProjects(rawProjects, RESEARCH_PROJECTS);
+    const project = projects.find((item) => item.id === projectId);
+
+    if (!project || project.status !== "quantitative") {
+      return NextResponse.json(
+        { message: "這個研究目前未開放心理量表流程" },
+        { status: 400 },
+      );
+    }
 
     const matched = (scales as PsychometricScale[]).find((scale) => scale.projectId === projectId);
     if (!matched) {

@@ -5,9 +5,9 @@ import { getSiteContentSection } from "@/lib/site-content-server";
 import { DEFAULT_BRAND_PAGE_CONTENT, normalizeBrandPageContent } from "./brand-content";
 
 export const metadata: Metadata = {
-  title: "任祈蔚｜品牌理念",
+  title: "品牌理念",
   description:
-    "任祈蔚所屬的 Ho-Se 好勢 Ong-Lai 旺來品牌理念，結合研究、文化創作、團體工作與心理學實踐。",
+    "Ho-Se 好勢・Ong-Lai 旺來的品牌理念，結合研究、文化創作、團體工作與心理學實踐。",
 };
 
 export default async function BrandPhilosophyPage() {

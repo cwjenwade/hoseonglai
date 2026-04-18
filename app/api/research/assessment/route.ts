@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { verifyResearchToken } from "@/lib/research-token";
 import { sendResearchCompletionEmail } from "@/lib/email";
 import { getSiteContentSection } from "@/lib/site-content-server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { enforceRateLimit, getRequestIp } from "@/lib/rate-limit";
+import {
+  getResearchRegistrationById,
+  parseResearchRegistrationMeta,
+} from "@/lib/research-registration";
 import {
   DEFAULT_RESEARCH_CONSENTS,
   type ResearchConsent,
@@ -16,6 +21,26 @@ type SubmitPayload = {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getRequestIp(req);
+    const rateLimit = await enforceRateLimit({
+      scope: "research_assessment",
+      identifier: ip,
+      maxRequests: 30,
+      windowMs: 15 * 60 * 1000,
+    });
+
+    if (!rateLimit.ok) {
+      return NextResponse.json(
+        { message: "請稍後再試，送出過於頻繁。" },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const body = (await req.json()) as SubmitPayload;
     const { token, projectId, answers } = body;
 
@@ -28,17 +53,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "驗證失敗" }, { status: 401 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const registration = await getResearchRegistrationById(payload.registrationId);
+    const meta = parseResearchRegistrationMeta(registration?.interest_note);
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { message: "Supabase 環境變數未設定" },
-        { status: 500 }
-      );
+    if (!registration || meta?.projectId !== projectId) {
+      return NextResponse.json({ message: "找不到研究資料" }, { status: 404 });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = getSupabaseAdminClient();
 
     const answerColumns = Object.fromEntries(
       answers.map((value, index) => [String(index + 1).padStart(3, "0"), value])
@@ -46,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     const { error } = await supabase.from("psych_test_results").insert({
       test_id: payload.projectId,
-      test_title: `${payload.projectTitle} | ${payload.participantCode}`,
+      test_title: `${registration.video_title} | ${payload.participantCode}`,
       user_name: payload.participantCode,
       user_email: "ADMIN_ONLY",
       answers,
@@ -83,11 +105,11 @@ export async function POST(req: NextRequest) {
         DEFAULT_RESEARCH_CONSENTS.find((consent) => consent.projectId === payload.projectId);
 
       await sendResearchCompletionEmail({
-        to: payload.email,
-        name: payload.name,
+        to: registration.user_email,
+        name: registration.user_name,
         participantCode: payload.participantCode,
-        projectTitleZh: mappedConsent?.projectTitleZh || payload.projectTitle,
-        projectTitleEn: mappedConsent?.projectTitleEn || payload.projectTitle,
+        projectTitleZh: mappedConsent?.projectTitleZh || registration.video_title,
+        projectTitleEn: mappedConsent?.projectTitleEn || registration.video_title,
         principalInvestigator: mappedConsent?.principalInvestigator || "待填寫",
         researchUnit: mappedConsent?.researchUnit || "Ho-Se 好勢旺來研究團隊",
         researchDescription:

@@ -2,9 +2,17 @@ import Link from "next/link";
 import { verifyResearchToken } from "@/lib/research-token";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import {
+  getResearchRegistrationById,
+  parseResearchRegistrationMeta,
+} from "@/lib/research-registration";
+import {
   DEFAULT_RESEARCH_CONSENTS,
   type ResearchConsent,
 } from "@/app/collaborative-prosperity/consent-data";
+import {
+  RESEARCH_PROJECTS,
+  normalizeResearchProjects,
+} from "@/app/collaborative-prosperity/projects";
 
 type PageProps = {
   searchParams: Promise<{
@@ -18,6 +26,11 @@ export default async function ResearchStartPage({ searchParams }: PageProps) {
     "collaborative_prosperity_consents",
     DEFAULT_RESEARCH_CONSENTS,
   );
+  const rawProjects = await getSiteContentSection(
+    "collaborative_prosperity_projects",
+    RESEARCH_PROJECTS,
+  );
+  const projects = normalizeResearchProjects(rawProjects, RESEARCH_PROJECTS);
   const token = resolvedSearchParams.token || "";
   const payload = verifyResearchToken(token);
 
@@ -56,19 +69,94 @@ export default async function ResearchStartPage({ searchParams }: PageProps) {
     );
   }
 
+  const registration = await getResearchRegistrationById(payload.registrationId);
+  const registrationMeta = parseResearchRegistrationMeta(registration?.interest_note);
+
+  if (!registration || registrationMeta?.projectId !== payload.projectId) {
+    return (
+      <div className="w-full bg-[#faf9f6] px-6 py-24 text-neutral-900 lg:px-20">
+        <p
+          className="text-[0.68rem] uppercase tracking-[0.34em] text-neutral-400"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          Invalid registration
+        </p>
+
+        <h1
+          className="mt-6 text-[2.8rem] tracking-[-0.03em]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          找不到對應的研究參與資料
+        </h1>
+
+        <p
+          className="mt-6 max-w-[62ch] text-[1.05rem] leading-[1.9] text-neutral-700"
+          style={{ fontFamily: "var(--font-serif)" }}
+        >
+          這個連結可能已失效，或研究資料已被移除。請回到研究專案頁面重新開始。
+        </p>
+
+        <Link
+          href="/collaborative-prosperity"
+          className="mt-10 inline-flex border border-neutral-900 px-6 py-3 text-[0.72rem] uppercase tracking-[0.22em] hover:bg-neutral-900 hover:text-[#f3f3f2]"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          Back to projects
+        </Link>
+      </div>
+    );
+  }
+
+  const project = projects.find((item) => item.id === payload.projectId);
+
+  if (!project || project.status !== "quantitative") {
+    return (
+      <div className="w-full bg-[#faf9f6] px-6 py-24 text-neutral-900 lg:px-20">
+        <p
+          className="text-[0.68rem] uppercase tracking-[0.34em] text-neutral-400"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          Invalid flow
+        </p>
+
+        <h1
+          className="mt-6 text-[2.8rem] tracking-[-0.03em]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          這個連結目前無法使用
+        </h1>
+
+        <p
+          className="mt-6 max-w-[62ch] text-[1.05rem] leading-[1.9] text-neutral-700"
+          style={{ fontFamily: "var(--font-serif)" }}
+        >
+          目前只有量化研究會進入心理量表流程。請回到研究專案頁確認此 project 的最新狀態。
+        </p>
+
+        <Link
+          href="/collaborative-prosperity"
+          className="mt-10 inline-flex border border-neutral-900 px-6 py-3 text-[0.72rem] uppercase tracking-[0.22em] hover:bg-neutral-900 hover:text-[#f3f3f2]"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          Back to projects
+        </Link>
+      </div>
+    );
+  }
+
   const mappedConsent =
     consents.find((consentItem) => consentItem.projectId === payload.projectId) ||
     DEFAULT_RESEARCH_CONSENTS.find((consentItem) => consentItem.projectId === payload.projectId);
 
   const consent = mappedConsent || {
-    projectTitleZh: payload.projectTitle,
-    projectTitleEn: payload.projectTitle,
+    projectTitleZh: registration.video_title,
+    projectTitleEn: registration.video_title,
     principalInvestigator: "待填寫",
     researchUnit: "Ho-Se 好勢旺來研究團隊",
     researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
   };
 
-  const testHref = `${payload.projectTestUrl}?token=${encodeURIComponent(token)}`;
+  const testHref = `${registration.video_url}?token=${encodeURIComponent(token)}`;
 
   return (
     <div className="w-full bg-[#f3f3f2] text-neutral-900">
@@ -93,14 +181,16 @@ export default async function ResearchStartPage({ searchParams }: PageProps) {
               className="max-w-[62ch] text-[1.05rem] leading-[1.9] text-neutral-700"
               style={{ fontFamily: "var(--font-serif)" }}
             >
-              受試者：{payload.name}。你已完成 email 驗證，請先閱讀以下研究同意內容，確認後再開始填寫心理量表。
+              受試者：{registration.user_name}。你的研究參與資料已建立，請再次確認以下研究同意內容，確認後再開始填寫心理量表。
             </p>
 
             <p
               className="max-w-[62ch] text-[1.05rem] leading-[1.9] text-neutral-700"
               style={{ fontFamily: "var(--font-serif)" }}
             >
-              你的 email 將以受限制方式保存，僅管理員可查看，研究者僅可使用受試者代碼進行資料分析。
+              {project.contactVisibility === "admin_only"
+                ? "你的 email 將以受限制方式保存，僅管理員可查看，研究者僅可使用受試者代碼進行資料分析。"
+                : "你的 email 會依此研究設定提供給 PI 與 admin，用於後續研究聯繫。"}
             </p>
           </div>
 

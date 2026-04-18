@@ -257,28 +257,7 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
         </section>
 
         <footer className="border-t border-black/10 py-10 md:py-12">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <div className="lg:col-span-8">
-              <p
-                className="max-w-[48ch] text-[15px] leading-[1.75] text-[#6b6b6b]"
-                style={{ fontFamily: fontMixed }}
-              >
-                For registration updates, research collaboration, and program
-                notices, please refer to each lecture page or subscribe to the
-                public programs newsletter.
-              </p>
-            </div>
 
-            <div className="lg:col-span-4 lg:text-right">
-              <Link
-                href="/programs/subscribe"
-                className="inline-flex items-center border border-black/10 px-5 py-3 text-[14px] text-[#1a1a1a] transition-colors duration-200 hover:border-black/20"
-                style={{ fontFamily: fontMixed }}
-              >
-                Subscribe
-              </Link>
-            </div>
-          </div>
         </footer>
       </div>
     </main>

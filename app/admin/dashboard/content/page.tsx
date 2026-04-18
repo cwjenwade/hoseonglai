@@ -8,7 +8,10 @@ import {
 	DEFAULT_BRAND_PAGE_CONTENT,
 	normalizeBrandPageContent,
 } from "@/app/brand-philosophy/brand-content";
-import { RESEARCH_PROJECTS } from "@/app/collaborative-prosperity/projects";
+import {
+	RESEARCH_PROJECTS,
+	normalizeResearchProjects,
+} from "@/app/collaborative-prosperity/projects";
 import { DEFAULT_PSYCHOMETRIC_SCALES } from "@/app/collaborative-prosperity/assessment-data";
 import { DEFAULT_RESEARCH_CONSENTS } from "@/app/collaborative-prosperity/consent-data";
 import { LECTURES } from "@/app/fortune-arrives/lectures-data";
@@ -71,8 +74,11 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 	const brandContent = normalizeBrandPageContent(
 		await getSiteContentSection("brand_philosophy_page", DEFAULT_BRAND_PAGE_CONTENT),
 	);
-	const collaborativeProjects = await getSiteContentSection(
-		"collaborative_prosperity_projects",
+	const collaborativeProjects = normalizeResearchProjects(
+		await getSiteContentSection(
+			"collaborative_prosperity_projects",
+			RESEARCH_PROJECTS,
+		),
 		RESEARCH_PROJECTS,
 	);
 	const fortuneLectures = await getSiteContentSection("fortune_arrives_lectures", LECTURES);

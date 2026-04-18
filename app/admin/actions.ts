@@ -1,6 +1,8 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { enforceRateLimit, getIpFromHeaders } from "@/lib/rate-limit";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 export type AdminLoginState = {
@@ -12,6 +14,18 @@ export async function adminLogin(
   _prevState: AdminLoginState,
   formData: FormData,
 ): Promise<AdminLoginState> {
+  const requestHeaders = await headers();
+  const rateLimit = await enforceRateLimit({
+    scope: "admin_login",
+    identifier: getIpFromHeaders(requestHeaders),
+    maxRequests: 8,
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.ok) {
+    return { ok: false, message: "登入嘗試過於頻繁，請稍後再試" };
+  }
+
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "").trim();
 

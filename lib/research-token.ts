@@ -1,12 +1,9 @@
 import crypto from "crypto";
 
 type ResearchTokenPayload = {
+  registrationId: string;
   projectId: string;
-  projectTitle: string;
-  projectTestUrl: string;
   participantCode: string;
-  name: string;
-  email: string;
   exp: number;
 };
 

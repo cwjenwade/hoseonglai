@@ -5,7 +5,8 @@ import { GROUPS, isGroupVisible } from "./group-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
 
 export const metadata: Metadata = {
-  title: "團團圓圓 | Group Therapy",
+  title: "團團圓圓｜Group Therapy",
+  description: "Ho-Se 好勢・Ong-Lai 旺來的團體與聚會頁面。",
 };
 
 type TogethernessPageProps = {

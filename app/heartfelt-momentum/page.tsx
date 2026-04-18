@@ -5,9 +5,9 @@ import { VideoGallery } from "./VideoGallery";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "任祈蔚｜心理健康內容與研究影片",
+  title: "有心好勢｜內容與研究影片",
   description:
-    "任祈蔚的心理健康內容與研究影片頁，整理與諮商心理、團體諮商、心理治療相關的短影音與知識內容。",
+    "Ho-Se 好勢・Ong-Lai 旺來的內容與研究影片頁，整理心理健康與研究相關影音內容。",
 };
 
 const geist = Geist({

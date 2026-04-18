@@ -7,7 +7,6 @@ import {
 } from "next/font/google";
 import Link from "next/link";
 import NewsletterSubscription from "./NewsletterSubscription";
-import SupabaseKeepAlive from "./SupabaseKeepAlive";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -48,18 +47,19 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   description:
-    "Ho-Se 好勢・Ong-Lai 旺來。任祈蔚 - 諮商心理師，專長諮商心理、團體諮商與諮商心理治療，提供心理健康支持與團體治療課程。",
+    "Ho-Se 好勢・Ong-Lai 旺來，串連研究、內容、社群與協作實踐的平台。",
   keywords: [
-    "任祈蔚",
+    "Ho-Se 好勢",
+    "Ong-Lai 旺來",
     "諮商心理師",
     "心理健康",
     "團體諮商",
     "諮商心理治療",
   ],
   openGraph: {
-    title: "任祈蔚 — 諮商心理師｜心理健康·團體諮商",
+    title: "Ho-Se 好勢｜Ong-Lai 旺來",
     description:
-      "任祈蔚，註冊諮商心理師，提供諮商心理治療與心理健康團體諮商，歡迎預約或了解團體課程。",
+      "Ho-Se 好勢・Ong-Lai 旺來，串連研究、內容、社群與協作實踐的平台。",
     url: "/",
     siteName: "Ho-Se 好勢｜Ong-Lai 旺來",
   },
@@ -76,9 +76,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "任祈蔚 — 諮商心理師｜心理健康·團體諮商",
+    title: "Ho-Se 好勢｜Ong-Lai 旺來",
     description:
-      "任祈蔚，註冊諮商心理師，專長諮商心理、團體諮商與諮商心理治療。",
+      "Ho-Se 好勢・Ong-Lai 旺來，串連研究、內容、社群與協作實踐的平台。",
   },
 };
 
@@ -102,7 +102,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSerif.variable} text-zinc-900 antialiased`}
         style={{ backgroundColor: "#f3f3f2" }}
       >
-        <SupabaseKeepAlive />
         <div className="min-h-screen flex flex-col">
 
           {/* HEADER / HERO */}

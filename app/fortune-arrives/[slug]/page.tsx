@@ -16,12 +16,12 @@ export async function generateMetadata({ params }: LectureDetailPageProps): Prom
   if (!lecture) {
     return {
       title: "講座與課程",
-      description: "任祈蔚相關講座與課程資訊。",
+      description: "Ho-Se 好勢・Ong-Lai 旺來的講座與課程資訊。",
     };
   }
 
   const title = lecture.titleZh;
-  const speaker = lecture.speaker || "任祈蔚";
+  const speaker = lecture.speaker || "Ho-Se 好勢｜Ong-Lai 旺來";
   const isComingSoon = lecture.dateMode === "month";
   const dateText = isComingSoon
     ? "敬請期待"

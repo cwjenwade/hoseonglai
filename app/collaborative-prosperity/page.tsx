@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import PsychTestList from "./PsychTestList";
 
 export const metadata: Metadata = {
-  title: "任祈蔚｜協力招來｜研究專案",
+  title: "協力招來｜研究專案",
   description:
-    "任祈蔚的心理研究專案與招募資訊，完成基本資料填寫後即可收到專屬連結開始測驗。",
+    "Ho-Se 好勢・Ong-Lai 旺來的研究專案與招募資訊，提供協作研究與參與流程。",
 };
 
 export default function CollaborativeProsperityPage() {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit, getRequestIp } from "@/lib/rate-limit";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 const ALLOWED_TABLES = new Map<string, string>([
@@ -41,13 +42,38 @@ function answerMapFromArray(answers: unknown): Record<string, unknown> {
   );
 }
 
-function parseResearchMeta(value: unknown): { projectId?: string } | null {
+function parseResearchMeta(
+  value: unknown,
+): {
+  projectId?: string;
+  projectStatus?: string;
+  registrationKind?: string;
+  contactVisibility?: string;
+  age?: number;
+} | null {
   if (typeof value !== "string" || !value.trim()) return null;
 
   try {
-    const parsed = JSON.parse(value) as { projectId?: unknown };
+    const parsed = JSON.parse(value) as {
+      projectId?: unknown;
+      projectStatus?: unknown;
+      registrationKind?: unknown;
+      contactVisibility?: unknown;
+      age?: unknown;
+    };
     return {
       projectId: typeof parsed.projectId === "string" ? parsed.projectId : undefined,
+      projectStatus:
+        typeof parsed.projectStatus === "string" ? parsed.projectStatus : undefined,
+      registrationKind:
+        typeof parsed.registrationKind === "string"
+          ? parsed.registrationKind
+          : undefined,
+      contactVisibility:
+        typeof parsed.contactVisibility === "string"
+          ? parsed.contactVisibility
+          : undefined,
+      age: typeof parsed.age === "number" ? parsed.age : undefined,
     };
   } catch {
     return null;
@@ -96,10 +122,30 @@ function csvEscape(value: unknown): string {
 }
 
 export async function GET(req: NextRequest) {
+  const rateLimit = await enforceRateLimit({
+    scope: "admin_export",
+    identifier: getRequestIp(req),
+    maxRequests: 20,
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.ok) {
+    return NextResponse.json(
+      { message: "請求過於頻繁，請稍後再試" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
+
   const tableParam = req.nextUrl.searchParams.get("table") || "";
   const table = ALLOWED_TABLES.get(tableParam);
   const scope = req.nextUrl.searchParams.get("scope") || "all";
   const project = (req.nextUrl.searchParams.get("project") || "").trim();
+  const researchView = (req.nextUrl.searchParams.get("researchView") || "").trim();
 
   if (!table) {
     return NextResponse.json({ message: "Invalid table" }, { status: 400 });
@@ -140,6 +186,13 @@ export async function GET(req: NextRequest) {
 
   let rows = allRows;
 
+  if (table === "research_registrations" && researchView) {
+    rows = rows.filter((row) => {
+      const meta = parseResearchMeta(row.interest_note);
+      return (meta?.registrationKind || "unknown") === researchView;
+    });
+  }
+
   if (scope === "project") {
     if (table === "lecture_registrations") {
       rows = allRows.filter((row) => safeString(row.lecture_id) === project);
@@ -155,6 +208,53 @@ export async function GET(req: NextRequest) {
     } else if (table === "psych_test_results") {
       rows = allRows.filter((row) => safeString(row.test_id) === project);
     }
+  }
+
+  if (table === "research_registrations") {
+    const researchRows: RowData[] = rows.map((row) => {
+      const meta = parseResearchMeta(row.interest_note);
+      return {
+        ...row,
+        project_id: meta?.projectId || "",
+        project_status: meta?.projectStatus || "",
+        registration_kind: meta?.registrationKind || "",
+        contact_visibility: meta?.contactVisibility || "",
+        age: meta?.age ?? "",
+      };
+    });
+
+    const columns = [
+      "id",
+      "video_title",
+      "project_id",
+      "project_status",
+      "registration_kind",
+      "user_name",
+      "user_email",
+      "contact_visibility",
+      "age",
+      "created_at",
+    ];
+    const header = columns.join(",");
+    const lines = researchRows.map((row) =>
+      columns.map((col) => csvEscape((row as RowData)[col])).join(","),
+    );
+    const csv = [header, ...lines].join("\n");
+
+    const suffix = researchView ? `-${sanitizeFilenamePart(researchView)}` : "";
+    const filename =
+      scope === "project"
+        ? `${table}${suffix}-${sanitizeFilenamePart(project)}-${new Date().toISOString().slice(0, 10)}.csv`
+        : `${table}${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
+
+    return new NextResponse(csv, {
+      status: 200,
+      headers: {
+        "content-type": "text/csv; charset=utf-8",
+        "content-disposition": `attachment; filename=\"${filename}\"`,
+        "cache-control": "no-store",
+      },
+    });
   }
 
   if (table === "psych_test_results") {

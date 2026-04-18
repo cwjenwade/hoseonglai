@@ -1,7 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { enforceRateLimit, getIpFromHeaders } from "@/lib/rate-limit";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import {
 	getSiteContentSection,
@@ -12,7 +14,11 @@ import {
 	normalizeBrandPageContent,
 	type BrandPageContent,
 } from "@/app/brand-philosophy/brand-content";
-import type { ResearchProject } from "@/app/collaborative-prosperity/projects";
+import {
+	normalizeResearchProject,
+	normalizeResearchProjects,
+	type ResearchProject,
+} from "@/app/collaborative-prosperity/projects";
 import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
@@ -30,6 +36,18 @@ import {
 } from "@/app/togetherness/group-data";
 
 async function requireAdminUser() {
+	const requestHeaders = await headers();
+	const rateLimit = await enforceRateLimit({
+		scope: "admin_content_write",
+		identifier: getIpFromHeaders(requestHeaders),
+		maxRequests: 40,
+		windowMs: 15 * 60 * 1000,
+	});
+
+	if (!rateLimit.ok) {
+		redirect("/admin/dashboard/content?error=rate_limited");
+	}
+
 	const supabase = await getSupabaseServerClient();
 	const {
 		data: { user },
@@ -140,35 +158,44 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 	}
 
 	const cleanedProjects: ResearchProject[] = parsed
-		.map((project) => {
-			if (!project || typeof project !== "object") return null;
-			const item = project as Partial<ResearchProject>;
-
-			const id = String(item.id || "").trim();
-			const title = String(item.title || "").trim();
-			const subtitle = String(item.subtitle || "").trim();
-			const description = String(item.description || "").trim();
-			const duration = String(item.duration || "").trim();
-			const target = String(item.target || "").trim();
-			const testUrl = String(item.testUrl || "").trim();
-
-			if (!id || !title || !subtitle || !description || !duration || !target || !testUrl) {
-				return null;
-			}
-
-			return {
-				id,
-				title,
-				subtitle,
-				description,
-				duration,
-				target,
-				testUrl,
-			};
-		})
+		.map((project) =>
+			project && typeof project === "object"
+				? normalizeResearchProject(project as Partial<ResearchProject>)
+				: null,
+		)
 		.filter((project): project is ResearchProject => project !== null);
 
 	if (cleanedProjects.length === 0) {
+		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
+	}
+
+	const hasInvalidProject = cleanedProjects.some((project) => {
+		if (
+			!project.description ||
+			!project.topic ||
+			!project.purpose ||
+			!project.duration ||
+			!project.participationMethod ||
+			!project.summary
+		) {
+			return true;
+		}
+
+		if (
+			(project.status === "quantitative" || project.status === "qualitative") &&
+			!project.pdfUrl
+		) {
+			return true;
+		}
+
+		if (project.status === "quantitative" && !project.testUrl) {
+			return true;
+		}
+
+		return false;
+	});
+
+	if (hasInvalidProject) {
 		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
 	}
 
@@ -179,7 +206,10 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 			"collaborative_prosperity_assessments",
 			[],
 		);
-		const nextScales: PsychometricScale[] = cleanedProjects.map((project) => {
+		const quantitativeProjects = cleanedProjects.filter(
+			(project) => project.status === "quantitative",
+		);
+		const nextScales: PsychometricScale[] = quantitativeProjects.map((project) => {
 			const existing = currentScales.find((scale) => scale.projectId === project.id);
 			if (existing) {
 				return {
@@ -533,27 +563,45 @@ export async function savePsychometricScalesContent(formData: FormData) {
 	}
 
 	try {
-		await saveSiteContentSection("collaborative_prosperity_assessments", cleanedScales);
+		const projects = normalizeResearchProjects(
+			await getSiteContentSection("collaborative_prosperity_projects", []),
+			[],
+		);
+		const quantitativeProjectIds = new Set(
+			projects
+				.filter((project) => project.status === "quantitative")
+				.map((project) => project.id),
+		);
+		const scopedScales = cleanedScales.filter((scale) =>
+			quantitativeProjectIds.has(scale.projectId),
+		);
+
+		if (scopedScales.length === 0) {
+			redirect("/admin/dashboard/content?tab=psychometrics&error=missing");
+		}
+
+		await saveSiteContentSection("collaborative_prosperity_assessments", scopedScales);
 
 		const currentConsents = await getSiteContentSection<ResearchConsent[]>(
 			"collaborative_prosperity_consents",
 			[],
 		);
-		const nextConsents: ResearchConsent[] = cleanedScales.map((scale) => {
-			const existing = currentConsents.find((consent) => consent.projectId === scale.projectId);
+		const nextConsents: ResearchConsent[] = projects.map((project) => {
+			const matchingScale = scopedScales.find((scale) => scale.projectId === project.id);
+			const existing = currentConsents.find((consent) => consent.projectId === project.id);
 			if (existing) {
 				return {
 					...existing,
-					projectId: scale.projectId,
-					projectTitleZh: existing.projectTitleZh || scale.projectTitleZh,
-					projectTitleEn: existing.projectTitleEn || scale.projectTitleEn,
+					projectId: project.id,
+					projectTitleZh: project.title,
+					projectTitleEn: project.subtitle,
 				};
 			}
 
 			return {
-				projectId: scale.projectId,
-				projectTitleZh: scale.projectTitleZh,
-				projectTitleEn: scale.projectTitleEn,
+				projectId: project.id,
+				projectTitleZh: matchingScale?.projectTitleZh || project.title,
+				projectTitleEn: matchingScale?.projectTitleEn || project.subtitle,
 				principalInvestigator: "待填寫",
 				researchUnit: "Ho-Se 好勢旺來研究團隊",
 				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
@@ -628,39 +676,44 @@ export async function saveResearchConsentsContent(formData: FormData) {
 	}
 
 	try {
-		const scales = await getSiteContentSection<PsychometricScale[]>(
-			"collaborative_prosperity_assessments",
+		const projects = normalizeResearchProjects(
+			await getSiteContentSection("collaborative_prosperity_projects", []),
 			[],
 		);
 
-		const normalizedConsents: ResearchConsent[] = (scales.length ? scales : cleanedConsents).map((scale) => {
-			if ("principalInvestigator" in scale) {
-				const consentScale = scale as ResearchConsent;
-				return {
-					projectId: consentScale.projectId,
-					projectTitleZh: consentScale.projectTitleZh,
-					projectTitleEn: consentScale.projectTitleEn,
-					principalInvestigator: consentScale.principalInvestigator,
-					researchUnit: consentScale.researchUnit,
-					researchDescription: consentScale.researchDescription,
-				};
-			}
-
-			const psychometricScale = scale as PsychometricScale;
-			const matched = cleanedConsents.find((consent) => consent.projectId === psychometricScale.projectId);
+		const normalizedConsents: ResearchConsent[] = (projects.length
+			? projects
+			: cleanedConsents.map((consent) => ({
+					id: consent.projectId,
+					title: consent.projectTitleZh,
+					subtitle: consent.projectTitleEn,
+					description: consent.researchDescription,
+					status: "quantitative",
+					topic: consent.projectTitleZh,
+					purpose: consent.researchDescription,
+					duration: "",
+					participationMethod: "",
+					summary: consent.researchDescription,
+					target: "",
+					pdfUrl: "",
+					testUrl: "",
+					contactVisibility: "admin_only",
+			  })))
+			.map((project) => {
+			const matched = cleanedConsents.find((consent) => consent.projectId === project.id);
 			if (matched) {
 				return {
 					...matched,
-					projectId: psychometricScale.projectId,
-					projectTitleZh: psychometricScale.projectTitleZh,
-					projectTitleEn: psychometricScale.projectTitleEn,
+					projectId: project.id,
+					projectTitleZh: project.title,
+					projectTitleEn: project.subtitle,
 				};
 			}
 
 			return {
-				projectId: psychometricScale.projectId,
-				projectTitleZh: psychometricScale.projectTitleZh,
-				projectTitleEn: psychometricScale.projectTitleEn,
+				projectId: project.id,
+				projectTitleZh: project.title,
+				projectTitleEn: project.subtitle,
 				principalInvestigator: "待填寫",
 				researchUnit: "Ho-Se 好勢旺來研究團隊",
 				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",

@@ -28,6 +28,7 @@ type PsychAnswerRow = {
 type AdminDashboardPageProps = {
   searchParams: Promise<{
     tab?: string;
+    researchView?: string;
     deleted?: string;
     project?: string;
     deleteError?: string;
@@ -53,13 +54,38 @@ function safeString(value: unknown): string {
   return String(value);
 }
 
-function parseResearchMeta(value: unknown): { projectId?: string } | null {
+function parseResearchMeta(
+  value: unknown,
+): {
+  projectId?: string;
+  projectStatus?: string;
+  registrationKind?: string;
+  contactVisibility?: string;
+  age?: number;
+} | null {
   if (typeof value !== "string" || !value.trim()) return null;
 
   try {
-    const parsed = JSON.parse(value) as { projectId?: unknown };
+    const parsed = JSON.parse(value) as {
+      projectId?: unknown;
+      projectStatus?: unknown;
+      registrationKind?: unknown;
+      contactVisibility?: unknown;
+      age?: unknown;
+    };
     return {
       projectId: typeof parsed.projectId === "string" ? parsed.projectId : undefined,
+      projectStatus:
+        typeof parsed.projectStatus === "string" ? parsed.projectStatus : undefined,
+      registrationKind:
+        typeof parsed.registrationKind === "string"
+          ? parsed.registrationKind
+          : undefined,
+      contactVisibility:
+        typeof parsed.contactVisibility === "string"
+          ? parsed.contactVisibility
+          : undefined,
+      age: typeof parsed.age === "number" ? parsed.age : undefined,
     };
   } catch {
     return null;
@@ -132,12 +158,30 @@ type ProjectBlock = {
   ids: string[];
 };
 
+const RESEARCH_VIEWS = [
+  { id: "waiting_list", label: "Waiting List" },
+  { id: "quantitative_enroll", label: "Quantitative" },
+  { id: "qualitative_enroll", label: "Qualitative" },
+] as const;
+
+type ResearchViewId = (typeof RESEARCH_VIEWS)[number]["id"];
+
+function getResearchViewLabel(value: string | undefined): string {
+  const match = RESEARCH_VIEWS.find((item) => item.id === value);
+  return match?.label || "Research";
+}
+
 export default async function AdminDashboardPage({
   searchParams,
 }: AdminDashboardPageProps) {
   const resolvedSearchParams = await searchParams;
   const activeTab = (resolvedSearchParams.tab || "lectures") as TabId;
   const tab = TABS.find((t) => t.id === activeTab) || TABS[0];
+  const activeResearchView = RESEARCH_VIEWS.some(
+    (view) => view.id === resolvedSearchParams.researchView,
+  )
+    ? (resolvedSearchParams.researchView as ResearchViewId)
+    : "waiting_list";
 
   const supabase = await getSupabaseServerClient();
   const {
@@ -194,6 +238,13 @@ export default async function AdminDashboardPage({
   }
 
   const { rows, error } = await fetchAllRows(supabase, tab.table);
+  const visibleRows =
+    tab.id === "research"
+      ? rows.filter((row) => {
+          const meta = parseResearchMeta(row.interest_note);
+          return (meta?.registrationKind || "waiting_list") === activeResearchView;
+        })
+      : rows;
 
   const psychAnswerLookup = new Map<string, Record<string, unknown>>();
   if (tab.id === "psych") {
@@ -210,11 +261,11 @@ export default async function AdminDashboardPage({
     blockMap.set("newsletter_all", {
       projectKey: "newsletter_all",
       projectLabel: "全部訂閱",
-      rows,
-      ids: rows.map((row) => safeString(row.id)).filter(Boolean),
+      rows: visibleRows,
+      ids: visibleRows.map((row) => safeString(row.id)).filter(Boolean),
     });
   } else {
-    rows.forEach((row) => {
+    visibleRows.forEach((row) => {
       let projectKey = "unknown";
       let projectLabel = "未命名專案";
 
@@ -230,8 +281,11 @@ export default async function AdminDashboardPage({
 
       if (tab.id === "research") {
         const meta = parseResearchMeta(row.interest_note);
-        projectKey = meta?.projectId || safeString(row.video_url) || "unknown";
-        projectLabel = safeString(row.video_title) || projectKey;
+        const baseProjectKey =
+          meta?.projectId || safeString(row.video_url) || "unknown";
+        const kind = meta?.registrationKind || activeResearchView;
+        projectKey = `${kind}::${baseProjectKey}`;
+        projectLabel = `${safeString(row.video_title) || baseProjectKey} · ${getResearchViewLabel(kind)}`;
       }
 
       if (tab.id === "psych") {
@@ -315,12 +369,37 @@ export default async function AdminDashboardPage({
           </div>
 
           <Link
-            href={`/api/admin/export?table=${encodeURIComponent(tab.table)}&scope=all`}
+            href={`/api/admin/export?table=${encodeURIComponent(tab.table)}&scope=all${
+              tab.id === "research"
+                ? `&researchView=${encodeURIComponent(activeResearchView)}`
+                : ""
+            }`}
             className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
           >
             匯出 CSV（全部）
           </Link>
         </div>
+
+        {tab.id === "research" ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {RESEARCH_VIEWS.map((view) => {
+              const isActive = view.id === activeResearchView;
+              return (
+                <Link
+                  key={view.id}
+                  href={`/admin/dashboard?tab=research&researchView=${encodeURIComponent(view.id)}`}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                    isActive
+                      ? "bg-zinc-900 text-white"
+                      : "border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                  }`}
+                >
+                  {view.label}
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
 
         {resolvedSearchParams.deleted === "1" ? (
           <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -337,7 +416,7 @@ export default async function AdminDashboardPage({
         <div className="mt-4">
           {error ? (
             <p className="text-sm text-red-700">載入資料失敗：{safeString(error)}</p>
-          ) : rows.length === 0 ? (
+          ) : visibleRows.length === 0 ? (
             <p className="text-center text-sm text-zinc-500">尚無資料</p>
           ) : (
             <div className="space-y-6">
@@ -350,13 +429,25 @@ export default async function AdminDashboardPage({
                     <div>
                       <h3 className="text-base font-semibold text-zinc-900">{block.projectLabel}</h3>
                       <p className="mt-1 text-xs text-zinc-600">
-                        專案代碼：{block.projectKey} ｜ 共 {block.rows.length} 筆
+                        專案代碼：
+                        {tab.id === "research"
+                          ? block.projectKey.split("::").slice(1).join("::")
+                          : block.projectKey}{" "}
+                        ｜ 共 {block.rows.length} 筆
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {tab.id !== "newsletter" ? (
                         <Link
-                          href={`/api/admin/export?table=${encodeURIComponent(tab.table)}&scope=project&project=${encodeURIComponent(block.projectKey)}`}
+                          href={`/api/admin/export?table=${encodeURIComponent(tab.table)}&scope=project&project=${encodeURIComponent(
+                            tab.id === "research"
+                              ? block.projectKey.split("::").slice(1).join("::")
+                              : block.projectKey,
+                          )}${
+                            tab.id === "research"
+                              ? `&researchView=${encodeURIComponent(activeResearchView)}`
+                              : ""
+                          }`}
                           className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
                         >
                           匯出此專案（全數）
@@ -366,6 +457,9 @@ export default async function AdminDashboardPage({
                       {tab.id !== "newsletter" ? (
                         <form action={deleteProjectData} className="flex flex-wrap items-center gap-2">
                           <input type="hidden" name="tab" value={tab.id} />
+                          {tab.id === "research" ? (
+                            <input type="hidden" name="researchView" value={activeResearchView} />
+                          ) : null}
                           <input type="hidden" name="table" value={tab.table} />
                           <input type="hidden" name="projectKey" value={block.projectKey} />
                           <input type="hidden" name="ids" value={block.ids.join(",")} />
@@ -411,7 +505,7 @@ export default async function AdminDashboardPage({
                             <>
                               <th className="pb-3 font-semibold text-zinc-900">姓名</th>
                               <th className="pb-3 font-semibold text-zinc-900">Email</th>
-                              <th className="pb-3 font-semibold text-zinc-900">備註</th>
+                              <th className="pb-3 font-semibold text-zinc-900">類型 / 備註</th>
                             </>
                           )}
                           {tab.id === "psych" && (
@@ -438,6 +532,8 @@ export default async function AdminDashboardPage({
                             tab.id === "psych"
                               ? psychAnswerLookup.get(answerKey) || answerMapFromArray(item.answers)
                               : {};
+                          const researchMeta =
+                            tab.id === "research" ? parseResearchMeta(item.interest_note) : null;
 
                           return (
                             <tr key={safeString(item.id)} className="border-b border-zinc-100 align-top">
@@ -467,7 +563,18 @@ export default async function AdminDashboardPage({
                                 <>
                                   <td className="py-3 text-zinc-700">{safeString(item.user_name)}</td>
                                   <td className="py-3 text-zinc-700">{safeString(item.user_email)}</td>
-                                  <td className="py-3 text-zinc-700">{safeString(item.interest_note) || "-"}</td>
+                                  <td className="py-3 text-zinc-700">
+                                    {researchMeta ? (
+                                      <div className="space-y-1 text-xs text-zinc-600">
+                                        <p>status: {researchMeta.projectStatus || "-"}</p>
+                                        <p>kind: {researchMeta.registrationKind || "-"}</p>
+                                        <p>visibility: {researchMeta.contactVisibility || "-"}</p>
+                                        <p>age: {researchMeta.age ?? "-"}</p>
+                                      </div>
+                                    ) : (
+                                      safeString(item.interest_note) || "-"
+                                    )}
+                                  </td>
                                 </>
                               )}
                               {tab.id === "psych" && (

@@ -42,9 +42,9 @@ function sortLecturesByTime(lectures: LectureItem[]): LectureItem[] {
 }
 
 export const metadata: Metadata = {
-  title: "任祈蔚｜講座與課程",
+  title: "有運旺來｜講座與課程",
   description:
-    "任祈蔚相關講座與課程資訊，包含心理健康、團體諮商與諮商心理治療主題。了解最新活動與報名方式。",
+    "Ho-Se 好勢・Ong-Lai 旺來的講座與課程資訊，整理最新活動與報名方式。",
 };
 
 export default async function LectureIndexPage() {

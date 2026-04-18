@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendGroupRegistrationEmail } from "@/lib/email";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { enforceRateLimit, getRequestIp } from "@/lib/rate-limit";
 
 type GroupRegisterPayload = {
   groupSlug: string;
@@ -15,6 +16,26 @@ type GroupRegisterPayload = {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getRequestIp(req);
+    const rateLimit = await enforceRateLimit({
+      scope: "group_register",
+      identifier: ip,
+      maxRequests: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+
+    if (!rateLimit.ok) {
+      return NextResponse.json(
+        { message: "請稍後再試，送出過於頻繁。" },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const body = (await req.json()) as GroupRegisterPayload;
     const {
       groupSlug,
