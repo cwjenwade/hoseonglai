@@ -18,6 +18,13 @@ export default async function BrandPhilosophyPage() {
     ),
   );
   const director = brandContent.director;
+  const mobileDirectorBio = [
+    "新北市家扶中心 合作心理師",
+    "光合心理諮商所 諮商心理師",
+    "清華大學 諮商心理 碩士",
+    "台灣大學 臨床心理 博士研究生",
+    "研究主題：述情障礙、團體諮商與治療、研究法、性少數男性",
+  ].join(" ");
   const teamMembers = brandContent.teamMembers;
   const teamSections = brandContent.teamSections
     .map((section) => ({
@@ -97,7 +104,7 @@ export default async function BrandPhilosophyPage() {
                   role:
                     director.affiliationLines.find((line) => /[\u4e00-\u9fff]/.test(line)) ||
                     "Branding Director",
-                  bio: director.introParagraphs.join(" "),
+                  bio: mobileDirectorBio,
                   photo: director.photo,
                 }}
               />
