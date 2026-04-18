@@ -7,6 +7,7 @@ import { enforceRateLimit, getIpFromHeaders } from "@/lib/rate-limit";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import {
 	getSiteContentSection,
+	saveSiteContentDocument,
 	saveSiteContentImage,
 	saveSiteContentSection,
 } from "@/lib/site-content-server";
@@ -15,10 +16,7 @@ import {
 	type BrandPageContent,
 } from "@/app/brand-philosophy/brand-content";
 import {
-	getResearchProjectAssessmentSourceId,
-	getResearchProjectConsentSourceId,
 	normalizeResearchProject,
-	normalizeResearchProjects,
 	type ResearchProject,
 } from "@/app/collaborative-prosperity/projects";
 import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
@@ -194,6 +192,20 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 			return true;
 		}
 
+		if (
+			project.status === "quantitative" &&
+			!String(project.assessmentSourceProjectId || "").trim()
+		) {
+			return true;
+		}
+
+		if (
+			project.status !== "preparing" &&
+			!String(project.consentSourceProjectId || "").trim()
+		) {
+			return true;
+		}
+
 		return false;
 	});
 
@@ -201,83 +213,41 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
 	}
 
+	const currentScales = await getSiteContentSection<PsychometricScale[]>(
+		"collaborative_prosperity_assessments",
+		[],
+	);
+	const currentConsents = await getSiteContentSection<ResearchConsent[]>(
+		"collaborative_prosperity_consents",
+		[],
+	);
+	const scaleIds = new Set(currentScales.map((scale) => scale.projectId));
+	const consentIds = new Set(currentConsents.map((consent) => consent.projectId));
+
+	const hasInvalidLinks = cleanedProjects.some((project) => {
+		if (
+			project.status === "quantitative" &&
+			!scaleIds.has(String(project.assessmentSourceProjectId || "").trim())
+		) {
+			return true;
+		}
+
+		if (
+			project.status !== "preparing" &&
+			!consentIds.has(String(project.consentSourceProjectId || "").trim())
+		) {
+			return true;
+		}
+
+		return false;
+	});
+
+	if (hasInvalidLinks) {
+		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
+	}
+
 	try {
 		await saveSiteContentSection("collaborative_prosperity_projects", cleanedProjects);
-
-		const currentScales = await getSiteContentSection<PsychometricScale[]>(
-			"collaborative_prosperity_assessments",
-			[],
-		);
-		const quantitativeProjects = cleanedProjects.filter(
-			(project) => project.status === "quantitative",
-		);
-		const usedScaleIds = new Set(
-			quantitativeProjects.map((project) => getResearchProjectAssessmentSourceId(project)),
-		);
-		const nextScales: PsychometricScale[] = currentScales.filter((scale) =>
-			usedScaleIds.has(scale.projectId),
-		);
-
-		quantitativeProjects.forEach((project) => {
-			const scaleId = getResearchProjectAssessmentSourceId(project);
-			const existing = nextScales.find((scale) => scale.projectId === scaleId);
-
-			if (existing) {
-				if (scaleId === project.id) {
-					existing.projectTitleZh = existing.projectTitleZh || project.title;
-					existing.projectTitleEn = existing.projectTitleEn || project.subtitle;
-				}
-				return;
-			}
-
-			nextScales.push({
-				projectId: scaleId,
-				projectTitleZh: project.title,
-				projectTitleEn: project.subtitle,
-				scalePrompt: "請根據最近兩週的經驗，選擇最符合你的選項。",
-				options: ["非常不同意", "不同意", "普通", "同意", "非常同意"],
-				questions: ["請填寫第一題"],
-			});
-		});
-		await saveSiteContentSection("collaborative_prosperity_assessments", nextScales);
-
-		const currentConsents = await getSiteContentSection<ResearchConsent[]>(
-			"collaborative_prosperity_consents",
-			[],
-		);
-		const usedConsentIds = new Set(
-			cleanedProjects
-				.filter((project) => project.status !== "preparing")
-				.map((project) => getResearchProjectConsentSourceId(project)),
-		);
-		const nextConsents: ResearchConsent[] = currentConsents.filter((consent) =>
-			usedConsentIds.has(consent.projectId),
-		);
-
-		cleanedProjects
-			.filter((project) => project.status !== "preparing")
-			.forEach((project) => {
-				const consentId = getResearchProjectConsentSourceId(project);
-				const existing = nextConsents.find((consent) => consent.projectId === consentId);
-
-				if (existing) {
-					if (consentId === project.id) {
-						existing.projectTitleZh = existing.projectTitleZh || project.title;
-						existing.projectTitleEn = existing.projectTitleEn || project.subtitle;
-					}
-					return;
-				}
-
-				nextConsents.push({
-					projectId: consentId,
-					projectTitleZh: project.title,
-					projectTitleEn: project.subtitle,
-					principalInvestigator: "待填寫",
-					researchUnit: "Ho-Se 好勢旺來研究團隊",
-					researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
-				});
-			});
-		await saveSiteContentSection("collaborative_prosperity_consents", nextConsents);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=collaborative&error=readonly_fs");
@@ -293,6 +263,43 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 	revalidatePath("/collaborative-prosperity");
 	revalidatePath("/admin/dashboard/content");
 	redirect("/admin/dashboard");
+}
+
+export async function uploadCollaborativePdf(formData: FormData) {
+	await requireAdminUser();
+
+	const file = formData.get("pdfFile");
+
+	if (!(file instanceof File) || file.size <= 0) {
+		redirect("/admin/dashboard/content?tab=collaborative&error=upload");
+	}
+
+	const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+	if (!isPdf) {
+		redirect("/admin/dashboard/content?tab=collaborative&error=upload_type");
+	}
+
+	if (file.size > 15 * 1024 * 1024) {
+		redirect("/admin/dashboard/content?tab=collaborative&error=upload_size");
+	}
+
+	let url = "";
+	try {
+		url = await saveSiteContentDocument("collaborative_prosperity_projects", file);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
+			redirect("/admin/dashboard/content?tab=collaborative&error=readonly_upload");
+		}
+
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_upload_error",
+		);
+		console.error("COLLABORATIVE_PDF_UPLOAD_ERROR", error);
+		redirect(`/admin/dashboard/content?tab=collaborative&error=upload&detail=${detail}`);
+	}
+
+	revalidatePath("/admin/dashboard/content");
+	redirect(`/admin/dashboard/content?tab=collaborative&uploadedPdf=${encodeURIComponent(url)}`);
 }
 
 export async function saveFortuneLecturesContent(formData: FormData) {
@@ -585,56 +592,11 @@ export async function savePsychometricScalesContent(formData: FormData) {
 	}
 
 	try {
-		const projects = normalizeResearchProjects(
-			await getSiteContentSection("collaborative_prosperity_projects", []),
-			[],
-		);
 		if (cleanedScales.length === 0) {
 			redirect("/admin/dashboard/content?tab=psychometrics&error=missing");
 		}
 
 		await saveSiteContentSection("collaborative_prosperity_assessments", cleanedScales);
-
-		const currentConsents = await getSiteContentSection<ResearchConsent[]>(
-			"collaborative_prosperity_consents",
-			[],
-		);
-		const usedConsentIds = new Set(
-			projects
-				.filter((project) => project.status !== "preparing")
-				.map((project) => getResearchProjectConsentSourceId(project)),
-		);
-		const nextConsents: ResearchConsent[] = currentConsents.filter((consent) =>
-			usedConsentIds.has(consent.projectId),
-		);
-
-		projects
-			.filter((project) => project.status !== "preparing")
-			.forEach((project) => {
-				const consentId = getResearchProjectConsentSourceId(project);
-				const matchingScale = cleanedScales.find(
-					(scale) => scale.projectId === getResearchProjectAssessmentSourceId(project),
-				);
-				const existing = nextConsents.find((consent) => consent.projectId === consentId);
-
-				if (existing) {
-					if (consentId === project.id) {
-						existing.projectTitleZh = project.title;
-						existing.projectTitleEn = project.subtitle;
-					}
-					return;
-				}
-
-				nextConsents.push({
-					projectId: consentId,
-					projectTitleZh: matchingScale?.projectTitleZh || project.title,
-					projectTitleEn: matchingScale?.projectTitleEn || project.subtitle,
-					principalInvestigator: "待填寫",
-					researchUnit: "Ho-Se 好勢旺來研究團隊",
-					researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
-				});
-			});
-		await saveSiteContentSection("collaborative_prosperity_consents", nextConsents);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=psychometrics&error=readonly_fs");
@@ -703,51 +665,7 @@ export async function saveResearchConsentsContent(formData: FormData) {
 	}
 
 	try {
-		const projects = normalizeResearchProjects(
-			await getSiteContentSection("collaborative_prosperity_projects", []),
-			[],
-		);
-
-		const normalizedConsents: ResearchConsent[] = (projects.length
-			? projects
-			: cleanedConsents.map((consent) => ({
-					id: consent.projectId,
-					title: consent.projectTitleZh,
-					subtitle: consent.projectTitleEn,
-					description: consent.researchDescription,
-					status: "quantitative",
-					topic: consent.projectTitleZh,
-					purpose: consent.researchDescription,
-					duration: "",
-					participationMethod: "",
-					summary: consent.researchDescription,
-					target: "",
-					pdfUrl: "",
-					testUrl: "",
-					contactVisibility: "admin_only",
-			  })))
-			.map((project) => {
-			const matched = cleanedConsents.find((consent) => consent.projectId === project.id);
-			if (matched) {
-				return {
-					...matched,
-					projectId: project.id,
-					projectTitleZh: project.title,
-					projectTitleEn: project.subtitle,
-				};
-			}
-
-			return {
-				projectId: project.id,
-				projectTitleZh: project.title,
-				projectTitleEn: project.subtitle,
-				principalInvestigator: "待填寫",
-				researchUnit: "Ho-Se 好勢旺來研究團隊",
-				researchDescription: "本研究旨在了解受試者之心理狀態與經驗，填答資料僅供研究使用。",
-			};
-		});
-
-		await saveSiteContentSection("collaborative_prosperity_consents", normalizedConsents);
+		await saveSiteContentSection("collaborative_prosperity_consents", cleanedConsents);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
 			redirect("/admin/dashboard/content?tab=consent&error=readonly_fs");

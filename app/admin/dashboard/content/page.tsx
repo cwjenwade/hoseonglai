@@ -32,6 +32,7 @@ import {
 	saveResearchConsentsContent,
 	savePsychometricScalesContent,
 	saveTogethernessGroupsContent,
+	uploadCollaborativePdf,
 	uploadHeartfeltImage,
 	uploadTogethernessImage,
 	uploadBrandImage,
@@ -46,7 +47,7 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; detail?: string; tab?: string }>;
+	searchParams: Promise<{ saved?: string; error?: string; uploaded?: string; uploadedPdf?: string; detail?: string; tab?: string }>;
 };
 
 export default async function AdminContentPage({ searchParams }: PageProps) {
@@ -226,14 +227,18 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 						? "資料格式錯誤，請重新送出。"
 						: resolvedSearchParams.error === "missing"
 							? "缺少欄位，請重新提交。"
-							: resolvedSearchParams.error === "readonly_upload"
+						: resolvedSearchParams.error === "readonly_upload"
 								? "目前部署環境是唯讀檔案系統，無法直接上傳圖片。請改用外部圖片 URL（例如 Cloudinary/Imgur）貼到照片路徑。"
 								: resolvedSearchParams.error === "readonly_fs"
-									? "目前部署環境是唯讀檔案系統，無法儲存本地內容檔。若要線上可編輯，需改用外部儲存（例如 Supabase/Blob）。"
+							? "目前部署環境是唯讀檔案系統，無法儲存本地內容檔。若要線上可編輯，需改用外部儲存（例如 Supabase/Blob）。"
 							: resolvedSearchParams.error === "upload_type"
-								? "只能上傳圖片檔案。"
+								? activeTab === "collaborative"
+									? "只能上傳 PDF 檔案。"
+									: "只能上傳圖片檔案。"
 								: resolvedSearchParams.error === "upload_size"
-									? "圖片大小不可超過 8MB。"
+									? activeTab === "collaborative"
+										? "PDF 大小不可超過 15MB。"
+										: "圖片大小不可超過 8MB。"
 									: "儲存或上傳失敗，請稍後再試。"}
 					{resolvedSearchParams.detail ? (
 						<p className="mt-2 text-xs text-red-600">detail: {resolvedSearchParams.detail}</p>
@@ -284,11 +289,33 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 
 			{activeTab === "collaborative" ? (
 				<section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+					<div className="mb-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+						<p className="mb-2 text-xs text-zinc-600">PDF 上傳（研究計劃書 / 同意書附件）</p>
+						<form action={uploadCollaborativePdf} className="flex flex-wrap items-center gap-3">
+							<input type="file" name="pdfFile" accept="application/pdf,.pdf" className="text-xs text-zinc-700" required />
+							<button
+								type="submit"
+								className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100"
+							>
+								上傳 PDF
+							</button>
+						</form>
+						{resolvedSearchParams.uploadedPdf ? (
+							<p className="mt-3 text-xs text-sky-700">
+								已上傳：
+								<a className="ml-1 underline" href={resolvedSearchParams.uploadedPdf} target="_blank">
+									{resolvedSearchParams.uploadedPdf}
+								</a>
+							</p>
+						) : null}
+					</div>
+
 					<form action={saveCollaborativeProjectsContent} className="space-y-4">
 						<CollaborativeProjectsEditor
 							initialProjects={collaborativeProjects}
 							scales={psychometricScales}
 							consents={researchConsents}
+							uploadedPdfUrl={resolvedSearchParams.uploadedPdf}
 						/>
 
 						<div className="mt-5 flex justify-end gap-3">

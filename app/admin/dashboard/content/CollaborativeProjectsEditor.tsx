@@ -4,8 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PsychometricScale } from "@/app/collaborative-prosperity/assessment-data";
 import type { ResearchConsent } from "@/app/collaborative-prosperity/consent-data";
 import {
-  getResearchProjectAssessmentSourceId,
-  getResearchProjectConsentSourceId,
   getResearchProjectTestUrl,
   type ProjectContactVisibility,
   PROJECT_CONTACT_VISIBILITIES,
@@ -18,6 +16,7 @@ type CollaborativeProjectsEditorProps = {
   initialProjects: ResearchProject[];
   scales: PsychometricScale[];
   consents: ResearchConsent[];
+  uploadedPdfUrl?: string;
 };
 
 type ValidationIssue = {
@@ -103,49 +102,33 @@ function getContactRuleCopy(status: ResearchProjectStatus): string {
 }
 
 function getVisibleScaleOptions(
-  project: ResearchProject,
   scales: PsychometricScale[],
 ) {
-  const selfOption = {
-    value: project.id,
-    label: "使用此專案自己的量表",
-    description: "系統會直接對應到這個 project 的心理量表。",
-  };
-
-  const externalOptions = scales
-    .filter((scale) => scale.projectId !== project.id)
-    .map((scale) => ({
-      value: scale.projectId,
-      label: `${scale.projectTitleZh || scale.projectId} / ${scale.projectTitleEn || scale.projectId}`,
-      description: scale.projectId,
-    }));
-
-  return [selfOption, ...externalOptions];
+  return scales.map((scale) => ({
+    value: scale.projectId,
+    label: `${scale.projectTitleZh || scale.projectId} / ${scale.projectTitleEn || scale.projectId}`,
+    description: scale.projectId,
+  }));
 }
 
 function getVisibleConsentOptions(
-  project: ResearchProject,
   consents: ResearchConsent[],
 ) {
-  const selfOption = {
-    value: project.id,
-    label: "使用此專案自己的研究計劃書 / 同意書",
-    description: "系統會直接對應到這個 project 的研究計劃書內容。",
-  };
-
-  const externalOptions = consents
-    .filter((consent) => consent.projectId !== project.id)
-    .map((consent) => ({
-      value: consent.projectId,
-      label: `${consent.projectTitleZh || consent.projectId} / ${consent.projectTitleEn || consent.projectId}`,
-      description: consent.projectId,
-    }));
-
-  return [selfOption, ...externalOptions];
+  return consents.map((consent) => ({
+    value: consent.projectId,
+    label: `${consent.projectTitleZh || consent.projectId} / ${consent.projectTitleEn || consent.projectId}`,
+    description: consent.projectId,
+  }));
 }
 
-function validateProjects(projects: ResearchProject[]): ValidationIssue[] {
+function validateProjects(
+  projects: ResearchProject[],
+  scales: PsychometricScale[],
+  consents: ResearchConsent[],
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+  const scaleIds = new Set(scales.map((scale) => scale.projectId));
+  const consentIds = new Set(consents.map((consent) => consent.projectId));
 
   projects.forEach((project) => {
     const projectTitle = project.title || project.id || "未命名專案";
@@ -166,6 +149,22 @@ function validateProjects(projects: ResearchProject[]): ValidationIssue[] {
       checks.push(["pdfUrl", "PDF 連結", project.pdfUrl]);
     }
 
+    if (project.status === "quantitative") {
+      checks.push([
+        "assessmentSourceProjectId",
+        "量表來源（需從 psychometrics 選擇）",
+        project.assessmentSourceProjectId || "",
+      ]);
+    }
+
+    if (project.status !== "preparing") {
+      checks.push([
+        "consentSourceProjectId",
+        "研究計劃書 / 同意書來源（需從 consent 選擇）",
+        project.consentSourceProjectId || "",
+      ]);
+    }
+
     checks.forEach(([field, label, value]) => {
       if (!String(value || "").trim()) {
         issues.push({
@@ -176,6 +175,32 @@ function validateProjects(projects: ResearchProject[]): ValidationIssue[] {
         });
       }
     });
+
+    if (
+      project.status === "quantitative" &&
+      String(project.assessmentSourceProjectId || "").trim() &&
+      !scaleIds.has(String(project.assessmentSourceProjectId || "").trim())
+    ) {
+      issues.push({
+        projectId: project.id,
+        projectTitle,
+        field: "assessmentSourceProjectId",
+        label: "量表來源不存在，請重新從 psychometrics 選擇",
+      });
+    }
+
+    if (
+      project.status !== "preparing" &&
+      String(project.consentSourceProjectId || "").trim() &&
+      !consentIds.has(String(project.consentSourceProjectId || "").trim())
+    ) {
+      issues.push({
+        projectId: project.id,
+        projectTitle,
+        field: "consentSourceProjectId",
+        label: "研究計劃書 / 同意書來源不存在，請重新從 consent 選擇",
+      });
+    }
   });
 
   return issues;
@@ -185,6 +210,7 @@ export default function CollaborativeProjectsEditor({
   initialProjects,
   scales,
   consents,
+  uploadedPdfUrl,
 }: CollaborativeProjectsEditorProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [projects, setProjects] = useState<ResearchProject[]>(
@@ -227,7 +253,7 @@ export default function CollaborativeProjectsEditor({
     if (!form) return;
 
     const handleSubmit = (event: Event) => {
-      const issues = validateProjects(projects);
+      const issues = validateProjects(projects, scales, consents);
       if (issues.length === 0) {
         setValidationIssues([]);
         return;
@@ -240,7 +266,7 @@ export default function CollaborativeProjectsEditor({
 
     form.addEventListener("submit", handleSubmit);
     return () => form.removeEventListener("submit", handleSubmit);
-  }, [activeProjectId, projects]);
+  }, [activeProjectId, consents, projects, scales]);
 
   function updateProject(
     index: number,
@@ -259,7 +285,7 @@ export default function CollaborativeProjectsEditor({
     if (validationIssues.length > 0) {
       setValidationIssues(validateProjects(projects.map((project, index) =>
         index === activeIndex ? updater(project) : project,
-      )));
+      ), scales, consents));
     }
   }
 
@@ -270,8 +296,10 @@ export default function CollaborativeProjectsEditor({
       contactVisibility: defaultContactVisibility(nextStatus),
       testUrl:
         nextStatus === "quantitative" ? getResearchProjectTestUrl(project.id) : "",
-      assessmentSourceProjectId: nextStatus === "quantitative" ? "" : "",
-      consentSourceProjectId: nextStatus === "preparing" ? "" : project.consentSourceProjectId,
+      assessmentSourceProjectId:
+        nextStatus === "quantitative" ? project.assessmentSourceProjectId || "" : "",
+      consentSourceProjectId:
+        nextStatus === "preparing" ? "" : project.consentSourceProjectId || "",
     }));
   }
 
@@ -692,8 +720,8 @@ export default function CollaborativeProjectsEditor({
                       activeProject.status === "qualitative") ? (
                       <label className="text-xs font-medium text-zinc-700">
                         PDF 連結
-                      <input
-                        value={activeProject.pdfUrl}
+                        <input
+                          value={activeProject.pdfUrl}
                           onChange={(event) =>
                             updateActiveProject((project) => ({
                               ...project,
@@ -708,6 +736,20 @@ export default function CollaborativeProjectsEditor({
                           }
                           placeholder="https://..."
                         />
+                        {uploadedPdfUrl ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateActiveProject((project) => ({
+                                ...project,
+                                pdfUrl: uploadedPdfUrl,
+                              }))
+                            }
+                            className="mt-2 inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs text-sky-700 transition hover:bg-sky-100"
+                          >
+                            使用剛上傳的 PDF
+                          </button>
+                        ) : null}
                       </label>
                     ) : (
                       <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-4 text-sm text-zinc-500">
@@ -724,17 +766,22 @@ export default function CollaborativeProjectsEditor({
                       <label className="mt-3 block text-xs font-medium text-zinc-700">
                         同意書來源
                         <select
-                          value={getResearchProjectConsentSourceId(activeProject)}
+                          value={activeProject.consentSourceProjectId || ""}
                           onChange={(event) =>
                             updateActiveProject((project) => ({
                               ...project,
-                              consentSourceProjectId:
-                                event.target.value === project.id ? "" : event.target.value,
+                              consentSourceProjectId: event.target.value,
                             }))
                           }
-                          className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
+                          className={
+                            "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                            (activeProjectIssueFields.has("consentSourceProjectId")
+                              ? "border border-red-400 bg-red-50"
+                              : "border border-zinc-300")
+                          }
                         >
-                          {getVisibleConsentOptions(activeProject, consents).map((option) => (
+                          <option value="">請從 consent 模組選擇</option>
+                          {getVisibleConsentOptions(consents).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -743,10 +790,10 @@ export default function CollaborativeProjectsEditor({
                       </label>
 
                       <div className="mt-3 rounded-xl border border-violet-200 bg-white p-3">
-                        {getVisibleConsentOptions(activeProject, consents)
+                        {getVisibleConsentOptions(consents)
                           .filter(
                             (option) =>
-                              option.value === getResearchProjectConsentSourceId(activeProject),
+                              option.value === (activeProject.consentSourceProjectId || ""),
                           )
                           .map((option) => (
                             <div key={option.value}>
@@ -794,8 +841,8 @@ export default function CollaborativeProjectsEditor({
                           Quantitative 量表設定
                         </h4>
                         <p className="mt-2 text-sm leading-6 text-sky-800">
-                          這裡只在 Quantitative 狀態出現。你可以直接使用此專案自己的量表，
-                          或改用既有的心理量表資料。
+                          這裡只在 Quantitative 狀態出現，而且量表必須直接指定你在 psychometrics
+                          模組裡建立好的既有量表。
                         </p>
                       </div>
                     </div>
@@ -818,18 +865,23 @@ export default function CollaborativeProjectsEditor({
                       <label className="text-xs font-medium text-zinc-700">
                         量表來源
                         <select
-                          value={getResearchProjectAssessmentSourceId(activeProject)}
+                          value={activeProject.assessmentSourceProjectId || ""}
                           onChange={(event) =>
                             updateActiveProject((project) => ({
                               ...project,
-                              assessmentSourceProjectId:
-                                event.target.value === project.id ? "" : event.target.value,
+                              assessmentSourceProjectId: event.target.value,
                               testUrl: getResearchProjectTestUrl(project.id),
                             }))
                           }
-                          className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none transition focus:border-zinc-900"
+                          className={
+                            "mt-1 h-11 w-full rounded-xl px-3 text-sm outline-none transition focus:border-zinc-900 " +
+                            (activeProjectIssueFields.has("assessmentSourceProjectId")
+                              ? "border border-red-400 bg-red-50"
+                              : "border border-zinc-300")
+                          }
                         >
-                          {getVisibleScaleOptions(activeProject, scales).map((option) => (
+                          <option value="">請從 psychometrics 模組選擇</option>
+                          {getVisibleScaleOptions(scales).map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -838,11 +890,10 @@ export default function CollaborativeProjectsEditor({
                       </label>
 
                       <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-                        {getVisibleScaleOptions(activeProject, scales)
+                        {getVisibleScaleOptions(scales)
                           .filter(
                             (option) =>
-                              option.value ===
-                              getResearchProjectAssessmentSourceId(activeProject),
+                              option.value === (activeProject.assessmentSourceProjectId || ""),
                           )
                           .map((option) => (
                             <div key={option.value}>
@@ -900,7 +951,7 @@ export default function CollaborativeProjectsEditor({
                       </p>
                       <p className="mt-2 break-all text-zinc-900">
                         {activeProject.status === "quantitative"
-                          ? getResearchProjectAssessmentSourceId(activeProject)
+                          ? activeProject.assessmentSourceProjectId || "未指定"
                           : "不啟用"}
                       </p>
                     </div>
@@ -910,7 +961,7 @@ export default function CollaborativeProjectsEditor({
                       </p>
                       <p className="mt-2 break-all text-zinc-900">
                         {activeProject.status !== "preparing"
-                          ? getResearchProjectConsentSourceId(activeProject)
+                          ? activeProject.consentSourceProjectId || "未指定"
                           : "不啟用"}
                       </p>
                     </div>

@@ -20,6 +20,15 @@ const CONTENT_FILE_PATH = path.join(process.cwd(), "data", "site-content.json");
 const CONTENT_BLOB_PATH = "site-content/site-content.json";
 const CONTENT_BUCKET = process.env.SITE_CONTENT_BUCKET || "site-content";
 const CONTENT_JSON_PATH = "site-content.json";
+const CONTENT_BUCKET_ALLOWED_MIME_TYPES = [
+  "application/json",
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+] as const;
 
 let bucketEnsured = false;
 
@@ -78,18 +87,34 @@ async function ensureContentBucket(admin: SupabaseClient) {
     const { error: createError } = await admin.storage.createBucket(CONTENT_BUCKET, {
       public: true,
       fileSizeLimit: 10 * 1024 * 1024,
-      allowedMimeTypes: [
-        "application/json",
-        "image/png",
-        "image/jpeg",
-        "image/webp",
-        "image/gif",
-        "image/avif",
-      ],
+      allowedMimeTypes: [...CONTENT_BUCKET_ALLOWED_MIME_TYPES],
     });
 
     if (createError) {
       throw new Error(`STORAGE_CREATE_BUCKET_FAILED:${createError.message}`);
+    }
+  } else {
+    const storageApi = admin.storage as typeof admin.storage & {
+      updateBucket?: (
+        id: string,
+        options: {
+          public: boolean;
+          fileSizeLimit: number;
+          allowedMimeTypes: string[];
+        },
+      ) => Promise<{ error: { message: string } | null }>;
+    };
+
+    if (storageApi.updateBucket) {
+      const { error: updateError } = await storageApi.updateBucket(CONTENT_BUCKET, {
+        public: true,
+        fileSizeLimit: 10 * 1024 * 1024,
+        allowedMimeTypes: [...CONTENT_BUCKET_ALLOWED_MIME_TYPES],
+      });
+
+      if (updateError) {
+        throw new Error(`STORAGE_UPDATE_BUCKET_FAILED:${updateError.message}`);
+      }
     }
   }
 
@@ -261,9 +286,11 @@ export async function saveSiteContentSection(
   await writeContentStore(store);
 }
 
-export async function saveSiteContentImage(
+async function saveSiteContentAsset(
   section: SiteContentSection,
   file: File,
+  assetFolder: "images" | "documents",
+  fallbackExt: string,
 ): Promise<string> {
   const extFromType = file.type.startsWith("image/")
     ? file.type.split("/")[1]
@@ -271,9 +298,11 @@ export async function saveSiteContentImage(
   const extFromName = file.name.includes(".")
     ? file.name.split(".").pop() || ""
     : "";
-  const ext = (extFromType || extFromName || "png").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const ext = (extFromType || extFromName || fallbackExt)
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toLowerCase();
 
-  const fileName = `${Date.now()}-${randomUUID()}.${ext || "png"}`;
+  const fileName = `${Date.now()}-${randomUUID()}.${ext || fallbackExt}`;
 
   const blobToken = getBlobReadWriteToken();
   if (blobToken) {
@@ -282,7 +311,7 @@ export async function saveSiteContentImage(
       throw new Error("BLOB_CLIENT_UNAVAILABLE");
     }
 
-    const objectPath = `site-content/images/${section}/${fileName}`;
+    const objectPath = `site-content/${assetFolder}/${section}/${fileName}`;
     const uploaded = await blobApi.put(objectPath, file, {
       token: blobToken,
       access: "public",
@@ -297,7 +326,7 @@ export async function saveSiteContentImage(
   const admin = getAdminClientOrNull();
   if (admin) {
     await ensureContentBucket(admin);
-    const objectPath = `images/${section}/${fileName}`;
+    const objectPath = `${assetFolder}/${section}/${fileName}`;
     const arrayBuffer = await file.arrayBuffer();
 
     const { error } = await admin.storage
@@ -308,7 +337,7 @@ export async function saveSiteContentImage(
       });
 
     if (error) {
-      throw new Error(`STORAGE_UPLOAD_IMAGE_FAILED:${error.message}`);
+      throw new Error(`STORAGE_UPLOAD_ASSET_FAILED:${error.message}`);
     }
 
     const {
@@ -318,7 +347,7 @@ export async function saveSiteContentImage(
     return publicUrl;
   }
 
-  const relativeDir = path.join("uploads", "content", section);
+  const relativeDir = path.join("uploads", "content", assetFolder, section);
   const absoluteDir = path.join(process.cwd(), "public", relativeDir);
   const absolutePath = path.join(absoluteDir, fileName);
 
@@ -334,4 +363,18 @@ export async function saveSiteContentImage(
   }
 
   return `/${relativeDir}/${fileName}`.replaceAll("\\", "/");
+}
+
+export async function saveSiteContentImage(
+  section: SiteContentSection,
+  file: File,
+): Promise<string> {
+  return saveSiteContentAsset(section, file, "images", "png");
+}
+
+export async function saveSiteContentDocument(
+  section: SiteContentSection,
+  file: File,
+): Promise<string> {
+  return saveSiteContentAsset(section, file, "documents", "pdf");
 }
