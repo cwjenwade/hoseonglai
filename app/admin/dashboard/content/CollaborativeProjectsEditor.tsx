@@ -26,6 +26,9 @@ type ValidationIssue = {
   label: string;
 };
 
+const DRAFT_STORAGE_KEY = "collaborative-projects-draft-v4";
+const LEGACY_DRAFT_STORAGE_KEYS = ["collaborative-projects-draft-v3"];
+
 const STATUS_LABELS: Record<ResearchProjectStatus, string> = {
   preparing: "Preparing",
   quantitative: "Quantitative",
@@ -230,10 +233,18 @@ export default function CollaborativeProjectsEditor({
 }: CollaborativeProjectsEditorProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [projects, setProjects] = useState<ResearchProject[]>(() => {
-    const storageKey = "collaborative-projects-draft-v3";
     if (typeof window !== "undefined") {
       try {
-        const raw = window.localStorage.getItem(storageKey);
+        const params = new URLSearchParams(window.location.search);
+        const shouldClearDraft =
+          params.get("saved") === "collaborative" || params.get("clearDraft") === "1";
+
+        if (shouldClearDraft) {
+          window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+          LEGACY_DRAFT_STORAGE_KEYS.forEach((key) => window.localStorage.removeItem(key));
+        }
+
+        const raw = shouldClearDraft ? null : window.localStorage.getItem(DRAFT_STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) {
@@ -305,8 +316,11 @@ export default function CollaborativeProjectsEditor({
   }, [projects]);
 
   useEffect(() => {
-    const storageKey = "collaborative-projects-draft-v3";
-    window.localStorage.setItem(storageKey, JSON.stringify(projects));
+    LEGACY_DRAFT_STORAGE_KEYS.forEach((key) => window.localStorage.removeItem(key));
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(projects));
   }, [projects]);
 
   useEffect(() => {

@@ -123,6 +123,12 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 	const activeTab = tabs.some((tab) => tab.key === resolvedSearchParams.tab)
 		? (resolvedSearchParams.tab as (typeof tabs)[number]["key"])
 		: "brand";
+	const errorDetails = resolvedSearchParams.detail
+		? resolvedSearchParams.detail
+				.split("；")
+				.map((item) => item.trim())
+				.filter(Boolean)
+		: [];
 
 	const modules = [
 		{ name: "品牌理念", status: "已完成" },
@@ -226,7 +232,9 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 					{resolvedSearchParams.error === "json"
 						? "資料格式錯誤，請重新送出。"
 						: resolvedSearchParams.error === "missing"
-							? "缺少欄位，請重新提交。"
+							? activeTab === "collaborative"
+								? "這次儲存沒有通過，下面列的是實際卡住的欄位或資料。"
+								: "缺少欄位，請重新提交。"
 						: resolvedSearchParams.error === "readonly_upload"
 								? "目前部署環境是唯讀檔案系統，無法直接上傳圖片。請改用外部圖片 URL（例如 Cloudinary/Imgur）貼到照片路徑。"
 								: resolvedSearchParams.error === "readonly_fs"
@@ -240,7 +248,13 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 										? "PDF 大小不可超過 15MB。"
 										: "圖片大小不可超過 8MB。"
 									: "儲存或上傳失敗，請稍後再試。"}
-					{resolvedSearchParams.detail ? (
+					{errorDetails.length > 0 ? (
+						<div className="mt-3 space-y-1 rounded-xl border border-red-200 bg-white/70 p-3 text-xs text-red-700">
+							{errorDetails.map((item, index) => (
+								<p key={`${item}-${index}`}>- {item}</p>
+							))}
+						</div>
+					) : resolvedSearchParams.detail ? (
 						<p className="mt-2 text-xs text-red-600">detail: {resolvedSearchParams.detail}</p>
 					) : null}
 				</div>

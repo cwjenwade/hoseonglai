@@ -141,9 +141,14 @@ export async function uploadBrandImage(formData: FormData) {
 export async function saveCollaborativeProjectsContent(formData: FormData) {
 	await requireAdminUser();
 
+	const redirectWithMissingDetail = (message: string) =>
+		redirect(
+			`/admin/dashboard/content?tab=collaborative&error=missing&detail=${encodeURIComponent(message)}`,
+		);
+
 	const payload = String(formData.get("payload") || "").trim();
 	if (!payload) {
-		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
+		redirectWithMissingDetail("表單 payload 是空的，可能是頁面草稿尚未成功寫入。");
 	}
 
 	let parsed: unknown;
@@ -157,16 +162,35 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 		redirect("/admin/dashboard/content?tab=collaborative&error=json");
 	}
 
+	const invalidRows: string[] = [];
 	const cleanedProjects: ResearchProject[] = parsed
-		.map((project) =>
-			project && typeof project === "object"
-				? normalizeResearchProject(project as Partial<ResearchProject>)
-				: null,
-		)
+		.map((project, index) => {
+			if (!project || typeof project !== "object") {
+				invalidRows.push(`第 ${index + 1} 筆資料不是有效物件`);
+				return null;
+			}
+
+			const normalized = normalizeResearchProject(project as Partial<ResearchProject>);
+			if (!normalized) {
+				const candidate = project as Partial<ResearchProject>;
+				const label =
+					String(candidate.title || "").trim() ||
+					String(candidate.id || "").trim() ||
+					`第 ${index + 1} 筆`;
+				invalidRows.push(`${label}：缺少專案 ID / 中文標題 / 英文副標`);
+				return null;
+			}
+
+			return normalized;
+		})
 		.filter((project): project is ResearchProject => project !== null);
 
 	if (cleanedProjects.length === 0) {
-		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
+		redirectWithMissingDetail(
+			invalidRows.length > 0
+				? invalidRows.join("；")
+				: "沒有任何有效的 collaborative 專案可儲存。",
+		);
 	}
 
 	const currentScales = await getSiteContentSection<PsychometricScale[]>(
@@ -194,65 +218,65 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 				: "",
 	}));
 
-	const hasInvalidProject = linkedProjects.some((project) => {
-		if (
-			!project.description ||
-			!project.topic ||
-			!project.principalInvestigator ||
-			!project.researchContact ||
-			!project.participationDetails ||
-			!project.researchAudiencePurpose
-		) {
-			return true;
-		}
+	const validationDetails: string[] = [];
 
-		if (
-			project.status === "quantitative" && !project.testUrl
-		) {
-			return true;
+	linkedProjects.forEach((project) => {
+		const projectLabel = project.title || project.id || "未命名專案";
+		const checks: Array<[string, string]> = [
+			[project.description, "卡片描述"],
+			[project.topic, "A. 研究主題"],
+			[project.principalInvestigator, "B. 計畫主持人"],
+			[project.researchContact, "C. 研究聯絡人"],
+			[project.participationDetails, "D. 參與方式與時間"],
+			[project.researchAudiencePurpose, "E. 研究對象與目的"],
+		];
+
+		checks.forEach(([value, label]) => {
+			if (!String(value || "").trim()) {
+				validationDetails.push(`${projectLabel}：${label}`);
+			}
+		});
+
+		if (project.status === "quantitative" && !project.testUrl) {
+			validationDetails.push(`${projectLabel}：測驗網址`);
 		}
 
 		if (
 			project.status === "quantitative" &&
 			!String(project.assessmentSourceProjectId || "").trim()
 		) {
-			return true;
+			validationDetails.push(`${projectLabel}：量表來源`);
 		}
 
 		if (
 			project.status !== "preparing" &&
 			!String(project.consentSourceProjectId || "").trim()
 		) {
-			return true;
+			validationDetails.push(`${projectLabel}：研究計劃書 / 同意書來源`);
 		}
 
-		return false;
-	});
-
-	if (hasInvalidProject) {
-		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
-	}
-
-	const hasInvalidLinks = linkedProjects.some((project) => {
 		if (
 			project.status === "quantitative" &&
+			String(project.assessmentSourceProjectId || "").trim() &&
 			!scaleIds.has(String(project.assessmentSourceProjectId || "").trim())
 		) {
-			return true;
+			validationDetails.push(`${projectLabel}：量表來源不存在`);
 		}
 
 		if (
 			project.status !== "preparing" &&
+			String(project.consentSourceProjectId || "").trim() &&
 			!consentIds.has(String(project.consentSourceProjectId || "").trim())
 		) {
-			return true;
+			validationDetails.push(`${projectLabel}：研究計劃書 / 同意書來源不存在`);
 		}
-
-		return false;
 	});
 
-	if (hasInvalidLinks) {
-		redirect("/admin/dashboard/content?tab=collaborative&error=missing");
+	if (validationDetails.length > 0) {
+		const detail = encodeURIComponent(
+			[...invalidRows, ...validationDetails].slice(0, 12).join("；"),
+		);
+		redirect(`/admin/dashboard/content?tab=collaborative&error=missing&detail=${detail}`);
 	}
 
 	try {
@@ -270,8 +294,11 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 	}
 
 	revalidatePath("/collaborative-prosperity");
+	linkedProjects.forEach((project) => {
+		revalidatePath(`/collaborative-prosperity/${project.id}`);
+	});
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard");
+	redirect("/admin/dashboard/content?tab=collaborative&saved=collaborative&clearDraft=1");
 }
 
 export async function uploadResearchConsentPdf(formData: FormData) {
