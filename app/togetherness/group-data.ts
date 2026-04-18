@@ -1,4 +1,6 @@
-export type GroupItem = {
+import type { ContentGovernanceFields } from "@/lib/content-governance";
+
+export type GroupItem = ContentGovernanceFields & {
   slug: string;
   title: string;
   subtitle: string;

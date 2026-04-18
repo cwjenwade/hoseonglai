@@ -1,3 +1,5 @@
+import type { ContentGovernanceFields } from "@/lib/content-governance";
+
 export type LectureCategory =
   | "All"
   | "Upcoming"
@@ -5,7 +7,7 @@ export type LectureCategory =
   | "Research"
   | "Public Talk";
 
-export type LectureItem = {
+export type LectureItem = ContentGovernanceFields & {
   id: string;
   slug: string;
   type: "LECTURE" | "WORKSHOP" | "PUBLIC TALK";

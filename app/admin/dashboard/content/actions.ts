@@ -16,6 +16,10 @@ import {
 	type BrandPageContent,
 } from "@/app/brand-philosophy/brand-content";
 import {
+	normalizeHomePageContent,
+	type HomePageContent,
+} from "@/app/home-content";
+import {
 	normalizeResearchProject,
 	type ResearchProject,
 } from "@/app/collaborative-prosperity/projects";
@@ -34,6 +38,11 @@ import {
 	DEFAULT_GROUP_REGISTRATION_DESCRIPTION,
 	DEFAULT_GROUP_REGISTRATION_HEADING,
 } from "@/app/togetherness/group-data";
+import {
+	normalizeContentGovernance,
+	sortByDisplayOrder,
+	type ContentGovernanceFields,
+} from "@/lib/content-governance";
 
 async function requireAdminUser() {
 	const requestHeaders = await headers();
@@ -68,38 +77,87 @@ async function requireAdminUser() {
 	}
 }
 
+function buildContentHref(
+	module: string,
+	item?: string,
+	params?: Record<string, string | undefined>,
+) {
+	const searchParams = new URLSearchParams();
+	searchParams.set("module", module);
+	if (item) {
+		searchParams.set("item", item);
+	}
+
+	Object.entries(params || {}).forEach(([key, value]) => {
+		if (value) searchParams.set(key, value);
+	});
+
+	return `/admin/dashboard/content?${searchParams.toString()}`;
+}
+
+function touchGovernance<T extends ContentGovernanceFields>(
+	value: T,
+	fallbackOrder: number,
+): T {
+	const governance = normalizeContentGovernance(value, fallbackOrder);
+	return {
+		...value,
+		...governance,
+		updatedAt: new Date().toISOString(),
+	};
+}
+
+function upsertByKey<T>(
+	items: T[],
+	nextItem: T,
+	getKey: (item: T) => string,
+	originalKey?: string,
+) {
+	const matchKey = String(originalKey || getKey(nextItem) || "").trim();
+	const index = items.findIndex((item) => getKey(item) === matchKey);
+
+	if (index >= 0) {
+		return items.map((item, itemIndex) => (itemIndex === index ? nextItem : item));
+	}
+
+	return [...items, nextItem];
+}
+
 export async function saveBrandPageContent(formData: FormData) {
 	await requireAdminUser();
 
 	const payload = String(formData.get("payload") || "").trim();
 	if (!payload) {
-		redirect("/admin/dashboard/content?tab=brand&error=missing");
+		redirect(buildContentHref("brand", "brand", { error: "missing" }));
 	}
 
 	let parsed: BrandPageContent;
 	try {
-		parsed = normalizeBrandPageContent(JSON.parse(payload) as BrandPageContent);
+		parsed = touchGovernance(
+			normalizeBrandPageContent(JSON.parse(payload) as BrandPageContent),
+			0,
+		);
 	} catch {
-		redirect("/admin/dashboard/content?tab=brand&error=json");
+		redirect(buildContentHref("brand", "brand", { error: "json" }));
 	}
 
 	try {
 		await saveSiteContentSection("brand_philosophy_page", parsed);
 	} catch (error) {
 		if (error instanceof Error && error.message === "READ_ONLY_FS") {
-			redirect("/admin/dashboard/content?tab=brand&error=readonly_fs");
+			redirect(buildContentHref("brand", "brand", { error: "readonly_fs" }));
 		}
 
 		const detail = encodeURIComponent(
 			error instanceof Error ? error.message : "unknown_save_error",
 		);
 		console.error("BRAND_SAVE_ERROR", error);
-		redirect(`/admin/dashboard/content?tab=brand&error=save&detail=${detail}`);
+		redirect(buildContentHref("brand", "brand", { error: "save", detail }));
 	}
 
 	revalidatePath("/brand-philosophy");
 	revalidatePath("/admin/dashboard/content");
-	redirect("/admin/dashboard");
+	redirect(buildContentHref("brand", "brand", { saved: "brand" }));
 }
 
 export async function uploadBrandImage(formData: FormData) {
@@ -136,6 +194,113 @@ export async function uploadBrandImage(formData: FormData) {
 
 	revalidatePath("/admin/dashboard/content");
 	redirect(`/admin/dashboard/content?tab=brand&uploaded=${encodeURIComponent(url)}`);
+}
+
+export async function saveHomePageContent(formData: FormData) {
+	await requireAdminUser();
+
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect(buildContentHref("home", "home", { error: "missing" }));
+	}
+
+	let parsed: HomePageContent;
+	try {
+		parsed = touchGovernance(
+			normalizeHomePageContent(JSON.parse(payload) as HomePageContent),
+			0,
+		);
+	} catch {
+		redirect(buildContentHref("home", "home", { error: "json" }));
+	}
+
+	try {
+		await saveSiteContentSection("home_page_content", parsed);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS") {
+			redirect(buildContentHref("home", "home", { error: "readonly_fs" }));
+		}
+
+		const detail = encodeURIComponent(
+			error instanceof Error ? error.message : "unknown_save_error",
+		);
+		redirect(buildContentHref("home", "home", { error: "save", detail }));
+	}
+
+	revalidatePath("/");
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("home", "home", { saved: "home" }));
+}
+
+export async function uploadModuleImage(formData: FormData) {
+	await requireAdminUser();
+
+	const moduleKey = String(formData.get("module") || "").trim();
+	const itemKey = String(formData.get("item") || "").trim();
+	const section = String(formData.get("section") || "").trim();
+	const file = formData.get("imageFile");
+
+	if (!(file instanceof File) || file.size <= 0) {
+		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload" }));
+	}
+
+	if (!file.type.startsWith("image/")) {
+		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload_type" }));
+	}
+
+	const allowedSections = new Set([
+		"brand_philosophy_page",
+		"heartfelt_momentum_videos",
+		"togetherness_groups",
+	]);
+	if (!allowedSections.has(section)) {
+		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload" }));
+	}
+
+	let url = "";
+	try {
+		url = await saveSiteContentImage(section as Parameters<typeof saveSiteContentImage>[0], file);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
+			redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "readonly_upload" }));
+		}
+		const detail = encodeURIComponent(error instanceof Error ? error.message : "unknown_upload_error");
+		redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { error: "upload", detail }));
+	}
+
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref(moduleKey || "brand", itemKey || undefined, { uploaded: url }));
+}
+
+export async function uploadModulePdf(formData: FormData) {
+	await requireAdminUser();
+
+	const moduleKey = String(formData.get("module") || "").trim() || "consents";
+	const itemKey = String(formData.get("item") || "").trim();
+	const file = formData.get("pdfFile");
+
+	if (!(file instanceof File) || file.size <= 0) {
+		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload" }));
+	}
+
+	const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+	if (!isPdf) {
+		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload_type" }));
+	}
+
+	let url = "";
+	try {
+		url = await saveSiteContentDocument("collaborative_prosperity_consents", file);
+	} catch (error) {
+		if (error instanceof Error && error.message === "READ_ONLY_FS_UPLOAD") {
+			redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "readonly_upload" }));
+		}
+		const detail = encodeURIComponent(error instanceof Error ? error.message : "unknown_upload_error");
+		redirect(buildContentHref(moduleKey, itemKey || undefined, { error: "upload", detail }));
+	}
+
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref(moduleKey, itemKey || undefined, { uploadedPdf: url }));
 }
 
 export async function saveCollaborativeProjectsContent(formData: FormData) {
@@ -859,4 +1024,389 @@ export async function saveTogethernessGroupsContent(formData: FormData) {
 	revalidatePath("/togetherness");
 	revalidatePath("/admin/dashboard/content");
 	redirect("/admin/dashboard/content?tab=togetherness&saved=togetherness");
+}
+
+export async function saveHeartfeltVideoEntry(formData: FormData) {
+	await requireAdminUser();
+
+	const originalKey = String(formData.get("entryKey") || "").trim();
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect(buildContentHref("research-videos", originalKey || undefined, { error: "missing" }));
+	}
+
+	let parsed: HeartfeltVideoItem;
+	try {
+		const item = JSON.parse(payload) as Partial<HeartfeltVideoItem>;
+		const normalized = touchGovernance(
+			{
+				title: String(item.title || "").trim(),
+				titleEn: String(item.titleEn || "").trim(),
+				tag: String(item.tag || "").trim(),
+				description: String(item.description || "").trim(),
+				category: String(item.category || "").trim(),
+				duration: String(item.duration || "").trim(),
+				image: String(item.image || "").trim(),
+				youtubeUrl: String(item.youtubeUrl || "").trim() || undefined,
+				isPublished: item.isPublished !== false,
+				displayOrder: item.displayOrder,
+				updatedAt: String(item.updatedAt || "").trim(),
+				internalNote: String(item.internalNote || "").trim(),
+			},
+			0,
+		);
+		if (
+			!normalized.title ||
+			!normalized.titleEn ||
+			!normalized.tag ||
+			!normalized.description ||
+			!normalized.category ||
+			!normalized.duration ||
+			!normalized.image
+		) {
+			redirect(buildContentHref("research-videos", originalKey || normalized.tag || undefined, { error: "missing" }));
+		}
+		parsed = normalized;
+	} catch {
+		redirect(buildContentHref("research-videos", originalKey || undefined, { error: "json" }));
+	}
+
+	const current = await getSiteContentSection<HeartfeltVideoItem[]>("heartfelt_momentum_videos", []);
+	const next = sortByDisplayOrder(
+		upsertByKey(current, parsed, (item) => String(item.tag || "").trim(), originalKey),
+	);
+	await saveSiteContentSection("heartfelt_momentum_videos", next);
+
+	revalidatePath("/heartfelt-momentum");
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("research-videos", parsed.tag, { saved: "research-videos" }));
+}
+
+export async function saveFortuneLectureEntry(formData: FormData) {
+	await requireAdminUser();
+
+	const originalKey = String(formData.get("entryKey") || "").trim();
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect(buildContentHref("lectures", originalKey || undefined, { error: "missing" }));
+	}
+
+	let parsed: LectureItem;
+	try {
+		const item = JSON.parse(payload) as Partial<LectureItem>;
+		const category = Array.isArray(item.category)
+			? item.category.map((value) => String(value || "").trim()).filter(Boolean)
+			: [];
+		const normalized = touchGovernance(
+			{
+				id: String(item.id || "").trim(),
+				slug: String(item.slug || "").trim(),
+				type: String(item.type || "LECTURE").trim() as LectureItem["type"],
+				category: category as LectureItem["category"],
+				dateMode: item.dateMode === "month" ? ("month" as const) : ("exact" as const),
+				date: String(item.date || "").trim(),
+				dateLabel: String(item.dateLabel || "").trim(),
+				time: String(item.time || "").trim(),
+				approxYear: String(item.approxYear || "").trim() || undefined,
+				approxMonth: String(item.approxMonth || "").trim() || undefined,
+				titleZh: String(item.titleZh || "").trim(),
+				titleEn: String(item.titleEn || "").trim() || undefined,
+				subtitleEn: String(item.subtitleEn || "").trim(),
+				speaker: String(item.speaker || "").trim(),
+				speakerEn: String(item.speakerEn || "").trim() || undefined,
+				summary: String(item.summary || "").trim(),
+				href: String(item.href || "").trim(),
+				locationZh: String(item.locationZh || "").trim(),
+				addressZh: String(item.addressZh || "").trim() || undefined,
+				isPublished: item.isPublished !== false,
+				displayOrder: item.displayOrder,
+				updatedAt: String(item.updatedAt || "").trim(),
+				internalNote: String(item.internalNote || "").trim(),
+			},
+			0,
+		);
+		if (
+			!normalized.id ||
+			!normalized.slug ||
+			!normalized.titleZh ||
+			!normalized.href ||
+			category.length === 0
+		) {
+			redirect(buildContentHref("lectures", originalKey || normalized.id || undefined, { error: "missing" }));
+		}
+		parsed = normalized;
+	} catch {
+		redirect(buildContentHref("lectures", originalKey || undefined, { error: "json" }));
+	}
+
+	const current = await getSiteContentSection<LectureItem[]>("fortune_arrives_lectures", []);
+	const next = sortByDisplayOrder(
+		upsertByKey(current, parsed, (item) => String(item.id || "").trim(), originalKey),
+	);
+	await saveSiteContentSection("fortune_arrives_lectures", next);
+
+	revalidatePath("/fortune-arrives");
+	revalidatePath(`/fortune-arrives/${parsed.slug}`);
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("lectures", parsed.id, { saved: "lectures" }));
+}
+
+export async function saveTogethernessGroupEntry(formData: FormData) {
+	await requireAdminUser();
+
+	const originalKey = String(formData.get("entryKey") || "").trim();
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect(buildContentHref("groups", originalKey || undefined, { error: "missing" }));
+	}
+
+	let parsed: GroupItem;
+	try {
+		const item = JSON.parse(payload) as Partial<GroupItem>;
+		const normalized = touchGovernance(
+			{
+				slug: String(item.slug || "").trim(),
+				title: String(item.title || "").trim(),
+				subtitle: String(item.subtitle || "").trim(),
+				description: String(item.description || "").trim(),
+				image: String(item.image || "").trim(),
+				isVisible: item.isVisible !== false,
+				leaderProfileId: String(item.leaderProfileId || "").trim() || undefined,
+				leaderNameZh: String(item.leaderNameZh || "").trim() || DEFAULT_GROUP_LEADER_NAME_ZH,
+				leaderNameEn: String(item.leaderNameEn || "").trim() || DEFAULT_GROUP_LEADER_NAME_EN,
+				leaderTitleZh: String(item.leaderTitleZh || "").trim() || DEFAULT_GROUP_LEADER_TITLE_ZH,
+				leaderPhoto: String(item.leaderPhoto || "").trim() || undefined,
+				introHeading: String(item.introHeading || "").trim() || DEFAULT_GROUP_INTRO_HEADING,
+				introDescription:
+					String(item.introDescription || "").trim() || DEFAULT_GROUP_INTRO_DESCRIPTION,
+				consultationNote:
+					String(item.consultationNote || "").trim() || DEFAULT_GROUP_CONSULTATION_NOTE,
+				registrationHeading:
+					String(item.registrationHeading || "").trim() || DEFAULT_GROUP_REGISTRATION_HEADING,
+				registrationDescription:
+					String(item.registrationDescription || "").trim() ||
+					DEFAULT_GROUP_REGISTRATION_DESCRIPTION,
+				isPublished: item.isPublished !== false,
+				displayOrder: item.displayOrder,
+				updatedAt: String(item.updatedAt || "").trim(),
+				internalNote: String(item.internalNote || "").trim(),
+			},
+			0,
+		);
+		if (
+			!normalized.slug ||
+			!normalized.title ||
+			!normalized.subtitle ||
+			!normalized.description ||
+			!normalized.image
+		) {
+			redirect(buildContentHref("groups", originalKey || normalized.slug || undefined, { error: "missing" }));
+		}
+		parsed = normalized;
+	} catch {
+		redirect(buildContentHref("groups", originalKey || undefined, { error: "json" }));
+	}
+
+	const current = await getSiteContentSection<GroupItem[]>("togetherness_groups", []);
+	const next = sortByDisplayOrder(
+		upsertByKey(current, parsed, (item) => String(item.slug || "").trim(), originalKey),
+	);
+	await saveSiteContentSection("togetherness_groups", next);
+
+	revalidatePath("/togetherness");
+	revalidatePath(`/togetherness/${parsed.slug}`);
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("groups", parsed.slug, { saved: "groups" }));
+}
+
+export async function savePsychometricScaleEntry(formData: FormData) {
+	await requireAdminUser();
+
+	const originalKey = String(formData.get("entryKey") || "").trim();
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect(buildContentHref("psychometrics", originalKey || undefined, { error: "missing" }));
+	}
+
+	let parsed: PsychometricScale;
+	try {
+		const item = JSON.parse(payload) as Partial<PsychometricScale>;
+		const normalized = touchGovernance(
+			{
+				projectId: String(item.projectId || "").trim(),
+				projectTitleZh: String(item.projectTitleZh || "").trim(),
+				projectTitleEn: String(item.projectTitleEn || "").trim(),
+				scalePrompt: String(item.scalePrompt || "").trim(),
+				options: Array.isArray(item.options)
+					? item.options.map((value) => String(value || "").trim()).filter(Boolean)
+					: [],
+				questions: Array.isArray(item.questions)
+					? item.questions.map((value) => String(value || "").trim()).filter(Boolean)
+					: [],
+				isPublished: item.isPublished !== false,
+				displayOrder: item.displayOrder,
+				updatedAt: String(item.updatedAt || "").trim(),
+				internalNote: String(item.internalNote || "").trim(),
+			},
+			0,
+		);
+		if (
+			!normalized.projectId ||
+			!normalized.projectTitleZh ||
+			!normalized.projectTitleEn ||
+			!normalized.scalePrompt ||
+			normalized.options.length < 2 ||
+			normalized.questions.length < 1
+		) {
+			redirect(buildContentHref("psychometrics", originalKey || normalized.projectId || undefined, { error: "missing" }));
+		}
+		parsed = normalized;
+	} catch {
+		redirect(buildContentHref("psychometrics", originalKey || undefined, { error: "json" }));
+	}
+
+	const current = await getSiteContentSection<PsychometricScale[]>(
+		"collaborative_prosperity_assessments",
+		[],
+	);
+	const next = sortByDisplayOrder(
+		upsertByKey(current, parsed, (item) => String(item.projectId || "").trim(), originalKey),
+	);
+	await saveSiteContentSection("collaborative_prosperity_assessments", next);
+
+	revalidatePath("/collaborative-prosperity");
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("psychometrics", parsed.projectId, { saved: "psychometrics" }));
+}
+
+export async function saveResearchConsentEntry(formData: FormData) {
+	await requireAdminUser();
+
+	const originalKey = String(formData.get("entryKey") || "").trim();
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect(buildContentHref("consents", originalKey || undefined, { error: "missing" }));
+	}
+
+	let parsed: ResearchConsent;
+	try {
+		const item = JSON.parse(payload) as Partial<ResearchConsent>;
+		const normalized = touchGovernance(
+			{
+				projectId: String(item.projectId || "").trim(),
+				projectTitleZh: String(item.projectTitleZh || "").trim(),
+				projectTitleEn: String(item.projectTitleEn || "").trim(),
+				pdfUrl: String(item.pdfUrl || "").trim() || undefined,
+				principalInvestigator: String(item.principalInvestigator || "").trim(),
+				researchUnit: String(item.researchUnit || "").trim(),
+				researchDescription: String(item.researchDescription || "").trim(),
+				isPublished: item.isPublished !== false,
+				displayOrder: item.displayOrder,
+				updatedAt: String(item.updatedAt || "").trim(),
+				internalNote: String(item.internalNote || "").trim(),
+			},
+			0,
+		);
+		if (
+			!normalized.projectId ||
+			!normalized.projectTitleZh ||
+			!normalized.projectTitleEn ||
+			!normalized.principalInvestigator ||
+			!normalized.researchUnit ||
+			!normalized.researchDescription
+		) {
+			redirect(buildContentHref("consents", originalKey || normalized.projectId || undefined, { error: "missing" }));
+		}
+		parsed = normalized;
+	} catch {
+		redirect(buildContentHref("consents", originalKey || undefined, { error: "json" }));
+	}
+
+	const current = await getSiteContentSection<ResearchConsent[]>(
+		"collaborative_prosperity_consents",
+		[],
+	);
+	const next = sortByDisplayOrder(
+		upsertByKey(current, parsed, (item) => String(item.projectId || "").trim(), originalKey),
+	);
+	await saveSiteContentSection("collaborative_prosperity_consents", next);
+
+	revalidatePath("/collaborative-prosperity");
+	revalidatePath("/collaborative-prosperity/start");
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("consents", parsed.projectId, { saved: "consents" }));
+}
+
+export async function saveResearchProjectEntry(formData: FormData) {
+	await requireAdminUser();
+
+	const originalKey = String(formData.get("entryKey") || "").trim();
+	const payload = String(formData.get("payload") || "").trim();
+	if (!payload) {
+		redirect(buildContentHref("research-projects", originalKey || undefined, { error: "missing" }));
+	}
+
+	let parsed: ResearchProject;
+	try {
+		const normalized = normalizeResearchProject(
+			JSON.parse(payload) as Partial<ResearchProject>,
+		);
+		if (!normalized) {
+			redirect(buildContentHref("research-projects", originalKey || undefined, { error: "missing" }));
+		}
+
+		const currentScales = await getSiteContentSection<PsychometricScale[]>(
+			"collaborative_prosperity_assessments",
+			[],
+		);
+		const currentConsents = await getSiteContentSection<ResearchConsent[]>(
+			"collaborative_prosperity_consents",
+			[],
+		);
+		const scaleIds = new Set(currentScales.map((scale) => scale.projectId));
+		const consentIds = new Set(currentConsents.map((consent) => consent.projectId));
+
+		if (
+			!normalized.description ||
+			!normalized.topic ||
+			!normalized.principalInvestigator ||
+			!normalized.researchContact ||
+			!normalized.participationDetails ||
+			!normalized.researchAudiencePurpose
+		) {
+			redirect(buildContentHref("research-projects", originalKey || normalized.id || undefined, { error: "missing" }));
+		}
+
+		if (
+			normalized.status === "quantitative" &&
+			(!normalized.assessmentSourceProjectId || !scaleIds.has(normalized.assessmentSourceProjectId))
+		) {
+			redirect(buildContentHref("research-projects", originalKey || normalized.id || undefined, { error: "missing", detail: "量表來源需對應既有 psychometrics。" }));
+		}
+
+		if (
+			normalized.status !== "preparing" &&
+			(!normalized.consentSourceProjectId || !consentIds.has(normalized.consentSourceProjectId))
+		) {
+			redirect(buildContentHref("research-projects", originalKey || normalized.id || undefined, { error: "missing", detail: "研究計劃書 / 同意書來源需對應既有 consents。" }));
+		}
+
+		parsed = touchGovernance(normalized, 0);
+	} catch {
+		redirect(buildContentHref("research-projects", originalKey || undefined, { error: "json" }));
+	}
+
+	const current = await getSiteContentSection<ResearchProject[]>(
+		"collaborative_prosperity_projects",
+		[],
+	);
+	const next = sortByDisplayOrder(
+		upsertByKey(current, parsed, (item) => String(item.id || "").trim(), originalKey),
+	);
+	await saveSiteContentSection("collaborative_prosperity_projects", next);
+
+	revalidatePath("/collaborative-prosperity");
+	revalidatePath(`/collaborative-prosperity/${parsed.id}`);
+	revalidatePath("/admin/dashboard/content");
+	redirect(buildContentHref("research-projects", parsed.id, { saved: "research-projects" }));
 }

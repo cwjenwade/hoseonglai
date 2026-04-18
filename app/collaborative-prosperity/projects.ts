@@ -1,3 +1,5 @@
+import type { ContentGovernanceFields } from "@/lib/content-governance";
+
 export const RESEARCH_PROJECT_STATUSES = [
   "preparing",
   "quantitative",
@@ -14,7 +16,7 @@ export const PROJECT_CONTACT_VISIBILITIES = [
 export type ProjectContactVisibility =
   (typeof PROJECT_CONTACT_VISIBILITIES)[number];
 
-export type ResearchProject = {
+export type ResearchProject = ContentGovernanceFields & {
   id: string;
   title: string;
   subtitle: string;
@@ -125,6 +127,13 @@ export function normalizeResearchProject(
       : defaultContactVisibility(status);
 
   return {
+    isPublished: project.isPublished !== false,
+    displayOrder:
+      Number.isFinite(Number(project.displayOrder))
+        ? Number(project.displayOrder)
+        : 0,
+    updatedAt: String(project.updatedAt || "").trim(),
+    internalNote: String(project.internalNote || "").trim(),
     id,
     title,
     subtitle,

@@ -1,6 +1,7 @@
 import { RESEARCH_PROJECTS } from "./projects";
+import type { ContentGovernanceFields } from "@/lib/content-governance";
 
-export type ResearchConsent = {
+export type ResearchConsent = ContentGovernanceFields & {
   projectId: string;
   projectTitleZh: string;
   projectTitleEn: string;

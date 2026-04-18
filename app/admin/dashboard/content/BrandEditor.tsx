@@ -6,6 +6,8 @@ import {
   type BrandPageContent,
 } from "@/app/brand-philosophy/brand-content";
 import type { TeamMember, TeamSection, TeamSectionId } from "@/app/brand-philosophy/team-data";
+import { EditorSection } from "./ui/EditorSection";
+import { GovernanceFields } from "./ui/GovernanceFields";
 
 type BrandEditorProps = {
   initialContent: BrandPageContent;
@@ -40,6 +42,12 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
   );
   const [teamSections, setTeamSections] = useState<TeamSection[]>(normalizedContent.teamSections || []);
   const [members, setMembers] = useState<TeamMember[]>(normalizedContent.teamMembers || []);
+  const [governance, setGovernance] = useState({
+    isPublished: normalizedContent.isPublished !== false,
+    displayOrder: normalizedContent.displayOrder || 0,
+    updatedAt: normalizedContent.updatedAt || "",
+    internalNote: normalizedContent.internalNote || "",
+  });
 
   function updateMember(index: number, updates: Partial<TeamMember>) {
     setMembers((prev) => prev.map((member, i) => (i === index ? { ...member, ...updates } : member)));
@@ -92,6 +100,7 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
       .filter(Boolean);
 
     return {
+      ...governance,
       director: {
         photo: directorPhoto.trim(),
         nameZh: directorNameZh.trim(),
@@ -121,6 +130,7 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
     introParagraphsText,
     teamSections,
     members,
+    governance,
   ]);
 
   return (
@@ -384,6 +394,13 @@ export default function BrandEditor({ initialContent, uploadedUrl }: BrandEditor
           })}
         </div>
       </section>
+
+      <EditorSection title="管理設定">
+        <GovernanceFields
+          value={governance}
+          onChange={(updates) => setGovernance((prev) => ({ ...prev, ...updates }))}
+        />
+      </EditorSection>
 
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
     </div>

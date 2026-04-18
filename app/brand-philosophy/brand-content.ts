@@ -6,6 +6,7 @@ import {
   type TeamSection,
   type TeamSectionId,
 } from "./team-data";
+import type { ContentGovernanceFields } from "@/lib/content-governance";
 
 export type BrandDirector = {
   photo: string;
@@ -15,13 +16,17 @@ export type BrandDirector = {
   introParagraphs: string[];
 };
 
-export type BrandPageContent = {
+export type BrandPageContent = ContentGovernanceFields & {
   director: BrandDirector;
   teamSections: TeamSection[];
   teamMembers: TeamMember[];
 };
 
 export const DEFAULT_BRAND_PAGE_CONTENT: BrandPageContent = {
+  isPublished: true,
+  displayOrder: 0,
+  updatedAt: "",
+  internalNote: "",
   director: {
     photo: "",
     nameZh: "任祈蔚",
@@ -79,6 +84,13 @@ export function normalizeBrandPageContent(content: Partial<BrandPageContent> | n
   });
 
   return {
+    isPublished: content?.isPublished !== false,
+    displayOrder:
+      Number.isFinite(Number(content?.displayOrder))
+        ? Number(content?.displayOrder)
+        : DEFAULT_BRAND_PAGE_CONTENT.displayOrder || 0,
+    updatedAt: String(content?.updatedAt || "").trim(),
+    internalNote: String(content?.internalNote || "").trim(),
     director: {
       photo: String(director?.photo || "").trim(),
       nameZh: String(director?.nameZh || DEFAULT_BRAND_PAGE_CONTENT.director.nameZh).trim(),

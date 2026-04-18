@@ -1,7 +1,8 @@
 import { TEST_QUESTIONS_DB } from "./test-questions";
 import { RESEARCH_PROJECTS } from "./projects";
+import type { ContentGovernanceFields } from "@/lib/content-governance";
 
-export type PsychometricScale = {
+export type PsychometricScale = ContentGovernanceFields & {
   projectId: string;
   projectTitleZh: string;
   projectTitleEn: string;

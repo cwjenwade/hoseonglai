@@ -1,4 +1,6 @@
-export type HeartfeltVideoItem = {
+import type { ContentGovernanceFields } from "@/lib/content-governance";
+
+export type HeartfeltVideoItem = ContentGovernanceFields & {
   title: string;
   titleEn: string;
   tag: string;

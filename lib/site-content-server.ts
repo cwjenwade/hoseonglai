@@ -7,6 +7,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export type SiteContentSection =
+  | "home_page_content"
   | "brand_philosophy_page"
   | "brand_philosophy_team"
   | "heartfelt_momentum_videos"

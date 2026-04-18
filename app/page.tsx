@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getSiteContentSection } from "@/lib/site-content-server";
+import {
+  DEFAULT_HOME_PAGE_CONTENT,
+  normalizeHomePageContent,
+} from "@/app/home-content";
 
 export const metadata: Metadata = {
   title: "Ho-Se 好勢｜Ong-Lai 旺來",
@@ -7,35 +12,16 @@ export const metadata: Metadata = {
     "Ho-Se 好勢・Ong-Lai 旺來首頁，整合研究、內容、團體與協作實踐。",
 };
 
-export default function Home() {
-  const platformFeatures = [
-    {
-      href: "/research-in-5-minutes",
-      title: "5分鐘研究",
-      description: "學術研究成果之精簡轉譯與知識傳播路徑。",
-    },
-    {
-      href: "/participant-recruitment",
-      title: "受試者招募",
-      description: "研究樣本庫建置與實證資料蒐集機制。",
-    },
-    {
-      href: "/cultural-products",
-      title: "文創商品",
-      description: "文化概念物質化之載體開發與流通介面。",
-    },
-    {
-      href: "/group-therapy",
-      title: "團體心理治療",
-      description: "心理治療專業知識與臨床資源之整合節點。",
-    },
-  ];
-
-  const recentUpdates = [
-    { id: 1, tag: "研究發布", title: "人際依附傾向與團體動力之交互作用測量" },
-    { id: 2, tag: "受試招募", title: "伴侶關係衝突因應機制之縱貫性研究" },
-    { id: 3, tag: "知識分享", title: "團體心理治療中凝聚力發展之階段性特徵" },
-  ];
+export default async function Home() {
+  const homeContent = normalizeHomePageContent(
+    await getSiteContentSection("home_page_content", DEFAULT_HOME_PAGE_CONTENT),
+  );
+  const platformFeatures = homeContent.platformFeatures;
+  const recentUpdates = homeContent.recentUpdates;
+  const ctas = homeContent.primaryCallToActions;
+  const primaryCta = ctas.find((item) => item.variant === "primary") || ctas[0];
+  const secondaryCta = ctas.find((item) => item.variant === "secondary") || ctas[1];
+  const tertiaryCta = ctas.find((item) => item.variant === "tertiary") || ctas[2];
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] px-6 py-16 font-sans text-zinc-900">
@@ -55,15 +41,21 @@ export default function Home() {
             本平台建構心理學研究與公眾社群之交會節點，整合五分鐘學術報告、受試者招募機制、文創載體及團體心理治療知識庫。藉由知識轉譯與公眾參與，建立具備人文向度之學術實踐場域。
           </p>
           <div className="flex flex-wrap justify-center gap-5 pt-6">
-            <Link href="/join-research" className="rounded-[1.25rem] bg-[#DD821D] px-8 py-4 text-base font-semibold text-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md">
-              加入研究
-            </Link>
-            <Link href="/group-therapy-info" className="rounded-[1.25rem] border border-[#E9BC60] bg-[#F2DB8D] px-8 py-4 text-base font-semibold text-[#DD821D] shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md">
-              了解團體諮商
-            </Link>
-            <Link href="/watch-5mins" className="rounded-[1.25rem] border border-[#D4B810] bg-white px-8 py-4 text-base font-semibold text-[#88854E] shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md">
-              觀看研究5mins
-            </Link>
+            {primaryCta ? (
+              <Link href={primaryCta.href} className="rounded-[1.25rem] bg-[#DD821D] px-8 py-4 text-base font-semibold text-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md">
+                {primaryCta.label}
+              </Link>
+            ) : null}
+            {secondaryCta ? (
+              <Link href={secondaryCta.href} className="rounded-[1.25rem] border border-[#E9BC60] bg-[#F2DB8D] px-8 py-4 text-base font-semibold text-[#DD821D] shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md">
+                {secondaryCta.label}
+              </Link>
+            ) : null}
+            {tertiaryCta ? (
+              <Link href={tertiaryCta.href} className="rounded-[1.25rem] border border-[#D4B810] bg-white px-8 py-4 text-base font-semibold text-[#88854E] shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md">
+                {tertiaryCta.label}
+              </Link>
+            ) : null}
           </div>
         </section>
 

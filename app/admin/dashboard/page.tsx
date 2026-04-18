@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { getSiteContentSection } from "@/lib/site-content-server";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { DEFAULT_BRAND_PAGE_CONTENT, normalizeBrandPageContent } from "@/app/brand-philosophy/brand-content";
+import { DEFAULT_HOME_PAGE_CONTENT, normalizeHomePageContent } from "@/app/home-content";
+import { HEARTFELT_VIDEOS } from "@/app/heartfelt-momentum/videos-data";
+import { LECTURES } from "@/app/fortune-arrives/lectures-data";
+import { GROUPS } from "@/app/togetherness/group-data";
+import { RESEARCH_PROJECTS, normalizeResearchProjects } from "@/app/collaborative-prosperity/projects";
+import { DEFAULT_PSYCHOMETRIC_SCALES } from "@/app/collaborative-prosperity/assessment-data";
+import { DEFAULT_RESEARCH_CONSENTS } from "@/app/collaborative-prosperity/consent-data";
 import { adminLogout } from "../actions";
 import { deleteProjectData } from "./actions";
 
@@ -118,6 +127,25 @@ function psychProjectTitle(testTitle: unknown, testId: unknown): string {
   const title = safeString(testTitle);
   if (!title) return safeString(testId) || "未命名專案";
   return title.split("|")[0]?.trim() || safeString(testId) || "未命名專案";
+}
+
+function countRowsWithinDays(rows: RegistrationData[], days: number) {
+  const now = Date.now();
+  const threshold = now - days * 24 * 60 * 60 * 1000;
+
+  return rows.filter((row) => {
+    const createdAt = Date.parse(String(row.created_at || ""));
+    return Number.isFinite(createdAt) && createdAt >= threshold;
+  }).length;
+}
+
+function latestUpdated(items: Array<{ updatedAt?: unknown }>): string {
+  const values = items
+    .map((item) => String(item.updatedAt || "").trim())
+    .filter(Boolean)
+    .sort();
+
+  return values.at(-1) || "";
 }
 
 async function fetchAllRows(
@@ -237,6 +265,140 @@ export default async function AdminDashboardPage({
     );
   }
 
+  const [
+    lectureSummary,
+    groupSummary,
+    researchSummary,
+    newsletterSummary,
+    homeContent,
+    brandContent,
+    heartfeltVideos,
+    lecturesContent,
+    groupsContent,
+    researchProjectsContent,
+    psychometricsContent,
+    consentsContent,
+  ] = await Promise.all([
+    fetchAllRows(supabase, "lecture_registrations"),
+    fetchAllRows(supabase, "group_registrations"),
+    fetchAllRows(supabase, "research_registrations"),
+    fetchAllRows(supabase, "newsletter_subscribers"),
+    getSiteContentSection("home_page_content", DEFAULT_HOME_PAGE_CONTENT).then((value) =>
+      normalizeHomePageContent(value),
+    ),
+    getSiteContentSection("brand_philosophy_page", DEFAULT_BRAND_PAGE_CONTENT).then((value) =>
+      normalizeBrandPageContent(value),
+    ),
+    getSiteContentSection("heartfelt_momentum_videos", HEARTFELT_VIDEOS),
+    getSiteContentSection("fortune_arrives_lectures", LECTURES),
+    getSiteContentSection("togetherness_groups", GROUPS),
+    getSiteContentSection("collaborative_prosperity_projects", RESEARCH_PROJECTS).then((value) =>
+      normalizeResearchProjects(value, RESEARCH_PROJECTS),
+    ),
+    getSiteContentSection(
+      "collaborative_prosperity_assessments",
+      DEFAULT_PSYCHOMETRIC_SCALES,
+    ),
+    getSiteContentSection(
+      "collaborative_prosperity_consents",
+      DEFAULT_RESEARCH_CONSENTS,
+    ),
+  ]);
+
+  const opsSummary = [
+    {
+      key: "lectures",
+      label: "講座報名數",
+      total: lectureSummary.rows.length,
+      delta: countRowsWithinDays(lectureSummary.rows, 7),
+    },
+    {
+      key: "groups",
+      label: "團體報名數",
+      total: groupSummary.rows.length,
+      delta: countRowsWithinDays(groupSummary.rows, 7),
+    },
+    {
+      key: "research",
+      label: "研究報名數",
+      total: researchSummary.rows.length,
+      delta: countRowsWithinDays(researchSummary.rows, 7),
+    },
+    {
+      key: "newsletter",
+      label: "電子報訂閱數",
+      total: newsletterSummary.rows.length,
+      delta: countRowsWithinDays(newsletterSummary.rows, 7),
+    },
+  ];
+
+  const contentSummary = [
+    {
+      key: "home",
+      label: "Home",
+      total: 1,
+      published: homeContent.isPublished === false ? 0 : 1,
+      draft: homeContent.isPublished === false ? 1 : 0,
+      updatedAt: latestUpdated([homeContent]),
+    },
+    {
+      key: "brand",
+      label: "Brand",
+      total: 1,
+      published: brandContent.isPublished === false ? 0 : 1,
+      draft: brandContent.isPublished === false ? 1 : 0,
+      updatedAt: latestUpdated([brandContent]),
+    },
+    {
+      key: "research-videos",
+      label: "Research Videos",
+      total: heartfeltVideos.length,
+      published: heartfeltVideos.filter((item) => item.isPublished !== false).length,
+      draft: heartfeltVideos.filter((item) => item.isPublished === false).length,
+      updatedAt: latestUpdated(heartfeltVideos),
+    },
+    {
+      key: "lectures",
+      label: "Lectures & Events",
+      total: lecturesContent.length,
+      published: lecturesContent.filter((item) => item.isPublished !== false).length,
+      draft: lecturesContent.filter((item) => item.isPublished === false).length,
+      updatedAt: latestUpdated(lecturesContent),
+    },
+    {
+      key: "groups",
+      label: "Groups",
+      total: groupsContent.length,
+      published: groupsContent.filter((item) => item.isPublished !== false).length,
+      draft: groupsContent.filter((item) => item.isPublished === false).length,
+      updatedAt: latestUpdated(groupsContent),
+    },
+    {
+      key: "research-projects",
+      label: "Research Projects",
+      total: researchProjectsContent.length,
+      published: researchProjectsContent.filter((item) => item.isPublished !== false).length,
+      draft: researchProjectsContent.filter((item) => item.isPublished === false).length,
+      updatedAt: latestUpdated(researchProjectsContent),
+    },
+    {
+      key: "psychometrics",
+      label: "Psychometrics",
+      total: psychometricsContent.length,
+      published: psychometricsContent.filter((item) => item.isPublished !== false).length,
+      draft: psychometricsContent.filter((item) => item.isPublished === false).length,
+      updatedAt: latestUpdated(psychometricsContent),
+    },
+    {
+      key: "consents",
+      label: "Consents",
+      total: consentsContent.length,
+      published: consentsContent.filter((item) => item.isPublished !== false).length,
+      draft: consentsContent.filter((item) => item.isPublished === false).length,
+      updatedAt: latestUpdated(consentsContent),
+    },
+  ];
+
   const { rows, error } = await fetchAllRows(supabase, tab.table);
   const visibleRows =
     tab.id === "research"
@@ -349,6 +511,67 @@ export default async function AdminDashboardPage({
           </form>
         </div>
       </div>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {opsSummary.map((item) => (
+          <article
+            key={item.key}
+            className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              {item.label}
+            </p>
+            <p className="mt-3 text-3xl font-bold text-zinc-900">{item.total}</p>
+            <p className="mt-2 text-sm text-emerald-700">近 7 天 +{item.delta}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-900">內容狀態摘要</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              依模組統計總筆數、已發布數、未發布數與最後更新時間。
+            </p>
+          </div>
+          <Link
+            href="/admin/dashboard/content"
+            className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
+          >
+            前往內容管理
+          </Link>
+        </div>
+
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200">
+                <th className="pb-3 font-semibold text-zinc-900">模組</th>
+                <th className="pb-3 font-semibold text-zinc-900">總筆數</th>
+                <th className="pb-3 font-semibold text-zinc-900">已發布</th>
+                <th className="pb-3 font-semibold text-zinc-900">未發布</th>
+                <th className="pb-3 font-semibold text-zinc-900">最後更新</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contentSummary.map((item) => (
+                <tr key={item.key} className="border-b border-zinc-100">
+                  <td className="py-3 font-medium text-zinc-900">{item.label}</td>
+                  <td className="py-3 text-zinc-700">{item.total}</td>
+                  <td className="py-3 text-emerald-700">{item.published}</td>
+                  <td className="py-3 text-amber-700">{item.draft}</td>
+                  <td className="py-3 text-zinc-500">
+                    {item.updatedAt
+                      ? new Date(item.updatedAt).toLocaleString("zh-TW")
+                      : "未記錄"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-4">
