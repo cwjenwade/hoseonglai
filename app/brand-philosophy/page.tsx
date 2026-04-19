@@ -24,7 +24,7 @@ export default async function BrandPhilosophyPage() {
     "清華大學 諮商心理 碩士",
     "台灣大學 臨床心理 博士研究生",
     "研究主題：述情障礙、團體諮商與治療、研究法、性少數男性",
-  ].join("\n\n");
+  ].join("\n");
   const teamMembers = brandContent.teamMembers;
   const teamSections = brandContent.teamSections
     .map((section) => ({
@@ -101,9 +101,7 @@ export default async function BrandPhilosophyPage() {
                   id: "director-mobile",
                   nameZh: director.nameZh || "-",
                   nameEn: director.nameEn || "-",
-                  role:
-                    director.affiliationLines.find((line) => /[\u4e00-\u9fff]/.test(line)) ||
-                    "Branding Director",
+                  role: "Branding Director",
                   bio: mobileDirectorBio,
                   photo: director.photo,
                 }}
