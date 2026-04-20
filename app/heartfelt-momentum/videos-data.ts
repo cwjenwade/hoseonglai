@@ -8,6 +8,8 @@ export type HeartfeltVideoItem = ContentGovernanceFields & {
   category: string;
   duration: string;
   image: string;
+  imageWidth?: number;
+  imageHeight?: number;
   youtubeUrl?: string;
 };
 
@@ -21,6 +23,8 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
     duration: "5 分鐘",
     image:
       "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=1200&q=80",
+    imageWidth: 1200,
+    imageHeight: 1567,
   },
   {
     title: "相近情緒為何混在一起",
@@ -31,6 +35,8 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
     duration: "5 分鐘",
     image:
       "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?auto=format&fit=crop&w=1200&q=80",
+    imageWidth: 1200,
+    imageHeight: 800,
   },
   {
     title: "情緒如何在團體中擴散",
@@ -41,6 +47,8 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
     duration: "5 分鐘",
     image:
       "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=1200&q=80",
+    imageWidth: 1200,
+    imageHeight: 1200,
   },
   {
     title: "同理是怎麼發生的",
@@ -51,6 +59,8 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
     duration: "5 分鐘",
     image:
       "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=1200&q=80",
+    imageWidth: 1200,
+    imageHeight: 1200,
   },
   {
     title: "為何有些感受說不出口",
@@ -61,6 +71,8 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
     duration: "5 分鐘",
     image:
       "https://images.unsplash.com/photo-1578301979108-0a2f6f91a4c0?auto=format&fit=crop&w=1200&q=80",
+    imageWidth: 1200,
+    imageHeight: 1450,
   },
   {
     title: "心理測量如何理解情緒",
@@ -71,6 +83,8 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
     duration: "5 分鐘",
     image:
       "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1200&q=80",
+    imageWidth: 1200,
+    imageHeight: 900,
   },
   {
     title: "關係如何改變情緒經驗",
@@ -81,6 +95,8 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
     duration: "5 分鐘",
     image:
       "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80",
+    imageWidth: 1200,
+    imageHeight: 900,
   },
   {
     title: "情緒強度真的比較高嗎",
@@ -91,5 +107,7 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
     duration: "5 分鐘",
     image:
       "https://images.unsplash.com/photo-1577083165633-14ebcdb0f658?auto=format&fit=crop&w=1200&q=80",
+    imageWidth: 1200,
+    imageHeight: 1797,
   },
 ];

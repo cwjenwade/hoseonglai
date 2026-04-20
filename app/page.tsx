@@ -57,17 +57,22 @@ function groupCardHref(group: GroupItem): string {
   return `/togetherness/${group.slug}`;
 }
 
-function getResearchImageAspectClass(index: number): string {
-  switch (index % 4) {
-    case 1:
-      return "aspect-[0.73]";
-    case 2:
-      return "aspect-[0.75]";
-    case 3:
-      return "aspect-[1.51]";
-    default:
-      return "aspect-[1.58]";
+const defaultResearchImageDimensions = new Map(
+  HEARTFELT_VIDEOS.map((video) => [
+    video.image,
+    {
+      width: video.imageWidth || 1200,
+      height: video.imageHeight || 900,
+    },
+  ]),
+);
+
+function getResearchImageDimensions(video: HeartfeltVideoItem): { width: number; height: number } {
+  if (video.imageWidth && video.imageHeight) {
+    return { width: video.imageWidth, height: video.imageHeight };
   }
+
+  return defaultResearchImageDimensions.get(video.image) || { width: 1200, height: 900 };
 }
 
 function getGalleryImageAspectClass(index: number): string {
@@ -201,8 +206,8 @@ export default async function Home() {
 
       case "researchExhibitions":
         return (
-          <section key={sectionKey} className="bg-[#f7f7f2] px-6 py-24 md:px-10 md:py-36">
-            <div className="mx-auto max-w-[1484px]">
+          <section key={sectionKey} className="bg-[#f7f7f2] px-6 py-24 md:px-12 md:py-36 xl:px-16 2xl:px-20">
+            <div className="mx-auto max-w-[1320px]">
               <div className="mx-auto max-w-3xl text-center">
                 <p
                   className="text-[0.68rem] uppercase tracking-[0.34em] text-black/36"
@@ -224,50 +229,53 @@ export default async function Home() {
                 </p>
               </div>
 
-              <div className="mx-auto mt-24 grid max-w-[1484px] items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-[26px]">
-                {researchItems.map((video, index) => (
-                  <Link
-                    key={video.tag}
-                    href={researchCardHref(video)}
-                    className="group block w-full"
-                  >
-                    <div className={["relative overflow-hidden bg-zinc-200", getResearchImageAspectClass(index)].join(" ")}>
+              <div className="mt-24 grid w-full items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-9">
+                {researchItems.map((video) => {
+                  const imageDimensions = getResearchImageDimensions(video);
+
+                  return (
+                    <Link
+                      key={video.tag}
+                      href={researchCardHref(video)}
+                      className="block w-full min-w-0 self-start"
+                    >
                       <Image
                         src={video.image}
                         alt={video.title}
-                        fill
-                        sizes="(min-width: 1280px) 352px, (min-width: 768px) 42vw, 100vw"
-                        className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                        width={imageDimensions.width}
+                        height={imageDimensions.height}
+                        sizes="(min-width: 1536px) 294px, (min-width: 1280px) calc((100vw - 236px) / 4), (min-width: 768px) calc((100vw - 128px) / 2), calc(100vw - 48px)"
+                        className="block h-auto w-full bg-zinc-200"
                       />
-                    </div>
-                    <div className="mt-5">
-                      <span
-                        className="inline-flex border border-black/12 bg-[#fbfbf8] px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.22em] text-black/48"
-                        style={{ fontFamily: "var(--font-geist-sans)" }}
-                      >
-                        Research
-                      </span>
-                      <h3
-                        className="mt-4 text-[1.32rem] leading-[1.22] tracking-[-0.02em] text-black md:text-[1.48rem]"
-                        style={{ fontFamily: "var(--font-noto-serif)" }}
-                      >
-                        {video.title}
-                      </h3>
-                      <p
-                        className="mt-3 text-[0.94rem] leading-[1.75] text-black/52"
-                        style={{ fontFamily: "var(--font-noto-serif)" }}
-                      >
-                        {video.description}
-                      </p>
-                      <p
-                        className="mt-5 text-[0.68rem] uppercase tracking-[0.2em] text-black/58"
-                        style={{ fontFamily: "var(--font-geist-sans)" }}
-                      >
-                        {video.category} · {video.duration}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                      <div className="mt-5">
+                        <span
+                          className="inline-flex border border-black/12 bg-[#fbfbf8] px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.22em] text-black/48"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
+                          Research
+                        </span>
+                        <h3
+                          className="mt-4 text-[1.32rem] leading-[1.22] tracking-[-0.02em] text-black md:text-[1.48rem]"
+                          style={{ fontFamily: "var(--font-noto-serif)" }}
+                        >
+                          {video.title}
+                        </h3>
+                        <p
+                          className="mt-3 text-[0.94rem] leading-[1.75] text-black/52"
+                          style={{ fontFamily: "var(--font-noto-serif)" }}
+                        >
+                          {video.description}
+                        </p>
+                        <p
+                          className="mt-5 text-[0.68rem] uppercase tracking-[0.2em] text-black/58"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
+                          {video.category} · {video.duration}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
 
               <div className="mt-16 flex justify-end">
