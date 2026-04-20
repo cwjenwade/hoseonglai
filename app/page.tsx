@@ -57,22 +57,23 @@ function groupCardHref(group: GroupItem): string {
   return `/togetherness/${group.slug}`;
 }
 
-const defaultResearchImageDimensions = new Map(
-  HEARTFELT_VIDEOS.map((video) => [
-    video.image,
-    {
-      width: video.imageWidth || 1200,
-      height: video.imageHeight || 900,
-    },
-  ]),
-);
+const homeResearchImageFrames = [
+  { heightClass: "h-[390px]", objectPosition: "center center" },
+  { heightClass: "h-[240px]", objectPosition: "center center" },
+  { heightClass: "h-[320px]", objectPosition: "50% 42%" },
+  { heightClass: "h-[340px]", objectPosition: "50% 38%" },
+];
 
-function getResearchImageDimensions(video: HeartfeltVideoItem): { width: number; height: number } {
-  if (video.imageWidth && video.imageHeight) {
-    return { width: video.imageWidth, height: video.imageHeight };
-  }
+function getHomeResearchImageFrame(
+  video: HeartfeltVideoItem,
+  index: number,
+): { heightClass: string; objectPosition: string } {
+  const fallback = homeResearchImageFrames[index % homeResearchImageFrames.length];
 
-  return defaultResearchImageDimensions.get(video.image) || { width: 1200, height: 900 };
+  return {
+    heightClass: video.homeImage?.heightClass || fallback.heightClass,
+    objectPosition: video.homeImage?.objectPosition || fallback.objectPosition,
+  };
 }
 
 function getGalleryImageAspectClass(index: number): string {
@@ -206,8 +207,8 @@ export default async function Home() {
 
       case "researchExhibitions":
         return (
-          <section key={sectionKey} className="bg-[#f7f7f2] px-6 py-24 md:px-12 md:py-36 xl:px-16 2xl:px-20">
-            <div className="mx-auto max-w-[1320px]">
+          <section key={sectionKey} className="bg-[#f7f7f2] px-6 py-24 md:px-14 md:py-36 xl:px-24 2xl:px-28">
+            <div className="mx-auto max-w-[1160px]">
               <div className="mx-auto max-w-3xl text-center">
                 <p
                   className="text-[0.68rem] uppercase tracking-[0.34em] text-black/36"
@@ -229,9 +230,9 @@ export default async function Home() {
                 </p>
               </div>
 
-              <div className="mt-24 grid w-full items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-9">
-                {researchItems.map((video) => {
-                  const imageDimensions = getResearchImageDimensions(video);
+              <div className="mt-24 grid w-full items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-14 xl:gap-y-28">
+                {researchItems.map((video, index) => {
+                  const homeImageFrame = getHomeResearchImageFrame(video, index);
 
                   return (
                     <Link
@@ -239,14 +240,21 @@ export default async function Home() {
                       href={researchCardHref(video)}
                       className="block w-full min-w-0 self-start"
                     >
-                      <Image
-                        src={video.image}
-                        alt={video.title}
-                        width={imageDimensions.width}
-                        height={imageDimensions.height}
-                        sizes="(min-width: 1536px) 294px, (min-width: 1280px) calc((100vw - 236px) / 4), (min-width: 768px) calc((100vw - 128px) / 2), calc(100vw - 48px)"
-                        className="block h-auto w-full bg-zinc-200"
-                      />
+                      <div
+                        className={[
+                          "relative w-full overflow-hidden bg-zinc-200",
+                          homeImageFrame.heightClass,
+                        ].join(" ")}
+                      >
+                        <Image
+                          src={video.image}
+                          alt={video.title}
+                          fill
+                          sizes="(min-width: 1280px) 248px, (min-width: 768px) calc((100vw - 144px) / 2), calc(100vw - 48px)"
+                          className="object-cover"
+                          style={{ objectPosition: homeImageFrame.objectPosition }}
+                        />
+                      </div>
                       <div className="mt-5">
                         <span
                           className="inline-flex border border-black/12 bg-[#fbfbf8] px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.22em] text-black/48"
