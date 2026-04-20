@@ -202,7 +202,7 @@ export default async function Home() {
       case "researchExhibitions":
         return (
           <section key={sectionKey} className="bg-[#f7f7f2] px-6 py-24 md:px-10 md:py-36">
-            <div className="mx-auto max-w-[1360px]">
+            <div className="mx-auto max-w-[1484px]">
               <div className="mx-auto max-w-3xl text-center">
                 <p
                   className="text-[0.68rem] uppercase tracking-[0.34em] text-black/36"
@@ -287,7 +287,7 @@ export default async function Home() {
       case "groupTherapyGallery":
         return (
           <section key={sectionKey} className="border-t border-black/10 bg-[#f7f7f2] px-6 py-24 md:px-10 md:py-36">
-            <div className="mx-auto max-w-[1360px]">
+            <div className="mx-auto max-w-[1484px]">
               <div className="mx-auto max-w-3xl text-center">
                 <p
                   className="text-[0.68rem] uppercase tracking-[0.34em] text-black/36"
