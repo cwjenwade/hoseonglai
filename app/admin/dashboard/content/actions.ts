@@ -410,14 +410,14 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 		});
 
 		if (project.status === "quantitative" && !project.testUrl) {
-			validationDetails.push(`${projectLabel}：測驗網址`);
+			validationDetails.push(`${projectLabel}：Legacy assessment URL`);
 		}
 
 		if (
 			project.status === "quantitative" &&
 			!String(project.assessmentSourceProjectId || "").trim()
 		) {
-			validationDetails.push(`${projectLabel}：量表來源`);
+			validationDetails.push(`${projectLabel}：Legacy 量表來源`);
 		}
 
 		if (
@@ -432,7 +432,7 @@ export async function saveCollaborativeProjectsContent(formData: FormData) {
 			String(project.assessmentSourceProjectId || "").trim() &&
 			!scaleIds.has(String(project.assessmentSourceProjectId || "").trim())
 		) {
-			validationDetails.push(`${projectLabel}：量表來源不存在`);
+			validationDetails.push(`${projectLabel}：Legacy 量表來源不存在`);
 		}
 
 		if (
@@ -888,7 +888,6 @@ export async function saveResearchConsentsContent(formData: FormData) {
 		redirect(`/admin/dashboard/content?tab=consent&error=save&detail=${detail}`);
 	}
 
-	revalidatePath("/collaborative-prosperity/start");
 	revalidatePath("/admin/dashboard/content");
 	redirect("/admin/dashboard");
 }
@@ -1339,7 +1338,6 @@ export async function saveResearchConsentEntry(formData: FormData) {
 	await saveSiteContentSection("collaborative_prosperity_consents", next);
 
 	revalidatePath("/collaborative-prosperity");
-	revalidatePath("/collaborative-prosperity/start");
 	revalidatePath("/admin/dashboard/content");
 	redirect(buildContentHref("consents", parsed.projectId, { saved: "consents" }));
 }
@@ -1388,7 +1386,7 @@ export async function saveResearchProjectEntry(formData: FormData) {
 			normalized.status === "quantitative" &&
 			(!normalized.assessmentSourceProjectId || !scaleIds.has(normalized.assessmentSourceProjectId))
 		) {
-			redirect(buildContentHref("research-projects", originalKey || normalized.id || undefined, { error: "missing", detail: "量表來源需對應既有 psychometrics。" }));
+			redirect(buildContentHref("research-projects", originalKey || normalized.id || undefined, { error: "missing", detail: "Legacy 量表來源需對應既有 psychometrics。" }));
 		}
 
 		if (
@@ -1544,7 +1542,7 @@ export async function saveResearchWorkspaceEntry(formData: FormData) {
 	}
 
 	if (project.publishStatus === "published") {
-		const missingFields = validateResearchWorkspace(project, consent, assessment, scheduling);
+		const missingFields = validateResearchWorkspace(project, consent);
 		if (missingFields.length > 0) {
 			redirect(buildContentHref("research-projects", originalKey || project.id, {
 				error: "missing",
@@ -1592,8 +1590,6 @@ export async function saveResearchWorkspaceEntry(formData: FormData) {
 
 	revalidatePath("/collaborative-prosperity");
 	revalidatePath(`/collaborative-prosperity/${project.id}`);
-	revalidatePath("/collaborative-prosperity/start");
-	revalidatePath(`/collaborative-prosperity/tests/${project.id}`);
 	revalidatePath("/admin/dashboard/content");
 	redirect(buildContentHref("research-projects", project.id, {
 		saved: "research-projects",
@@ -1649,12 +1645,7 @@ export async function setResearchWorkspacePublishStatus(formData: FormData) {
 			currentAssessments,
 			currentScheduling,
 		);
-		const missingFields = validateResearchWorkspace(
-			workspace.project,
-			workspace.consent,
-			workspace.researchType === "quantitative" ? workspace.assessment : null,
-			workspace.researchType === "qualitative" ? workspace.scheduling : null,
-		);
+		const missingFields = validateResearchWorkspace(workspace.project, workspace.consent);
 
 		if (missingFields.length > 0) {
 			redirect(
@@ -1674,8 +1665,6 @@ export async function setResearchWorkspacePublishStatus(formData: FormData) {
 
 	revalidatePath("/collaborative-prosperity");
 	revalidatePath(`/collaborative-prosperity/${projectId}`);
-	revalidatePath(`/collaborative-prosperity/tests/${projectId}`);
-	revalidatePath("/collaborative-prosperity/start");
 	revalidatePath("/admin/dashboard/content");
 	redirect(buildContentHref("research-projects", undefined, { saved: "research-projects" }));
 }

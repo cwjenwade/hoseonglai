@@ -29,7 +29,7 @@ export default function PsychometricScalesEditor({ initialScales }: Psychometric
         <div>
           <h2 className="text-xl font-semibold text-zinc-900">心理量表資料庫</h2>
           <p className="mt-1 text-sm text-zinc-600">
-            管理量表題項與量尺選項。Collaborative Prosperity 的 Quantitative 專案可直接選用這裡的既有量表。
+            Legacy：保留舊站內量表題項與量尺選項；前台主流程已改為 Google Form。
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export default function PsychometricScalesEditor({ initialScales }: Psychometric
           <article key={`${scale.projectId}-${scaleIndex}`} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
             <div className="grid gap-3 md:grid-cols-2">
               <label className="text-xs text-zinc-700">
-                專案 ID（對應 tests/[projectId]）
+                Legacy 專案 ID
                 <input
                   value={scale.projectId}
                   onChange={(e) =>
@@ -87,7 +87,7 @@ export default function PsychometricScalesEditor({ initialScales }: Psychometric
             </div>
 
             <p className="mt-2 text-xs text-zinc-500">
-              受試者填寫頁：/collaborative-prosperity/tests/{scale.projectId || "<projectId>"}
+              Legacy assessment project ID：{scale.projectId || "<projectId>"}
             </p>
 
             <label className="mt-3 block text-xs text-zinc-700">

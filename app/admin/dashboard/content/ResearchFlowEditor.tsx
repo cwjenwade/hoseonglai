@@ -14,9 +14,9 @@ export default function ResearchFlowEditor({ initialContent }: ResearchFlowEdito
   return (
     <div className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
       <div>
-        <h3 className="text-base font-semibold text-zinc-900">Email 回流頁（start）文案編輯</h3>
+        <h3 className="text-base font-semibold text-zinc-900">Legacy Email 回流頁（start）文案編輯</h3>
         <p className="mt-1 text-xs text-zinc-600">
-          對應受試者從 email 點回來的頁面：/collaborative-prosperity/start?token=...
+          Deprecated：前台主流程已改為 Google Form；此內容僅保留給歷史 token flow。
         </p>
       </div>
 

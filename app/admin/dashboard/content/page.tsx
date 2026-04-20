@@ -250,7 +250,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		{
 			key: "home",
 			title: "Home",
-			description: "首頁功能卡、最新更新與 CTA。",
+			description: "首頁控制層：hero、section、選取項目與 CTA。",
 			count: 1,
 			lastUpdated: homeContent.updatedAt || "",
 			singleton: true,
@@ -290,7 +290,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 		{
 			key: "research-projects",
 			title: "Research Workspace",
-			description: "整合同一研究的 project settings、consent、assessment / scheduling。",
+			description: "整合同一研究的 project settings、consent 與 Google Form 導流。",
 			count: researchWorkspaces.length,
 			lastUpdated: getLatestUpdated(researchProjects),
 			singleton: false,
@@ -647,12 +647,8 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 													tone={workspace.readiness.flowComplete ? "visible" : "draft"}
 													label={
 														workspace.readiness.flowComplete
-															? workspace.researchType === "quantitative"
-																? "Assessment ready"
-																: "Scheduling ready"
-															: workspace.researchType === "quantitative"
-																? "Assessment missing"
-																: "Scheduling missing"
+															? "Legacy flow retained"
+															: "Legacy flow missing"
 													}
 												/>
 												<StatusBadge
@@ -920,6 +916,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 								participationDetails: "",
 								researchAudiencePurpose: "",
 								testUrl: "",
+								googleFormUrl: "",
 								assessmentSourceProjectId: "",
 								consentSourceProjectId: "",
 								contactVisibility: "admin_only" as const,
@@ -1025,8 +1022,8 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 												}`}
 											>
 												{summaryResearchType === "quantitative"
-													? "Assessment"
-													: "Scheduling / Time Selection"}
+													? "Legacy Assessment"
+													: "Legacy Scheduling"}
 											</Link>
 										</div>
 									</section>
@@ -1064,7 +1061,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 															href={`/admin/dashboard/content?module=research-projects&item=${encodeURIComponent(activeItem)}&researchTab=flow`}
 															className="rounded-full border border-red-300 px-3 py-1.5 text-xs text-red-700 transition hover:bg-red-100"
 														>
-															{summaryResearchType === "quantitative" ? "Assessment" : "Scheduling"} ({groupedMissingFields.flow.length})
+															Legacy flow ({groupedMissingFields.flow.length})
 														</Link>
 													) : null}
 												</div>

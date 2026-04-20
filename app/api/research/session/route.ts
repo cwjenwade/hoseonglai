@@ -6,6 +6,8 @@ import {
 } from "@/lib/research-registration";
 import { enforceRateLimit, getRequestIp } from "@/lib/rate-limit";
 
+// Deprecated: retained for historical token/session links.
+// Current frontend participation entry is the project Google Form CTA.
 export async function GET(req: NextRequest) {
   try {
     const ip = getRequestIp(req);

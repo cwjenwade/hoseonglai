@@ -75,10 +75,7 @@ export function createDefaultScheduling(project: ResearchProject): ResearchSched
 export function validateResearchWorkspace(
   project: ResearchProject,
   consent: ResearchConsent,
-  assessment: PsychometricScale | null,
-  scheduling: ResearchScheduling | null,
 ): string[] {
-  const researchType = getResearchProjectType(project);
   const missingFields: string[] = [];
 
   if (!String(project.id || "").trim()) missingFields.push("Project Settings：專案 ID");
@@ -90,6 +87,7 @@ export function validateResearchWorkspace(
   if (!String(project.researchContact || "").trim()) missingFields.push("Project Settings：C. 研究聯絡人");
   if (!String(project.participationDetails || "").trim()) missingFields.push("Project Settings：D. 參與方式與時間");
   if (!String(project.researchAudiencePurpose || "").trim()) missingFields.push("Project Settings：E. 研究對象與目的");
+  if (!String(project.googleFormUrl || "").trim()) missingFields.push("Project Settings：Google Form URL");
 
   if (!String(consent.projectId || "").trim()) missingFields.push("Consent：projectId");
   if (!String(consent.projectTitleZh || "").trim()) missingFields.push("Consent：中文標題");
@@ -98,32 +96,6 @@ export function validateResearchWorkspace(
   if (!String(consent.researchUnit || "").trim()) missingFields.push("Consent：研究單位");
   if (!String(consent.researchDescription || "").trim()) missingFields.push("Consent：研究說明");
   if (!String(consent.pdfUrl || "").trim()) missingFields.push("Consent：PDF");
-
-  if (researchType === "quantitative") {
-    if (!assessment) {
-      missingFields.push("Assessment：尚未建立量表");
-    } else {
-      if (!String(assessment.scalePrompt || "").trim()) missingFields.push("Assessment：量尺說明");
-      if (!Array.isArray(assessment.options) || assessment.options.filter(Boolean).length < 2) {
-        missingFields.push("Assessment：至少兩個量尺選項");
-      }
-      if (!Array.isArray(assessment.questions) || assessment.questions.filter(Boolean).length < 1) {
-        missingFields.push("Assessment：至少一題量表題目");
-      }
-    }
-  } else {
-    if (!scheduling) {
-      missingFields.push("Scheduling：尚未建立時段設定");
-    } else {
-      if (!String(scheduling.schedulingPrompt || "").trim()) missingFields.push("Scheduling：時段說明");
-      if (
-        !Array.isArray(scheduling.availabilitySlots) ||
-        scheduling.availabilitySlots.filter(Boolean).length < 1
-      ) {
-        missingFields.push("Scheduling：至少一個可選時段");
-      }
-    }
-  }
 
   return missingFields;
 }
@@ -144,12 +116,7 @@ export function buildResearchWorkspace(
   const scheduling =
     schedulingConfigs.find((item) => item.projectId === project.id) ||
     (researchType === "qualitative" ? createDefaultScheduling(project) : null);
-  const missingFields = validateResearchWorkspace(
-    project,
-    consent,
-    researchType === "quantitative" ? assessment : null,
-    researchType === "qualitative" ? scheduling : null,
-  );
+  const missingFields = validateResearchWorkspace(project, consent);
 
   return {
     projectId: project.id,

@@ -5,12 +5,10 @@ import {
   DEFAULT_RESEARCH_CONSENTS,
   type ResearchConsent,
 } from "../consent-data";
-import PreparingWaitingListForm from "../PreparingWaitingListForm";
-import ResearchEnrollForm from "../ResearchEnrollForm";
 import {
   RESEARCH_PROJECTS,
   getResearchProjectConsentSourceId,
-  getProjectContactVisibilityLabel,
+  getResearchProjectGoogleFormUrl,
   getProjectStatusLabel,
   normalizeResearchProjects,
 } from "../projects";
@@ -48,6 +46,7 @@ export default async function CollaborativeProjectDetailPage({
   const principalInvestigator =
     project.principalInvestigator || consent?.principalInvestigator || "待補充";
   const researchContact = project.researchContact || consent?.researchUnit || "待補充";
+  const googleFormUrl = getResearchProjectGoogleFormUrl(project);
 
   const showPdfReader =
     (project.status === "quantitative" || project.status === "qualitative") &&
@@ -222,10 +221,10 @@ export default async function CollaborativeProjectDetailPage({
                 style={{ fontFamily: "var(--font-serif)" }}
               >
                 {project.status === "preparing"
-                  ? "留下 email 先加入 waiting list"
+                  ? "透過 Google Form 加入 waiting list"
                   : project.status === "quantitative"
-                    ? "閱讀文件後，繼續研究流程"
-                    : "閱讀文件後，完成質性研究報名"}
+                    ? "閱讀文件後，前往 Google Form"
+                    : "閱讀文件後，完成 Google Form"}
               </h2>
 
               <p
@@ -233,10 +232,10 @@ export default async function CollaborativeProjectDetailPage({
                 style={{ fontFamily: "var(--font-serif)" }}
               >
                 {project.status === "preparing"
-                  ? "這個研究目前處於準備階段。我們會先蒐集有意願參與的 email，待研究正式開放後再通知你。"
+                  ? "這個研究目前處於準備階段。請透過研究專屬 Google Form 留下參與意願。"
                   : project.status === "quantitative"
-                    ? "量化研究會沿用目前心理量表流程。你送出後會直接進入研究同意與量表頁，參與者 email 僅 admin 可見。"
-                    : "質性研究送出後，研究主持人可依你提供的 email 與你聯繫，安排後續訪談或研究步驟。"}
+                    ? "量化研究的參與資料將統一由研究專屬 Google Form 收集。"
+                    : "質性研究的報名與後續聯繫資料將統一由研究專屬 Google Form 收集。"}
               </p>
 
               <div className="mt-6 rounded-2xl border border-neutral-300/60 bg-[#f7f5ef] p-4">
@@ -244,21 +243,34 @@ export default async function CollaborativeProjectDetailPage({
                   className="text-[0.64rem] uppercase tracking-[0.28em] text-neutral-400"
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
-                  Email visibility
+                  Participation form
                 </p>
                 <p
                   className="mt-2 text-[0.98rem] leading-[1.8] text-neutral-700"
                   style={{ fontFamily: "var(--font-serif)" }}
                 >
-                  {getProjectContactVisibilityLabel(project.contactVisibility)}
+                  {googleFormUrl ? "Google Form is ready." : "Google Form 尚未設定，請先到後台補上連結。"}
                 </p>
               </div>
 
               <div className="mt-8">
-                {project.status === "preparing" ? (
-                  <PreparingWaitingListForm project={project} />
+                {googleFormUrl ? (
+                  <a
+                    href={googleFormUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 items-center justify-center border border-neutral-900 px-6 text-[0.72rem] uppercase tracking-[0.22em] text-neutral-900 transition hover:bg-neutral-900 hover:text-[#f3f3f2]"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    Open Google Form
+                  </a>
                 ) : (
-                  <ResearchEnrollForm project={project} />
+                  <span
+                    className="inline-flex min-h-11 cursor-not-allowed items-center justify-center border border-neutral-900 px-6 text-[0.72rem] uppercase tracking-[0.22em] text-neutral-900 opacity-50"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    Google Form not set
+                  </span>
                 )}
               </div>
             </aside>

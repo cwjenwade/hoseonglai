@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ResearchProject } from "./projects";
 
+// Deprecated: retained for historical in-app research flow only.
+// Current frontend participation entry is the project Google Form CTA.
 type Props = {
   project: ResearchProject;
 };

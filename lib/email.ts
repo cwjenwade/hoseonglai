@@ -7,6 +7,7 @@ type SendResearchJoinEmailParams = {
   startUrl: string;
 };
 
+// Deprecated: legacy token-flow email retained for historical API compatibility.
 export async function sendResearchJoinEmail({
   to,
   name,

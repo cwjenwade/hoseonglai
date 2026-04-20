@@ -24,6 +24,8 @@ type SubmitPayload = {
   answers: number[];
 };
 
+// Deprecated: retained for historical assessment submissions.
+// Current frontend participation entry is the project Google Form CTA.
 export async function POST(req: NextRequest) {
   try {
     const ip = getRequestIp(req);

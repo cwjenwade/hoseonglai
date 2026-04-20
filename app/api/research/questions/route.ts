@@ -10,6 +10,8 @@ import {
   normalizeResearchProjects,
 } from "@/app/collaborative-prosperity/projects";
 
+// Deprecated: retained for historical assessment clients.
+// Current frontend participation entry is the project Google Form CTA.
 export async function GET(req: NextRequest) {
   try {
     const projectId = (req.nextUrl.searchParams.get("projectId") || "").trim();

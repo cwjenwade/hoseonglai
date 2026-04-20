@@ -10,6 +10,8 @@ import type {
   ResearchProjectStatus,
 } from "@/app/collaborative-prosperity/projects";
 
+// Deprecated: retained for historical registrations and direct legacy clients.
+// Current frontend participation entry is the project Google Form CTA.
 type JoinPayload = {
   projectId: string;
   projectTitle: string;

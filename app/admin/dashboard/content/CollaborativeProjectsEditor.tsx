@@ -13,6 +13,7 @@ import {
   type ResearchProjectStatus,
 } from "@/app/collaborative-prosperity/projects";
 
+// Deprecated: retained for legacy bulk project editing. The active research workspace uses Google Form routing.
 type CollaborativeProjectsEditorProps = {
   initialProjects: ResearchProject[];
   scales: PsychometricScale[];
@@ -36,11 +37,11 @@ const STATUS_LABELS: Record<ResearchProjectStatus, string> = {
 };
 
 const STATUS_HELP: Record<ResearchProjectStatus, string> = {
-  preparing: "只顯示 A-E 與 waiting list email 蒐集，不會出現 PDF 或量表流程。",
+  preparing: "只顯示 A-E 與 Google Form 導流，不會出現 PDF 或舊量表流程。",
   quantitative:
-    "會顯示 PDF、知情同意與心理量表流程。只有這個狀態會出現量表設定。",
+    "會顯示 PDF 與 Google Form 導流；舊量表設定僅保留歷史資料。",
   qualitative:
-    "會顯示 PDF 與知情同意，完成後供 PI 後續聯繫，不會出現心理量表設定。",
+    "會顯示 PDF 與 Google Form 導流，後續聯繫由外部表單資料承接。",
 };
 
 const STATUS_TONES: Record<ResearchProjectStatus, string> = {
@@ -172,7 +173,7 @@ function validateProjects(
     if (project.status === "quantitative") {
       checks.push([
         "assessmentSourceProjectId",
-        "量表來源（需從 psychometrics 選擇）",
+        "Legacy 量表來源（需從 psychometrics 選擇）",
         project.assessmentSourceProjectId || "",
       ]);
     }
@@ -205,7 +206,7 @@ function validateProjects(
         projectId: project.id,
         projectTitle,
         field: "assessmentSourceProjectId",
-        label: "量表來源不存在，請重新從 psychometrics 選擇",
+        label: "Legacy 量表來源不存在，請重新從 psychometrics 選擇",
       });
     }
 
@@ -427,8 +428,7 @@ export default function CollaborativeProjectsEditor({
               Collaborative Prosperity Editor
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
-              用狀態驅動的方式管理研究專案。Preparing 只收 waiting list，Quantitative
-              才會出現量表設定，Qualitative 則保留 PI 聯繫流程。
+              Legacy bulk editor：目前前台主流程已改為 Google Form，這裡保留舊站內量表與關聯資料。
             </p>
           </div>
 
@@ -865,18 +865,17 @@ export default function CollaborativeProjectsEditor({
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h4 className="text-base font-semibold text-sky-950">
-                          Quantitative 量表設定
+                          Legacy quantitative data
                         </h4>
                         <p className="mt-2 text-sm leading-6 text-sky-800">
-                          這裡只在 Quantitative 狀態出現，而且量表必須直接指定你在 psychometrics
-                          模組裡建立好的既有量表。
+                          舊站內量表設定僅保留歷史資料；前台主流程已改為 Google Form。
                         </p>
                       </div>
                     </div>
 
                     <div className="mt-5 rounded-2xl border border-sky-200 bg-white p-4">
                       <p className="text-xs uppercase tracking-[0.18em] text-sky-700">
-                        受試者測驗網址
+                        Legacy assessment URL
                       </p>
                       <input
                         value={getResearchProjectTestUrl(activeProject.id)}
@@ -884,13 +883,13 @@ export default function CollaborativeProjectsEditor({
                         className="mt-2 h-11 w-full rounded-xl border border-sky-200 bg-sky-50 px-3 text-sm text-sky-900 outline-none"
                       />
                       <p className="mt-2 text-xs text-sky-700">
-                        測驗網址由 project ID 自動生成，避免手動填錯。
+                        Deprecated：前台主流程已改為 Google Form，舊 assessment URL 僅保留歷史資料。
                       </p>
                     </div>
 
                     <div className="mt-4 rounded-2xl border border-sky-200 bg-white p-4">
                       <label className="text-xs font-medium text-zinc-700">
-                        量表來源
+                        Legacy 量表來源
                         <select
                           value={activeProject.assessmentSourceProjectId || ""}
                           onChange={(event) =>
@@ -938,17 +937,15 @@ export default function CollaborativeProjectsEditor({
                         href="/admin/dashboard/content?tab=psychometrics"
                         className="mt-4 inline-flex text-sm font-medium text-sky-700 underline underline-offset-4"
                       >
-                        直接前往心理量表編輯器
+                        前往 legacy 量表資料庫
                       </a>
                     </div>
                   </article>
                 ) : (
                   <article className="rounded-[28px] border border-dashed border-zinc-300 bg-zinc-50 p-6">
-                    <h4 className="text-base font-semibold text-zinc-900">量表設定</h4>
+                    <h4 className="text-base font-semibold text-zinc-900">Legacy 量表設定</h4>
                     <p className="mt-2 text-sm leading-6 text-zinc-600">
-                      只有當狀態是 <span className="font-semibold">Quantitative</span>
-                      時，才會顯示量表網址與量表來源選擇。這樣可以避免 Preparing /
-                      Qualitative 狀態下出現不必要的測驗設定。
+                      舊站內量表設定只保留給歷史資料；前台主流程已改為 Google Form。
                     </p>
                   </article>
                 )}
@@ -976,7 +973,7 @@ export default function CollaborativeProjectsEditor({
                     </div>
                     <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                       <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-                        Assessment source
+                        Legacy assessment source
                       </p>
                       <p className="mt-2 break-all text-zinc-900">
                         {activeProject.status === "quantitative"

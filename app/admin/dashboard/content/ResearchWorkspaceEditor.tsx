@@ -268,6 +268,11 @@ export default function ResearchWorkspaceEditor({
               <textarea value={project.description} onChange={(event) => updateProject({ description: event.target.value })} className="mt-1 h-28 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none focus:border-zinc-900" />
             </label>
 
+            <label className="mt-4 block text-xs font-medium text-zinc-700">
+              Google Form URL
+              <input value={project.googleFormUrl || ""} onChange={(event) => updateProject({ googleFormUrl: event.target.value })} className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900" />
+            </label>
+
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <label className="text-xs font-medium text-zinc-700">
                 A. 研究主題
@@ -365,9 +370,9 @@ export default function ResearchWorkspaceEditor({
       {activeTab === "flow" ? (
         researchType === "quantitative" ? (
           <>
-            <EditorSection title="Assessment" description="Quantitative 研究才顯示 assessment；前台 `tests/[projectId]` 仍會吃同一組資料。">
+            <EditorSection title="Legacy Assessment" description="舊站內量表資料仍可保留；前台主流程已改為 Google Form 導流。">
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">測驗網址</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Legacy assessment URL</p>
                 <p className="mt-2 break-all text-sm text-zinc-900">{getResearchProjectTestUrl(project.id)}</p>
               </div>
 
@@ -399,7 +404,7 @@ export default function ResearchWorkspaceEditor({
           </>
         ) : (
           <>
-            <EditorSection title="Scheduling / Time Selection" description="Qualitative 研究不顯示量表，改用研究專屬時段勾選。">
+            <EditorSection title="Legacy Scheduling / Time Selection" description="舊站內時段資料仍可保留；前台主流程已改為 Google Form 導流。">
               <label className="block text-xs font-medium text-zinc-700">
                 時段說明
                 <textarea value={syncedPayloads.scheduling?.schedulingPrompt || ""} onChange={(event) => setScheduling((prev) => ({ ...(prev || syncedPayloads.scheduling!), schedulingPrompt: event.target.value }))} className="mt-1 h-28 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none focus:border-zinc-900" />

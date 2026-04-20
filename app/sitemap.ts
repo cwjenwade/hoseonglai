@@ -10,7 +10,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/fortune-arrives",
     "/togetherness",
     "/collaborative-prosperity",
-    "/collaborative-prosperity/start",
   ];
 
   return routes.map((route) => ({

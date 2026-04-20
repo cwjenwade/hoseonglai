@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { HomePageContent } from "@/app/home-content";
+import {
+  HOME_SECTION_DISPLAY_MODES,
+  HOME_SECTION_SELECTED_ID_HINTS,
+  type HomePageContent,
+  type HomeSectionCallToAction,
+  type HomeSectionControl,
+} from "@/app/home-content";
 import type { BrandPageContent } from "@/app/brand-philosophy/brand-content";
 import type { HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
 import type { LectureItem } from "@/app/fortune-arrives/lectures-data";
@@ -49,184 +55,187 @@ export function HomePageEditor({ initialContent }: { initialContent: HomePageCon
   const [content, setContent] = useState<HomePageContent>(initialContent);
   const payload = useMemo(() => content, [content]);
 
+  function updateSection(index: number, updates: Partial<HomeSectionControl>) {
+    setContent((prev) => ({
+      ...prev,
+      sections: updateListItem(prev.sections, index, {
+        ...prev.sections[index],
+        ...updates,
+      }),
+    }));
+  }
+
+  function updateSectionCta(
+    sectionIndex: number,
+    ctaIndex: number,
+    updates: Partial<HomeSectionCallToAction>,
+  ) {
+    const section = content.sections[sectionIndex];
+    updateSection(sectionIndex, {
+      ctas: updateListItem(section.ctas, ctaIndex, {
+        ...section.ctas[ctaIndex],
+        ...updates,
+      }),
+    });
+  }
+
   return (
     <div className="space-y-5">
       <EditorSection
-        title="首頁功能卡片"
-        description="維持前台原有四張功能卡，只把內容來源移到後台管理。"
+        title="Hero"
+        description="首頁 hero 只控制影片來源與顯示狀態，不管理其他內容模組。"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={content.hero.visible}
+              onChange={(event) =>
+                setContent((prev) => ({
+                  ...prev,
+                  hero: { ...prev.hero, visible: event.target.checked },
+                }))
+              }
+              className="h-4 w-4 accent-zinc-900"
+            />
+            <span>顯示首頁影片 hero</span>
+          </label>
+          <label className="text-xs font-medium text-zinc-700">
+            Hero eyebrow
+            <input
+              value={content.hero.eyebrow}
+              onChange={(event) =>
+                setContent((prev) => ({
+                  ...prev,
+                  hero: { ...prev.hero, eyebrow: event.target.value },
+                }))
+              }
+              className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
+            />
+          </label>
+        </div>
+        <label className="mt-4 block text-xs font-medium text-zinc-700">
+          Hero video src
+          <input
+            value={content.hero.videoSrc}
+            onChange={(event) =>
+              setContent((prev) => ({
+                ...prev,
+                hero: { ...prev.hero, videoSrc: event.target.value },
+              }))
+            }
+            className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
+          />
+        </label>
+      </EditorSection>
+
+      <EditorSection
+        title="首頁 Section 控制"
+        description="只控制首頁顯示、排序、選取項目與 CTA；內容本體仍由各自模組管理。selectedIds 留空或找不到時，會沿用首頁既有 fallback。displayMode 目前只作為控制層記錄，不改變前台版型。"
       >
         <div className="space-y-4">
-          {content.platformFeatures.map((feature, index) => (
-            <div key={`${feature.href}-${index}`} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="text-xs font-medium text-zinc-700">
-                  卡片標題
+          {content.sections.map((section, sectionIndex) => (
+            <div key={section.key} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+              <div className="grid gap-3 md:grid-cols-4">
+                <label className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm text-zinc-700">
                   <input
-                    value={feature.title}
+                    type="checkbox"
+                    checked={section.visible}
                     onChange={(event) =>
-                      setContent((prev) => ({
-                        ...prev,
-                        platformFeatures: updateListItem(prev.platformFeatures, index, {
-                          ...feature,
-                          title: event.target.value,
-                        }),
-                      }))
+                      updateSection(sectionIndex, { visible: event.target.checked })
+                    }
+                    className="h-4 w-4 accent-zinc-900"
+                  />
+                  <span>{section.key}</span>
+                </label>
+                <label className="text-xs font-medium text-zinc-700">
+                  排序
+                  <input
+                    type="number"
+                    value={section.order}
+                    onChange={(event) =>
+                      updateSection(sectionIndex, { order: Number(event.target.value) })
                     }
                     className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
                   />
                 </label>
-                <label className="text-xs font-medium text-zinc-700">
-                  連結
-                  <input
-                    value={feature.href}
+                <label className="text-xs font-medium text-zinc-700 md:col-span-2">
+                  Display mode
+                  <select
+                    value={section.displayMode}
                     onChange={(event) =>
-                      setContent((prev) => ({
-                        ...prev,
-                        platformFeatures: updateListItem(prev.platformFeatures, index, {
-                          ...feature,
-                          href: event.target.value,
-                        }),
-                      }))
+                      updateSection(sectionIndex, {
+                        displayMode: event.target.value as HomeSectionControl["displayMode"],
+                      })
                     }
-                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                  />
+                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-900"
+                  >
+                    {HOME_SECTION_DISPLAY_MODES.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
+
               <label className="mt-3 block text-xs font-medium text-zinc-700">
-                描述
+                selectedIds
                 <textarea
-                  value={feature.description}
+                  value={section.selectedIds.join("\n")}
                   onChange={(event) =>
-                    setContent((prev) => ({
-                      ...prev,
-                      platformFeatures: updateListItem(prev.platformFeatures, index, {
-                        ...feature,
-                        description: event.target.value,
-                      }),
-                    }))
+                    updateSection(sectionIndex, {
+                      selectedIds: event.target.value
+                        .split("\n")
+                        .map((value) => value.trim())
+                        .filter(Boolean),
+                    })
                   }
                   className="mt-1 h-24 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none focus:border-zinc-900"
                 />
+                <span className="mt-1 block text-xs leading-5 text-zinc-500">
+                  {HOME_SECTION_SELECTED_ID_HINTS[section.key]}
+                </span>
               </label>
-            </div>
-          ))}
-        </div>
-      </EditorSection>
 
-      <EditorSection title="最新更新卡片" description="控制首頁最新研究與內容列表。">
-        <div className="space-y-4">
-          {content.recentUpdates.map((item, index) => (
-            <div key={item.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <div className="grid gap-3 md:grid-cols-3">
-                <label className="text-xs font-medium text-zinc-700">
-                  ID
-                  <input
-                    value={item.id}
-                    onChange={(event) =>
-                      setContent((prev) => ({
-                        ...prev,
-                        recentUpdates: updateListItem(prev.recentUpdates, index, {
-                          ...item,
-                          id: event.target.value,
-                        }),
-                      }))
-                    }
-                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                  />
-                </label>
-                <label className="text-xs font-medium text-zinc-700">
-                  標籤
-                  <input
-                    value={item.tag}
-                    onChange={(event) =>
-                      setContent((prev) => ({
-                        ...prev,
-                        recentUpdates: updateListItem(prev.recentUpdates, index, {
-                          ...item,
-                          tag: event.target.value,
-                        }),
-                      }))
-                    }
-                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                  />
-                </label>
-                <label className="text-xs font-medium text-zinc-700">
-                  連結
-                  <input
-                    value={item.href || ""}
-                    onChange={(event) =>
-                      setContent((prev) => ({
-                        ...prev,
-                        recentUpdates: updateListItem(prev.recentUpdates, index, {
-                          ...item,
-                          href: event.target.value,
-                        }),
-                      }))
-                    }
-                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                  />
-                </label>
-              </div>
-              <label className="mt-3 block text-xs font-medium text-zinc-700">
-                標題
-                <input
-                  value={item.title}
-                  onChange={(event) =>
-                    setContent((prev) => ({
-                      ...prev,
-                      recentUpdates: updateListItem(prev.recentUpdates, index, {
-                        ...item,
-                        title: event.target.value,
-                      }),
-                    }))
-                  }
-                  className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                />
-              </label>
-            </div>
-          ))}
-        </div>
-      </EditorSection>
-
-      <EditorSection title="主要 CTA" description="維持 Hero 下方三顆按鈕的內容與連結。">
-        <div className="grid gap-4 md:grid-cols-3">
-          {content.primaryCallToActions.map((item, index) => (
-            <div key={`${item.variant}-${index}`} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                {item.variant}
-              </p>
-              <label className="mt-3 block text-xs font-medium text-zinc-700">
-                按鈕文字
-                <input
-                  value={item.label}
-                  onChange={(event) =>
-                    setContent((prev) => ({
-                      ...prev,
-                      primaryCallToActions: updateListItem(prev.primaryCallToActions, index, {
-                        ...item,
-                        label: event.target.value,
-                      }),
-                    }))
-                  }
-                  className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                />
-              </label>
-              <label className="mt-3 block text-xs font-medium text-zinc-700">
-                連結
-                <input
-                  value={item.href}
-                  onChange={(event) =>
-                    setContent((prev) => ({
-                      ...prev,
-                      primaryCallToActions: updateListItem(prev.primaryCallToActions, index, {
-                        ...item,
-                        href: event.target.value,
-                      }),
-                    }))
-                  }
-                  className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                />
-              </label>
+              {section.ctas.length > 0 ? (
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  {section.ctas.map((cta, ctaIndex) => (
+                    <div key={`${section.key}-${cta.key}`} className="rounded-xl border border-zinc-200 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                        {cta.key}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-zinc-500">
+                        CTA label / href 留空或格式無效時，會回到 Home module 預設值。
+                      </p>
+                      <label className="mt-2 block text-xs font-medium text-zinc-700">
+                        CTA label
+                        <input
+                          value={cta.label}
+                          onChange={(event) =>
+                            updateSectionCta(sectionIndex, ctaIndex, {
+                              label: event.target.value,
+                            })
+                          }
+                          className="mt-1 h-10 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
+                        />
+                      </label>
+                      <label className="mt-2 block text-xs font-medium text-zinc-700">
+                        CTA href
+                        <input
+                          value={cta.href}
+                          onChange={(event) =>
+                            updateSectionCta(sectionIndex, ctaIndex, {
+                              href: event.target.value,
+                            })
+                          }
+                          className="mt-1 h-10 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
@@ -855,11 +864,11 @@ export function ResearchProjectItemEditor({
           />
 
           <RelationPicker
-            label="Assessment source"
+            label="Legacy assessment source"
             value={quantitative ? item.assessmentSourceProjectId || "" : ""}
             options={scaleOptions}
-            emptyLabel={quantitative ? "請選擇 psychometric scale" : "只有 Quantitative 需要量表"}
-            helper="只有 Quantitative 會對應量表，且測驗網址會依專案 ID 自動生成。"
+            emptyLabel={quantitative ? "請選擇 legacy psychometric scale" : "只有 legacy Quantitative 需要量表"}
+            helper="Deprecated：舊站內量表來源僅保留歷史資料；前台主流程已改為 Google Form。"
             onChange={(value) => setItem({ ...item, assessmentSourceProjectId: value })}
           />
         </div>
@@ -872,7 +881,7 @@ export function ResearchProjectItemEditor({
             </p>
           </div>
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Test URL</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Legacy assessment URL</p>
             <p className="mt-2 break-all text-sm text-zinc-900">
               {quantitative ? getResearchProjectTestUrl(item.id) : "不啟用"}
             </p>

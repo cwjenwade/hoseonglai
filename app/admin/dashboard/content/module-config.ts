@@ -2,7 +2,7 @@ export const CONTENT_MODULES = [
   {
     key: "home",
     title: "Home",
-    description: "首頁功能卡片、最新更新與 CTA 區塊。",
+    description: "首頁 hero、section 顯示排序、選取項目與首頁 CTA 控制層。",
     singleton: true,
     createLabel: "編輯首頁",
   },
@@ -37,7 +37,7 @@ export const CONTENT_MODULES = [
   {
     key: "research-projects",
     title: "Research Workspace",
-    description: "單一研究工作台，整合 project settings、consent、assessment / scheduling。",
+    description: "單一研究工作台，整合 project settings、consent 與 Google Form 導流。",
     singleton: false,
     createLabel: "新增研究專案",
   },

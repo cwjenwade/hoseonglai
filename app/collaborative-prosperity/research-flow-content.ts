@@ -1,3 +1,4 @@
+// Deprecated: retained for historical token-flow copy only.
 export type ResearchFlowContent = {
   invalidEyebrow: string;
   invalidTitle: string;
