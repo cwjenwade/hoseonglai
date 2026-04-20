@@ -2,7 +2,7 @@ export const CONTENT_MODULES = [
   {
     key: "home",
     title: "Home",
-    description: "首頁 hero、section 顯示排序、選取項目與首頁 CTA 控制層。",
+    description: "首頁 hero、positioning banner、research exhibitions、group therapy gallery 與 support CTA 控制層。",
     singleton: true,
     createLabel: "編輯首頁",
   },

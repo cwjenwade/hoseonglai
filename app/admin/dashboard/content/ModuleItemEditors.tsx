@@ -131,7 +131,7 @@ export function HomePageEditor({ initialContent }: { initialContent: HomePageCon
 
       <EditorSection
         title="首頁 Section 控制"
-        description="只控制首頁顯示、排序、選取項目與 CTA；內容本體仍由各自模組管理。selectedIds 留空或找不到時，會沿用首頁既有 fallback。displayMode 目前只作為控制層記錄，不改變前台版型。"
+        description="只控制首頁顯示、排序、首頁專屬文案、選取項目與 CTA；內容本體仍由 research videos、groups、research projects 與 brand module 管理。selectedIds 留空或找不到時，會沿用該 section 的 fallback。"
       >
         <div className="space-y-4">
           {content.sections.map((section, sectionIndex) => (
@@ -178,6 +178,43 @@ export function HomePageEditor({ initialContent }: { initialContent: HomePageCon
                   </select>
                 </label>
               </div>
+
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label className="text-xs font-medium text-zinc-700">
+                  Eyebrow / 小標
+                  <input
+                    value={section.eyebrow}
+                    onChange={(event) =>
+                      updateSection(sectionIndex, { eyebrow: event.target.value })
+                    }
+                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
+                  />
+                </label>
+                <label className="text-xs font-medium text-zinc-700">
+                  Title / 區塊標題
+                  <input
+                    value={section.title}
+                    onChange={(event) =>
+                      updateSection(sectionIndex, { title: event.target.value })
+                    }
+                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
+                  />
+                </label>
+              </div>
+
+              <label className="mt-3 block text-xs font-medium text-zinc-700">
+                Description / 首頁短說明
+                <textarea
+                  value={section.description}
+                  onChange={(event) =>
+                    updateSection(sectionIndex, { description: event.target.value })
+                  }
+                  className="mt-1 h-20 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none focus:border-zinc-900"
+                />
+                <span className="mt-1 block text-xs leading-5 text-zinc-500">
+                  只作為首頁導覽與定位文案，不用來存放 research / group / project 的內容本體。
+                </span>
+              </label>
 
               <label className="mt-3 block text-xs font-medium text-zinc-700">
                 selectedIds

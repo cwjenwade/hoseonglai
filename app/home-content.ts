@@ -1,21 +1,19 @@
 import type { ContentGovernanceFields } from "@/lib/content-governance";
 
 export const HOME_SECTION_KEYS = [
-  "brandIntro",
-  "research",
-  "gatherings",
-  "programsCollaborations",
-  "about",
+  "positioningBanner",
+  "researchExhibitions",
+  "groupTherapyGallery",
+  "supportUs",
 ] as const;
 
 export type HomeSectionKey = (typeof HOME_SECTION_KEYS)[number];
 
 export const HOME_SECTION_DISPLAY_MODES = [
-  "statement",
-  "feature",
-  "featureReverse",
-  "split",
-  "short",
+  "banner",
+  "exhibitionGrid",
+  "galleryGrid",
+  "supportGrid",
 ] as const;
 
 export type HomeSectionDisplayMode = (typeof HOME_SECTION_DISPLAY_MODES)[number];
@@ -37,6 +35,9 @@ export type HomeSectionControl = {
   visible: boolean;
   order: number;
   displayMode: HomeSectionDisplayMode;
+  eyebrow: string;
+  title: string;
+  description: string;
   selectedIds: string[];
   ctas: HomeSectionCallToAction[];
 };
@@ -48,81 +49,99 @@ export type HomePageContent = ContentGovernanceFields & {
 };
 
 export const HOME_SECTION_SELECTED_ID_HINTS: Record<HomeSectionKey, string> = {
-  brandIntro: "此 section 不選內容本體；留空即可。",
-  research: "使用 research video tag，例如 alexithymia。留空或找不到時，沿用首頁既有 research fallback。",
-  gatherings: "使用 group slug，例如 group-counseling。留空或找不到時，沿用首頁既有 gatherings fallback。",
-  programsCollaborations:
-    "每行一筆：lecture:{lecture id 或 slug}、project:{project id}。可只填其中一種；留空或找不到時，沿用首頁既有 programs / collaborations fallback。",
-  about: "目前僅支援 director；留空或找不到時，沿用 brand director fallback。",
+  positioningBanner: "此 banner 不選內容本體；留空即可。eyebrow / title / description 只控制首頁定位文案。",
+  researchExhibitions:
+    "使用 research video tag，每行一筆，例如 alexithymia。留空或找不到時，首頁會 fallback 顯示前 4 筆 research videos。",
+  groupTherapyGallery:
+    "使用 group slug，每行一筆，例如 group-counseling。留空或找不到時，首頁會 fallback 顯示可見 group therapy 項目。",
+  supportUs:
+    "使用 project:{project id} 指定參與研究入口，例如 project:emotion-patterns。留空或找不到時，首頁會 fallback 顯示第一筆已發布 research project。",
+};
+
+const HOME_SECTION_LEGACY_KEY_ALIASES: Record<HomeSectionKey, string[]> = {
+  positioningBanner: ["brandIntro"],
+  researchExhibitions: ["research"],
+  groupTherapyGallery: ["gatherings"],
+  supportUs: ["programsCollaborations", "about"],
 };
 
 const DEFAULT_HOME_SECTIONS: HomeSectionControl[] = [
   {
-    key: "brandIntro",
+    key: "positioningBanner",
     visible: true,
     order: 10,
-    displayMode: "statement",
+    displayMode: "banner",
+    eyebrow: "Brand Platform",
+    title: "Ho-Se 好勢｜Ong-Lai 旺來",
+    description:
+      "以心理學研究、創作內容、團體陪伴與協作實踐，建立一個可以閱讀、參與與停留的品牌平台。",
     selectedIds: [],
-    ctas: [],
+    ctas: [
+      {
+        key: "research",
+        href: "/heartfelt-momentum",
+        label: "See research",
+      },
+      {
+        key: "groups",
+        href: "/togetherness",
+        label: "Join a group",
+      },
+    ],
   },
   {
-    key: "research",
+    key: "researchExhibitions",
     visible: true,
     order: 20,
-    displayMode: "feature",
-    selectedIds: ["alexithymia"],
+    displayMode: "exhibitionGrid",
+    eyebrow: "Research output",
+    title: "Exhibitions",
+    description: "以作品式展陳呈現團隊的研究影片與心理學轉譯內容。",
+    selectedIds: ["alexithymia", "emotion differentiation", "group process", "empathy"],
     ctas: [
       {
         key: "primary",
         href: "/heartfelt-momentum",
-        label: "Enter Research",
+        label: "See more research",
       },
     ],
   },
   {
-    key: "gatherings",
+    key: "groupTherapyGallery",
     visible: true,
     order: 30,
-    displayMode: "featureReverse",
-    selectedIds: ["group-counseling"],
+    displayMode: "galleryGrid",
+    eyebrow: "Group therapy",
+    title: "Galleries",
+    description: "像走進一間 gallery，一起找到可以停留、回應與被陪伴的團體。",
+    selectedIds: ["group-counseling", "group-psychotherapy", "interpersonal-group"],
     ctas: [
       {
         key: "primary",
         href: "/togetherness",
-        label: "Enter Gatherings",
+        label: "Visit group therapy",
       },
     ],
   },
   {
-    key: "programsCollaborations",
+    key: "supportUs",
     visible: true,
     order: 40,
-    displayMode: "split",
-    selectedIds: [],
+    displayMode: "supportGrid",
+    eyebrow: "Support us",
+    title: "Support Us",
+    description: "透過理解品牌身份，或參與目前開放的研究，一起支持這個平台繼續發生。",
+    selectedIds: ["project:emotion-patterns"],
     ctas: [
       {
-        key: "programs",
-        href: "/fortune-arrives",
-        label: "View Programs",
-      },
-      {
-        key: "collaborations",
-        href: "/collaborative-prosperity",
-        label: "View Collaborations",
-      },
-    ],
-  },
-  {
-    key: "about",
-    visible: true,
-    order: 50,
-    displayMode: "short",
-    selectedIds: ["director"],
-    ctas: [
-      {
-        key: "primary",
+        key: "identity",
         href: "/brand-philosophy",
-        label: "View Identity",
+        label: "Brand identity",
+      },
+      {
+        key: "research",
+        href: "/collaborative-prosperity",
+        label: "Participate in research",
       },
     ],
   },
@@ -164,6 +183,11 @@ function normalizeSelectedIds(value: unknown, fallback: string[]): string[] {
     .filter(Boolean);
 }
 
+function normalizeString(value: unknown, fallback: string): string {
+  const text = String(value || "").trim();
+  return text || fallback;
+}
+
 function normalizeCtas(
   value: unknown,
   fallback: HomeSectionCallToAction[],
@@ -202,9 +226,25 @@ function normalizeSectionControl(
       ? Number(candidate.order)
       : fallback.order,
     displayMode: normalizeDisplayMode(candidate.displayMode, fallback.displayMode),
+    eyebrow: normalizeString(candidate.eyebrow, fallback.eyebrow),
+    title: normalizeString(candidate.title, fallback.title),
+    description: normalizeString(candidate.description, fallback.description),
     selectedIds: normalizeSelectedIds(candidate.selectedIds, fallback.selectedIds),
     ctas: normalizeCtas(candidate.ctas, fallback.ctas),
   };
+}
+
+function findRawSectionForFallback(
+  rawSections: Array<Partial<HomeSectionControl> | undefined>,
+  fallback: HomeSectionControl,
+): Partial<HomeSectionControl> | undefined {
+  return rawSections.find((section) => {
+    const rawKey = String(section?.key || "").trim();
+    return (
+      rawKey === fallback.key ||
+      HOME_SECTION_LEGACY_KEY_ALIASES[fallback.key].includes(rawKey)
+    );
+  });
 }
 
 export function getHomeSectionControl(
@@ -257,7 +297,7 @@ export function normalizeHomePageContent(
     },
     sections: DEFAULT_HOME_SECTIONS.map((fallback) =>
       normalizeSectionControl(
-        rawSections.find((section) => section?.key === fallback.key),
+        findRawSectionForFallback(rawSections, fallback),
         fallback,
       ),
     ).sort((left, right) => left.order - right.order),

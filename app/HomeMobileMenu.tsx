@@ -14,13 +14,17 @@ const links = [
 
 type HomeMobileMenuProps = {
   variant?: "dark" | "light";
+  showOnDesktop?: boolean;
 };
 
 export default function HomeMobileMenu({
   variant = "dark",
+  showOnDesktop = false,
 }: HomeMobileMenuProps) {
   const [open, setOpen] = useState(false);
   const isLight = variant === "light";
+  const visibilityClass = showOnDesktop ? "inline-flex" : "inline-flex sm:hidden";
+  const overlayVisibilityClass = showOnDesktop ? "" : "sm:hidden";
 
   return (
     <>
@@ -30,20 +34,27 @@ export default function HomeMobileMenu({
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         className={[
-          "inline-flex h-11 w-11 items-center justify-center rounded-full transition sm:hidden",
+          visibilityClass,
+          "h-11 w-11 items-center justify-center rounded-full transition",
           isLight
             ? "border border-zinc-300/80 bg-white/88 text-zinc-900 hover:bg-white"
             : "border border-white/24 bg-black/18 text-white backdrop-blur-md hover:bg-black/28",
         ].join(" ")}
       >
-        <span className="flex flex-col gap-[4px]">
-          <span className="block h-[1.5px] w-4 rounded-full bg-current" />
-          <span className="block h-[1.5px] w-4 rounded-full bg-current" />
+        <span className="relative h-5 w-5" aria-hidden="true">
+          <span className="absolute right-0 top-0 h-5 w-3 rounded-[2px] border border-current border-l-0 opacity-70" />
+          <span className="absolute left-0 top-[5px] block h-[1.5px] w-4 rounded-full bg-current" />
+          <span className="absolute left-0 top-[13px] block h-[1.5px] w-4 rounded-full bg-current" />
         </span>
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 bg-[#f4efe7]/96 px-6 py-6 backdrop-blur-xl sm:hidden">
+        <div
+          className={[
+            "fixed inset-0 z-50 bg-[#f7f7f2]/96 px-6 py-6 backdrop-blur-xl",
+            overlayVisibilityClass,
+          ].join(" ")}
+        >
           <div className="flex items-center justify-between">
             <p
               className="text-[0.68rem] uppercase tracking-[0.3em] text-zinc-500"
