@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { DEFAULT_BRAND_PAGE_CONTENT, normalizeBrandPageContent } from "@/app/brand-philosophy/brand-content";
 import {
@@ -7,8 +6,10 @@ import {
   getHomeSectionControl,
   getHomeSectionCta,
   normalizeHomePageContent,
+  type HomeCardContent,
   type HomeSectionKey,
 } from "@/app/home-content";
+import HomeCroppedImage from "@/app/HomeCroppedImage";
 import HomeMobileMenu from "@/app/HomeMobileMenu";
 import { HEARTFELT_VIDEOS, type HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
 import {
@@ -55,6 +56,30 @@ function researchCardHref(video: HeartfeltVideoItem): string {
 
 function groupCardHref(group: GroupItem): string {
   return `/togetherness/${group.slug}`;
+}
+
+function getHomeCard(
+  cards: HomeCardContent[],
+  key: string,
+  fallback: Omit<HomeCardContent, "key">,
+): HomeCardContent {
+  const card = cards.find((item) => item.key === key);
+  return {
+    key,
+    label: card?.label ?? fallback.label,
+    title: card?.title || fallback.title,
+    description: card?.description ?? fallback.description,
+    meta: card?.meta ?? fallback.meta,
+    href: card?.href || fallback.href,
+    ctaLabel: card?.ctaLabel ?? fallback.ctaLabel,
+    image: {
+      src: card?.image.src || fallback.image.src,
+      alt: card?.image.alt || fallback.image.alt,
+      scale: card?.image.scale ?? fallback.image.scale,
+      x: card?.image.x ?? fallback.image.x,
+      y: card?.image.y ?? fallback.image.y,
+    },
+  };
 }
 
 const homeResearchImageFrames = [
@@ -177,15 +202,15 @@ export default async function Home() {
                     className="text-[1.55rem] leading-[0.96] tracking-[-0.055em] text-black md:text-[2.7rem] xl:text-[3.3rem]"
                     style={{ fontFamily: "var(--font-playfair)" }}
                   >
-                    Ho-Se 好勢
+                    {homeContent.brandTitle}
                     <br />
-                    Ong-Lai 旺來
+                    {homeContent.brandSubtitle}
                   </h1>
                   <p
                     className="mt-6 text-[0.78rem] uppercase tracking-[0.26em] text-black/38"
                     style={{ fontFamily: "var(--font-geist-sans)" }}
                   >
-                    Research, creative content, community, and collaborative practice
+                    {homeContent.mainDescription}
                   </p>
                 </div>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -225,7 +250,7 @@ export default async function Home() {
                   className="text-[2.55rem] uppercase leading-none tracking-[0.25em] text-black md:text-[3.65rem]"
                   style={{ fontFamily: "var(--font-geist-sans)" }}
                 >
-                  RESEARCH
+                  {researchControl.title}
                 </h2>
                 <div className="h-5" aria-hidden="true" />
               </div>
@@ -236,11 +261,26 @@ export default async function Home() {
                     video,
                     index,
                   );
+                  const card = getHomeCard(homeContent.cards.research, video.tag, {
+                    label: "Research",
+                    title: video.title,
+                    description: video.description,
+                    meta: `${video.category} · ${video.duration}`,
+                    href: researchCardHref(video),
+                    ctaLabel: "",
+                    image: {
+                      src: video.image,
+                      alt: video.title,
+                      scale: 1,
+                      x: 0,
+                      y: 0,
+                    },
+                  });
 
                   return (
                     <Link
                       key={video.tag}
-                      href={researchCardHref(video)}
+                      href={card.href}
                       className="group block w-full min-w-0 self-start"
                     >
                       <div
@@ -249,15 +289,11 @@ export default async function Home() {
                           homeImageFrame.heightClass,
                         ].join(" ")}
                       >
-                        <Image
-                          src={video.image}
-                          alt={video.title}
-                          fill
+                        <HomeCroppedImage
+                          image={card.image}
+                          fallbackSrc={video.image}
+                          fallbackAlt={video.title}
                           sizes="(min-width: 1536px) 321px, (min-width: 1280px) calc((100vw - 200px) / 4), (min-width: 768px) calc((100vw - 112px) / 2), calc(100vw - 48px)"
-                          className="object-cover"
-                          style={{
-                            objectPosition: homeImageFrame.objectPosition,
-                          }}
                         />
                       </div>
                       <div className="mt-4">
@@ -265,25 +301,25 @@ export default async function Home() {
                           className="inline-flex border border-black/12 bg-[#fbfbf8] px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.22em] text-black/48"
                           style={{ fontFamily: "var(--font-geist-sans)" }}
                         >
-                          Research
+                          {card.label}
                         </span>
                         <h3
                           className="mt-3 text-[1.32rem] leading-[1.22] tracking-[-0.02em] text-black md:text-[1.48rem]"
                           style={{ fontFamily: "var(--font-noto-serif)" }}
                         >
-                          {video.title}
+                          {card.title}
                         </h3>
                         <p
                           className="mt-2.5 text-[0.94rem] leading-[1.72] text-black/52"
                           style={{ fontFamily: "var(--font-noto-serif)" }}
                         >
-                          {video.description}
+                          {card.description}
                         </p>
                         <p
                           className="mt-4 text-[0.68rem] uppercase tracking-[0.2em] text-black/58"
                           style={{ fontFamily: "var(--font-geist-sans)" }}
                         >
-                          {video.category} · {video.duration}
+                          {card.meta}
                         </p>
                       </div>
                     </Link>
@@ -304,11 +340,26 @@ export default async function Home() {
                     lockedResearchExhibitionFrames[
                       index % lockedResearchExhibitionFrames.length
                     ];
+                  const card = getHomeCard(homeContent.cards.research, video.tag, {
+                    label: "Research",
+                    title: video.title,
+                    description: video.description,
+                    meta: `${video.category} · ${video.duration}`,
+                    href: researchCardHref(video),
+                    ctaLabel: "",
+                    image: {
+                      src: video.image,
+                      alt: video.title,
+                      scale: 1,
+                      x: 0,
+                      y: 0,
+                    },
+                  });
 
                   return (
                     <Link
                       key={video.tag}
-                      href={researchCardHref(video)}
+                      href={card.href}
                       className="group block w-[241px] min-w-[241px] max-w-[241px] self-start"
                     >
                       <div
@@ -317,13 +368,11 @@ export default async function Home() {
                           frame.heightClass,
                         ].join(" ")}
                       >
-                        <Image
-                          src={video.image}
-                          alt={video.title}
-                          fill
+                        <HomeCroppedImage
+                          image={card.image}
+                          fallbackSrc={video.image}
+                          fallbackAlt={video.title}
                           sizes="241px"
-                          className="object-cover"
-                          style={{ objectPosition: frame.objectPosition }}
                         />
                       </div>
                       <div className="mt-4">
@@ -331,25 +380,25 @@ export default async function Home() {
                           className="inline-flex border border-black/12 bg-[#fbfbf8] px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.22em] text-black/48"
                           style={{ fontFamily: "var(--font-geist-sans)" }}
                         >
-                          Research
+                          {card.label}
                         </span>
                         <h3
                           className="mt-3 text-[1.32rem] leading-[1.22] tracking-[-0.02em] text-black md:text-[1.48rem]"
                           style={{ fontFamily: "var(--font-noto-serif)" }}
                         >
-                          {video.title}
+                          {card.title}
                         </h3>
                         <p
                           className="mt-2.5 text-[0.94rem] leading-[1.72] text-black/52"
                           style={{ fontFamily: "var(--font-noto-serif)" }}
                         >
-                          {video.description}
+                          {card.description}
                         </p>
                         <p
                           className="mt-4 text-[0.68rem] uppercase tracking-[0.2em] text-black/58"
                           style={{ fontFamily: "var(--font-geist-sans)" }}
                         >
-                          {video.category} · {video.duration}
+                          {card.meta}
                         </p>
                       </div>
                     </Link>
@@ -381,55 +430,73 @@ export default async function Home() {
                   className="whitespace-nowrap text-[2rem] uppercase leading-none tracking-[0.12em] text-black md:text-[3rem] xl:text-[3.35rem]"
                   style={{ fontFamily: "var(--font-geist-sans)" }}
                 >
-                  GROUP COUNSELING
+                  {galleryControl.title}
                 </h2>
                 <div className="h-5" aria-hidden="true" />
               </div>
 
               <div className="mx-auto mt-5 grid max-w-[1020px] items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:hidden">
-                {galleryItems.map((group, index) => (
-                  <Link
-                    key={group.slug}
-                    href={groupCardHref(group)}
-                    className="group block w-full"
-                  >
-                    <div className={["relative overflow-hidden bg-zinc-200 after:absolute after:inset-0 after:bg-black/40 after:opacity-0 after:transition-opacity group-hover:after:opacity-100", getGalleryImageAspectClass(index)].join(" ")}>
-                      <Image
-                        src={group.image}
-                        alt={group.title}
-                        fill
-                        sizes="(min-width: 1280px) 352px, (min-width: 768px) 42vw, 100vw"
-                        className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                      />
-                    </div>
-                    <div className="mt-5">
-                      <h3
-                        className="text-[1.32rem] leading-[1.22] tracking-[-0.02em] text-black md:text-[1.48rem]"
-                        style={{ fontFamily: "var(--font-noto-serif)" }}
-                      >
-                        {group.title}
-                      </h3>
-                      <p
-                        className="mt-3 text-[0.74rem] uppercase tracking-[0.18em] text-black/42"
-                        style={{ fontFamily: "var(--font-geist-sans)" }}
-                      >
-                        {group.subtitle}
-                      </p>
-                      <p
-                        className="mt-4 text-[0.94rem] leading-[1.75] text-black/52"
-                        style={{ fontFamily: "var(--font-noto-serif)" }}
-                      >
-                        {group.description}
-                      </p>
-                      <p
-                        className="mt-5 text-[0.68rem] uppercase tracking-[0.2em] text-black/58"
-                        style={{ fontFamily: "var(--font-geist-sans)" }}
-                      >
-                        Open for inquiry
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                {galleryItems.map((group, index) => {
+                  const card = getHomeCard(homeContent.cards.groups, group.slug, {
+                    label: group.subtitle,
+                    title: group.title,
+                    description: group.description,
+                    meta: "Open for inquiry",
+                    href: groupCardHref(group),
+                    ctaLabel: "",
+                    image: {
+                      src: group.image,
+                      alt: group.title,
+                      scale: 1,
+                      x: 0,
+                      y: 0,
+                    },
+                  });
+
+                  return (
+                    <Link
+                      key={group.slug}
+                      href={card.href}
+                      className="group block w-full"
+                    >
+                      <div className={["relative overflow-hidden bg-zinc-200 after:absolute after:inset-0 after:bg-black/40 after:opacity-0 after:transition-opacity group-hover:after:opacity-100", getGalleryImageAspectClass(index)].join(" ")}>
+                        <HomeCroppedImage
+                          image={card.image}
+                          fallbackSrc={group.image}
+                          fallbackAlt={group.title}
+                          sizes="(min-width: 1280px) 352px, (min-width: 768px) 42vw, 100vw"
+                          className="transition duration-500 group-hover:scale-[1.03]"
+                        />
+                      </div>
+                      <div className="mt-5">
+                        <h3
+                          className="text-[1.32rem] leading-[1.22] tracking-[-0.02em] text-black md:text-[1.48rem]"
+                          style={{ fontFamily: "var(--font-noto-serif)" }}
+                        >
+                          {card.title}
+                        </h3>
+                        <p
+                          className="mt-3 text-[0.74rem] uppercase tracking-[0.18em] text-black/42"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
+                          {card.label}
+                        </p>
+                        <p
+                          className="mt-4 text-[0.94rem] leading-[1.75] text-black/52"
+                          style={{ fontFamily: "var(--font-noto-serif)" }}
+                        >
+                          {card.description}
+                        </p>
+                        <p
+                          className="mt-5 text-[0.68rem] uppercase tracking-[0.2em] text-black/58"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
+                          {card.meta}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
 
               <div
@@ -440,49 +507,67 @@ export default async function Home() {
                   rowGap: "72px",
                 }}
               >
-                {galleryItems.map((group) => (
-                  <Link
-                    key={group.slug}
-                    href={groupCardHref(group)}
-                    className="group block w-[241px] min-w-[241px] max-w-[241px]"
-                  >
-                    <div className="relative h-[323px] w-[241px] min-w-[241px] max-w-[241px] overflow-hidden bg-zinc-200 after:absolute after:inset-0 after:bg-black/40 after:opacity-0 after:transition-opacity group-hover:after:opacity-100">
-                      <Image
-                        src={group.image}
-                        alt={group.title}
-                        fill
-                        sizes="241px"
-                        className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                      />
-                    </div>
-                    <div className="mt-5">
-                      <h3
-                        className="text-[1.32rem] leading-[1.22] tracking-[-0.02em] text-black md:text-[1.48rem]"
-                        style={{ fontFamily: "var(--font-noto-serif)" }}
-                      >
-                        {group.title}
-                      </h3>
-                      <p
-                        className="mt-3 text-[0.74rem] uppercase tracking-[0.18em] text-black/42"
-                        style={{ fontFamily: "var(--font-geist-sans)" }}
-                      >
-                        {group.subtitle}
-                      </p>
-                      <p
-                        className="mt-4 text-[0.94rem] leading-[1.75] text-black/52"
-                        style={{ fontFamily: "var(--font-noto-serif)" }}
-                      >
-                        {group.description}
-                      </p>
-                      <p
-                        className="mt-5 text-[0.68rem] uppercase tracking-[0.2em] text-black/58"
-                        style={{ fontFamily: "var(--font-geist-sans)" }}
-                      >
-                        Open for inquiry
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                {galleryItems.map((group) => {
+                  const card = getHomeCard(homeContent.cards.groups, group.slug, {
+                    label: group.subtitle,
+                    title: group.title,
+                    description: group.description,
+                    meta: "Open for inquiry",
+                    href: groupCardHref(group),
+                    ctaLabel: "",
+                    image: {
+                      src: group.image,
+                      alt: group.title,
+                      scale: 1,
+                      x: 0,
+                      y: 0,
+                    },
+                  });
+
+                  return (
+                    <Link
+                      key={group.slug}
+                      href={card.href}
+                      className="group block w-[241px] min-w-[241px] max-w-[241px]"
+                    >
+                      <div className="relative h-[323px] w-[241px] min-w-[241px] max-w-[241px] overflow-hidden bg-zinc-200 after:absolute after:inset-0 after:bg-black/40 after:opacity-0 after:transition-opacity group-hover:after:opacity-100">
+                        <HomeCroppedImage
+                          image={card.image}
+                          fallbackSrc={group.image}
+                          fallbackAlt={group.title}
+                          sizes="241px"
+                          className="transition duration-500 group-hover:scale-[1.03]"
+                        />
+                      </div>
+                      <div className="mt-5">
+                        <h3
+                          className="text-[1.32rem] leading-[1.22] tracking-[-0.02em] text-black md:text-[1.48rem]"
+                          style={{ fontFamily: "var(--font-noto-serif)" }}
+                        >
+                          {card.title}
+                        </h3>
+                        <p
+                          className="mt-3 text-[0.74rem] uppercase tracking-[0.18em] text-black/42"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
+                          {card.label}
+                        </p>
+                        <p
+                          className="mt-4 text-[0.94rem] leading-[1.75] text-black/52"
+                          style={{ fontFamily: "var(--font-noto-serif)" }}
+                        >
+                          {card.description}
+                        </p>
+                        <p
+                          className="mt-5 text-[0.68rem] uppercase tracking-[0.2em] text-black/58"
+                          style={{ fontFamily: "var(--font-geist-sans)" }}
+                        >
+                          {card.meta}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
 
               <div className="mt-16 flex justify-end">
@@ -500,6 +585,40 @@ export default async function Home() {
         );
 
       case "supportUs":
+        {
+          const supportIdentityCard = getHomeCard(homeContent.cards.support, "identity", {
+            label: "",
+            title: supportIdentityCta.label,
+            description: "先理解 Ho-Se 好勢 Ong-Lai 旺來的品牌身份、主體與背後的心理學實踐。",
+            meta: "",
+            href: supportIdentityCta.href,
+            ctaLabel: "",
+            image: {
+              src: supportIdentityImage,
+              alt: director.nameZh,
+              scale: 1,
+              x: 0,
+              y: 0,
+            },
+          });
+          const supportResearchCard = getHomeCard(homeContent.cards.support, "research", {
+            label: "",
+            title: supportResearchCta.label,
+            description:
+              supportProject?.researchAudiencePurpose ||
+              "目前開放的研究會導向研究專屬 Google Form，讓參與者可以閱讀說明後再填寫資料。",
+            meta: "",
+            href: supportResearchCta.href,
+            ctaLabel: "",
+            image: {
+              src: supportResearchImage,
+              alt: supportProject?.title || "Participate in research",
+              scale: 1,
+              x: 0,
+              y: 0,
+            },
+          });
+
         return (
           <section key={sectionKey} className="bg-white px-6 pb-16 pt-0 md:px-10 md:pb-24 md:pt-0">
             <div className="mx-auto max-w-[1020px]">
@@ -513,58 +632,58 @@ export default async function Home() {
               </div>
 
               <div className="mt-14 grid gap-8 lg:grid-cols-2">
-                <Link href={supportIdentityCta.href} className="group block">
+                <Link href={supportIdentityCard.href} className="group block">
                   <div className="relative aspect-[1.72] overflow-hidden bg-zinc-200 after:absolute after:inset-0 after:bg-black/40 after:opacity-0 after:transition-opacity group-hover:after:opacity-100">
-                    <Image
-                      src={supportIdentityImage}
-                      alt={director.nameZh}
-                      fill
+                    <HomeCroppedImage
+                      image={supportIdentityCard.image}
+                      fallbackSrc={supportIdentityImage}
+                      fallbackAlt={director.nameZh}
                       sizes="(min-width: 1024px) 50vw, 100vw"
-                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                      className="transition duration-500 group-hover:scale-[1.03]"
                     />
                   </div>
                   <h3
                     className="mt-6 text-[2rem] leading-tight tracking-[-0.035em] text-black"
                     style={{ fontFamily: "var(--font-noto-serif)" }}
                   >
-                    {supportIdentityCta.label}
+                    {supportIdentityCard.title}
                   </h3>
                   <p
                     className="mt-3 max-w-[40rem] text-[1rem] leading-[1.75] text-black/56"
                     style={{ fontFamily: "var(--font-noto-serif)" }}
                   >
-                    先理解 Ho-Se 好勢 Ong-Lai 旺來的品牌身份、主體與背後的心理學實踐。
+                    {supportIdentityCard.description}
                   </p>
                 </Link>
 
-                <Link href={supportResearchCta.href} className="group block">
+                <Link href={supportResearchCard.href} className="group block">
                   <div className="relative aspect-[1.72] overflow-hidden bg-zinc-200 after:absolute after:inset-0 after:bg-black/40 after:opacity-0 after:transition-opacity group-hover:after:opacity-100">
-                    <Image
-                      src={supportResearchImage}
-                      alt={supportProject?.title || "Participate in research"}
-                      fill
+                    <HomeCroppedImage
+                      image={supportResearchCard.image}
+                      fallbackSrc={supportResearchImage}
+                      fallbackAlt={supportProject?.title || "Participate in research"}
                       sizes="(min-width: 1024px) 50vw, 100vw"
-                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                      className="transition duration-500 group-hover:scale-[1.03]"
                     />
                   </div>
                   <h3
                     className="mt-6 text-[2rem] leading-tight tracking-[-0.035em] text-black"
                     style={{ fontFamily: "var(--font-noto-serif)" }}
                   >
-                    {supportResearchCta.label}
+                    {supportResearchCard.title}
                   </h3>
                   <p
                     className="mt-3 max-w-[40rem] text-[1rem] leading-[1.75] text-black/56"
                     style={{ fontFamily: "var(--font-noto-serif)" }}
                   >
-                    {supportProject?.researchAudiencePurpose ||
-                      "目前開放的研究會導向研究專屬 Google Form，讓參與者可以閱讀說明後再填寫資料。"}
+                    {supportResearchCard.description}
                   </p>
                 </Link>
               </div>
             </div>
           </section>
         );
+        }
 
       default:
         return null;

@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import type { HomeNewsletterContent } from "@/app/home-content";
 import { getSupabaseClient } from "@/lib/supabase";
 
-export default function NewsletterSubscription() {
+type NewsletterSubscriptionProps = {
+  content: HomeNewsletterContent;
+};
+
+export default function NewsletterSubscription({ content }: NewsletterSubscriptionProps) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -44,28 +49,28 @@ export default function NewsletterSubscription() {
 
   return (
     <div className="rounded-2xl border border-amber-200 bg-white p-6">
-      <h3 className="text-lg font-bold text-zinc-900">訂閱電子報</h3>
+      <h3 className="text-lg font-bold text-zinc-900">{content.title}</h3>
       <p className="mt-1 text-sm text-zinc-600">
-        第一時間收到最新講座、研究與心理資源資訊
+        {content.description}
       </p>
 
       {submitted ? (
         <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center">
-          <p className="text-sm font-semibold text-emerald-800">訂閱成功！</p>
-          <p className="mt-1 text-xs text-emerald-700">感謝你的訂閱，我們會定期寄送資訊給你。</p>
+          <p className="text-sm font-semibold text-emerald-800">{content.successTitle}</p>
+          <p className="mt-1 text-xs text-emerald-700">{content.successDescription}</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input
             type="text"
-            placeholder="你的名字（選填）"
+            placeholder={content.namePlaceholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="h-11 flex-1 rounded-xl border border-zinc-300 px-4 text-sm outline-none transition focus:border-amber-400"
           />
           <input
             type="email"
-            placeholder="你的 Email"
+            placeholder={content.emailPlaceholder}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-11 flex-1 rounded-xl border border-zinc-300 px-4 text-sm outline-none transition focus:border-amber-400"
@@ -76,7 +81,7 @@ export default function NewsletterSubscription() {
             disabled={loading}
             className="h-11 rounded-xl bg-amber-600 px-6 text-sm font-medium text-white transition hover:bg-amber-700 disabled:opacity-50"
           >
-            {loading ? "訂閱中..." : "訂閱"}
+            {loading ? content.loadingLabel : content.buttonLabel}
           </button>
         </form>
       )}

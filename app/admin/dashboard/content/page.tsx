@@ -730,14 +730,41 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 					/>
 
 					{activeModule === "home" ? (
-						<form action={saveHomePageContent} className="space-y-5">
-							<HomePageEditor initialContent={homeContent} />
-							<div className="flex justify-end">
-								<button type="submit" className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800">
-									儲存 Home
-								</button>
-							</div>
-						</form>
+						<>
+							<section className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm">
+								<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+									<div>
+										<h2 className="text-base font-semibold text-zinc-900">首頁圖片上傳</h2>
+										<p className="mt-1 text-sm leading-6 text-zinc-600">
+											先上傳圖片，再到下方任一卡片的圖片裁切器按「套用剛上傳圖片」。
+										</p>
+									</div>
+									<form action={uploadModuleImage} className="flex flex-wrap items-center gap-3">
+										<input type="hidden" name="module" value="home" />
+										<input type="hidden" name="item" value="home" />
+										<input type="hidden" name="section" value="home_page_content" />
+										<input type="file" name="imageFile" accept="image/*" className="text-xs text-zinc-700" required />
+										<button type="submit" className="rounded-full border border-zinc-300 px-4 py-2 text-xs text-zinc-700 transition hover:bg-zinc-100">
+											上傳首頁圖片
+										</button>
+									</form>
+								</div>
+							</section>
+							<form action={saveHomePageContent} className="space-y-5">
+								<HomePageEditor initialContent={homeContent} uploadedUrl={resolvedSearchParams.uploaded} />
+								<div className="sticky bottom-4 z-20 flex flex-wrap justify-end gap-3 rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-lg backdrop-blur">
+									<Link href="/admin/dashboard/content" className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">
+										取消
+									</Link>
+									<Link href="/" target="_blank" className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">
+										預覽首頁
+									</Link>
+									<button type="submit" className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800">
+										儲存 Home
+									</button>
+								</div>
+							</form>
+						</>
 					) : null}
 
 					{activeModule === "brand" ? (

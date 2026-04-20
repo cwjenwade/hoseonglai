@@ -1,9 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
   HOME_SECTION_DISPLAY_MODES,
   HOME_SECTION_SELECTED_ID_HINTS,
+  type HomeCardContent,
+  type HomeImageCrop,
   type HomePageContent,
   type HomeSectionCallToAction,
   type HomeSectionControl,
@@ -51,7 +56,177 @@ function updateListItem<T>(list: T[], index: number, nextValue: T): T[] {
   return list.map((item, itemIndex) => (itemIndex === index ? nextValue : item));
 }
 
-export function HomePageEditor({ initialContent }: { initialContent: HomePageContent }) {
+function inputClassName(extra = "") {
+  return [
+    "mt-1 h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10",
+    extra,
+  ].join(" ");
+}
+
+function textareaClassName(extra = "") {
+  return [
+    "mt-1 min-h-24 w-full rounded-xl border border-zinc-300 bg-white p-3 text-sm leading-6 outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10",
+    extra,
+  ].join(" ");
+}
+
+function FieldLabel({
+  label,
+  children,
+  hint,
+}: {
+  label: string;
+  children: ReactNode;
+  hint?: string;
+}) {
+  return (
+    <label className="block text-xs font-medium text-zinc-700">
+      {label}
+      {children}
+      {hint ? <span className="mt-1 block text-xs leading-5 text-zinc-500">{hint}</span> : null}
+    </label>
+  );
+}
+
+function ImageCropControl({
+  title,
+  image,
+  uploadedUrl,
+  onChange,
+}: {
+  title: string;
+  image: HomeImageCrop;
+  uploadedUrl?: string;
+  onChange: (image: HomeImageCrop) => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const safeScale = Number.isFinite(image.scale) ? image.scale : 1;
+  const safeX = Number.isFinite(image.x) ? image.x : 0;
+  const safeY = Number.isFinite(image.y) ? image.y : 0;
+
+  function update(updates: Partial<HomeImageCrop>) {
+    onChange({ ...image, ...updates });
+  }
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-zinc-900">{title}</p>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">
+            拖曳預覽圖調整位置；原圖不會被破壞，只儲存 scale / x / y。
+          </p>
+        </div>
+        {uploadedUrl ? (
+          <button
+            type="button"
+            onClick={() => update({ src: uploadedUrl })}
+            className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
+          >
+            套用剛上傳圖片
+          </button>
+        ) : null}
+      </div>
+
+      <div
+        className="relative mt-4 aspect-[1.35] cursor-move overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
+        onPointerDown={(event) => {
+          setDragging(true);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          if (!dragging) return;
+          update({
+            x: Math.max(-100, Math.min(100, safeX + event.movementX)),
+            y: Math.max(-100, Math.min(100, safeY + event.movementY)),
+          });
+        }}
+        onPointerUp={() => setDragging(false)}
+        onPointerCancel={() => setDragging(false)}
+      >
+        {image.src ? (
+          <Image
+            src={image.src}
+            alt={image.alt || title}
+            fill
+            sizes="360px"
+            className="object-cover"
+            style={{
+              transform: `translate3d(${safeX}px, ${safeY}px, 0) scale(${safeScale})`,
+              transformOrigin: "center",
+            }}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-zinc-500">
+            尚未設定圖片
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-0 border border-white/60" />
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <FieldLabel label="圖片 URL">
+          <input
+            value={image.src}
+            onChange={(event) => update({ src: event.target.value })}
+            className={inputClassName()}
+          />
+        </FieldLabel>
+        <FieldLabel label="Alt text">
+          <input
+            value={image.alt}
+            onChange={(event) => update({ alt: event.target.value })}
+            className={inputClassName()}
+          />
+        </FieldLabel>
+      </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <FieldLabel label={`Scale ${safeScale.toFixed(2)}`}>
+          <input
+            type="range"
+            min="0.5"
+            max="3"
+            step="0.01"
+            value={safeScale}
+            onChange={(event) => update({ scale: Number(event.target.value) })}
+            className="mt-3 w-full accent-zinc-900"
+          />
+        </FieldLabel>
+        <FieldLabel label={`X ${Math.round(safeX)}px`}>
+          <input
+            type="range"
+            min="-100"
+            max="100"
+            step="1"
+            value={safeX}
+            onChange={(event) => update({ x: Number(event.target.value) })}
+            className="mt-3 w-full accent-zinc-900"
+          />
+        </FieldLabel>
+        <FieldLabel label={`Y ${Math.round(safeY)}px`}>
+          <input
+            type="range"
+            min="-100"
+            max="100"
+            step="1"
+            value={safeY}
+            onChange={(event) => update({ y: Number(event.target.value) })}
+            className="mt-3 w-full accent-zinc-900"
+          />
+        </FieldLabel>
+      </div>
+    </div>
+  );
+}
+
+export function HomePageEditor({
+  initialContent,
+  uploadedUrl,
+}: {
+  initialContent: HomePageContent;
+  uploadedUrl?: string;
+}) {
   const [content, setContent] = useState<HomePageContent>(initialContent);
   const payload = useMemo(() => content, [content]);
 
@@ -79,13 +254,97 @@ export function HomePageEditor({ initialContent }: { initialContent: HomePageCon
     });
   }
 
+  function updateCard(
+    group: keyof HomePageContent["cards"],
+    index: number,
+    updates: Partial<HomeCardContent>,
+  ) {
+    setContent((prev) => ({
+      ...prev,
+      cards: {
+        ...prev.cards,
+        [group]: updateListItem(prev.cards[group], index, {
+          ...prev.cards[group][index],
+          ...updates,
+        }),
+      },
+    }));
+  }
+
+  function updateCardImage(
+    group: keyof HomePageContent["cards"],
+    index: number,
+    image: HomeImageCrop,
+  ) {
+    updateCard(group, index, { image });
+  }
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <section className="overflow-hidden rounded-[28px] border border-zinc-200 bg-zinc-950 text-white shadow-sm">
+        <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="p-6 md:p-8">
+            <p className="text-xs uppercase tracking-[0.28em] text-white/48">Home Base Module</p>
+            <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] md:text-4xl">
+              首頁基礎內容工作台
+            </h2>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-white/62">
+              這裡只管理首頁目前看得到的文字、連結與圖片顯示範圍。儲存後會直接反映在首頁，不建立文章系統、不新增多語系，也不改版型結構。
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Link
+                href="/"
+                target="_blank"
+                className="rounded-full bg-white px-4 py-2 text-xs font-medium text-zinc-950 transition hover:bg-zinc-200"
+              >
+                預覽首頁
+              </Link>
+              <Link
+                href="/admin/dashboard/content"
+                className="rounded-full border border-white/24 px-4 py-2 text-xs font-medium text-white/78 transition hover:bg-white/10"
+              >
+                取消
+              </Link>
+            </div>
+          </div>
+          <div className="border-t border-white/10 bg-white/5 p-6 md:p-8 lg:border-l lg:border-t-0">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/42">Text fields</p>
+                <p className="mt-2 text-2xl font-semibold">Full</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/42">Image crop</p>
+                <p className="mt-2 text-2xl font-semibold">Scale/X/Y</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/42">Publish</p>
+                <p className="mt-2 text-2xl font-semibold">Instant</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <EditorSection
-        title="Hero"
-        description="首頁 hero 只控制影片來源與顯示狀態，不管理其他內容模組。"
+        title="品牌首頁主視覺"
+        description="品牌主標、副標、首頁主敘述與左側影片來源。按鈕文字與連結在 Positioning banner CTA 裡編輯。"
       >
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
+          <FieldLabel label="品牌主標">
+            <input
+              value={content.brandTitle}
+              onChange={(event) => setContent((prev) => ({ ...prev, brandTitle: event.target.value }))}
+              className={inputClassName()}
+            />
+          </FieldLabel>
+          <FieldLabel label="品牌副標">
+            <input
+              value={content.brandSubtitle}
+              onChange={(event) => setContent((prev) => ({ ...prev, brandSubtitle: event.target.value }))}
+              className={inputClassName()}
+            />
+          </FieldLabel>
           <label className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
             <input
               type="checkbox"
@@ -98,40 +357,35 @@ export function HomePageEditor({ initialContent }: { initialContent: HomePageCon
               }
               className="h-4 w-4 accent-zinc-900"
             />
-            <span>顯示首頁影片 hero</span>
+            <span>顯示首頁影片</span>
           </label>
-          <label className="text-xs font-medium text-zinc-700">
-            Hero eyebrow
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <FieldLabel label="首頁主敘述">
+            <textarea
+              value={content.mainDescription}
+              onChange={(event) => setContent((prev) => ({ ...prev, mainDescription: event.target.value }))}
+              className={textareaClassName("min-h-20")}
+            />
+          </FieldLabel>
+          <FieldLabel label="Hero video src">
             <input
-              value={content.hero.eyebrow}
+              value={content.hero.videoSrc}
               onChange={(event) =>
                 setContent((prev) => ({
                   ...prev,
-                  hero: { ...prev.hero, eyebrow: event.target.value },
+                  hero: { ...prev.hero, videoSrc: event.target.value },
                 }))
               }
-              className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
+              className={inputClassName()}
             />
-          </label>
+          </FieldLabel>
         </div>
-        <label className="mt-4 block text-xs font-medium text-zinc-700">
-          Hero video src
-          <input
-            value={content.hero.videoSrc}
-            onChange={(event) =>
-              setContent((prev) => ({
-                ...prev,
-                hero: { ...prev.hero, videoSrc: event.target.value },
-              }))
-            }
-            className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-          />
-        </label>
       </EditorSection>
 
       <EditorSection
-        title="首頁 Section 控制"
-        description="只控制首頁顯示、排序、首頁專屬文案、選取項目與 CTA；內容本體仍由 research videos、groups、research projects 與 brand module 管理。selectedIds 留空或找不到時，會沿用該 section 的 fallback。"
+        title="Section 標題、排序與 CTA"
+        description="維持既有首頁版型與 section 順序；只改文字、連結、是否顯示與 selectedIds。"
       >
         <div className="space-y-4">
           {content.sections.map((section, sectionIndex) => (
@@ -181,21 +435,21 @@ export function HomePageEditor({ initialContent }: { initialContent: HomePageCon
 
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label className="text-xs font-medium text-zinc-700">
-                  Eyebrow / 小標
-                  <input
-                    value={section.eyebrow}
-                    onChange={(event) =>
-                      updateSection(sectionIndex, { eyebrow: event.target.value })
-                    }
-                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                  />
-                </label>
-                <label className="text-xs font-medium text-zinc-700">
                   Title / 區塊標題
                   <input
                     value={section.title}
                     onChange={(event) =>
                       updateSection(sectionIndex, { title: event.target.value })
+                    }
+                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
+                  />
+                </label>
+                <label className="text-xs font-medium text-zinc-700">
+                  Eyebrow / 已不顯示但保留資料
+                  <input
+                    value={section.eyebrow}
+                    onChange={(event) =>
+                      updateSection(sectionIndex, { eyebrow: event.target.value })
                     }
                     className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
                   />
@@ -275,6 +529,180 @@ export function HomePageEditor({ initialContent }: { initialContent: HomePageCon
               ) : null}
             </div>
           ))}
+        </div>
+      </EditorSection>
+
+      <EditorSection
+        title="首頁卡片文字、連結與圖片裁切"
+        description="每張首頁卡片的標籤、標題、描述、meta、連結與圖片顯示範圍都在這裡改。手機與桌機共用同一組 scale / x / y。"
+      >
+        {(["research", "groups", "support"] as const).map((group) => (
+          <div key={group} className="mt-5 first:mt-0">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                {group}
+              </h3>
+              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-500">
+                {content.cards[group].length} cards
+              </span>
+            </div>
+            <div className="space-y-4">
+              {content.cards[group].map((card, cardIndex) => (
+                <div key={card.key} className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
+                  <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+                    <div className="space-y-3">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <FieldLabel label="卡片 key">
+                          <input value={card.key} readOnly className={inputClassName("bg-zinc-100 text-zinc-500")} />
+                        </FieldLabel>
+                        <FieldLabel label="卡片連結 href">
+                          <input
+                            value={card.href}
+                            onChange={(event) => updateCard(group, cardIndex, { href: event.target.value })}
+                            className={inputClassName()}
+                          />
+                        </FieldLabel>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <FieldLabel label="卡片標籤">
+                          <input
+                            value={card.label}
+                            onChange={(event) => updateCard(group, cardIndex, { label: event.target.value })}
+                            className={inputClassName()}
+                          />
+                        </FieldLabel>
+                        <FieldLabel label="卡片 meta">
+                          <input
+                            value={card.meta}
+                            onChange={(event) => updateCard(group, cardIndex, { meta: event.target.value })}
+                            className={inputClassName()}
+                          />
+                        </FieldLabel>
+                      </div>
+                      <FieldLabel label="卡片標題">
+                        <input
+                          value={card.title}
+                          onChange={(event) => updateCard(group, cardIndex, { title: event.target.value })}
+                          className={inputClassName()}
+                        />
+                      </FieldLabel>
+                      <FieldLabel label="卡片描述">
+                        <textarea
+                          value={card.description}
+                          onChange={(event) => updateCard(group, cardIndex, { description: event.target.value })}
+                          className={textareaClassName()}
+                        />
+                      </FieldLabel>
+                      <FieldLabel label="卡片按鈕文字（目前首頁卡片不顯示按鈕，保留給既有欄位）">
+                        <input
+                          value={card.ctaLabel}
+                          onChange={(event) => updateCard(group, cardIndex, { ctaLabel: event.target.value })}
+                          className={inputClassName()}
+                        />
+                      </FieldLabel>
+                    </div>
+                    <ImageCropControl
+                      title={card.title || card.key}
+                      image={card.image}
+                      uploadedUrl={uploadedUrl}
+                      onChange={(image) => updateCardImage(group, cardIndex, image)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </EditorSection>
+
+      <EditorSection title="電子報區塊">
+        <div className="grid gap-4 md:grid-cols-2">
+          <FieldLabel label="電子報標題">
+            <input
+              value={content.newsletter.title}
+              onChange={(event) =>
+                setContent((prev) => ({
+                  ...prev,
+                  newsletter: { ...prev.newsletter, title: event.target.value },
+                }))
+              }
+              className={inputClassName()}
+            />
+          </FieldLabel>
+          <FieldLabel label="電子報說明文字">
+            <input
+              value={content.newsletter.description}
+              onChange={(event) =>
+                setContent((prev) => ({
+                  ...prev,
+                  newsletter: { ...prev.newsletter, description: event.target.value },
+                }))
+              }
+              className={inputClassName()}
+            />
+          </FieldLabel>
+          {([
+            ["namePlaceholder", "姓名欄 placeholder"],
+            ["emailPlaceholder", "Email 欄 placeholder"],
+            ["buttonLabel", "按鈕文字"],
+            ["loadingLabel", "送出中按鈕文字"],
+            ["successTitle", "成功標題"],
+            ["successDescription", "成功說明"],
+          ] as const).map(([key, label]) => (
+            <FieldLabel key={key} label={label}>
+              <input
+                value={content.newsletter[key]}
+                onChange={(event) =>
+                  setContent((prev) => ({
+                    ...prev,
+                    newsletter: { ...prev.newsletter, [key]: event.target.value },
+                  }))
+                }
+                className={inputClassName()}
+              />
+            </FieldLabel>
+          ))}
+        </div>
+      </EditorSection>
+
+      <EditorSection title="頁尾文字">
+        <div className="grid gap-4 md:grid-cols-3">
+          <FieldLabel label="頁尾品牌名稱">
+            <input
+              value={content.footer.brandName}
+              onChange={(event) =>
+                setContent((prev) => ({
+                  ...prev,
+                  footer: { ...prev.footer, brandName: event.target.value },
+                }))
+              }
+              className={inputClassName()}
+            />
+          </FieldLabel>
+          <FieldLabel label="頁尾標語">
+            <input
+              value={content.footer.tagline}
+              onChange={(event) =>
+                setContent((prev) => ({
+                  ...prev,
+                  footer: { ...prev.footer, tagline: event.target.value },
+                }))
+              }
+              className={inputClassName()}
+            />
+          </FieldLabel>
+          <FieldLabel label="頁尾描述">
+            <input
+              value={content.footer.description}
+              onChange={(event) =>
+                setContent((prev) => ({
+                  ...prev,
+                  footer: { ...prev.footer, description: event.target.value },
+                }))
+              }
+              className={inputClassName()}
+            />
+          </FieldLabel>
         </div>
       </EditorSection>
 

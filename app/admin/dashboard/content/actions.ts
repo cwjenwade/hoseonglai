@@ -233,6 +233,7 @@ export async function saveHomePageContent(formData: FormData) {
 	}
 
 	revalidatePath("/");
+	revalidatePath("/", "layout");
 	revalidatePath("/admin/dashboard/content");
 	redirect(buildContentHref("home", "home", { saved: "home" }));
 }
@@ -255,6 +256,7 @@ export async function uploadModuleImage(formData: FormData) {
 	}
 
 	const allowedSections = new Set([
+		"home_page_content",
 		"brand_philosophy_page",
 		"heartfelt_momentum_videos",
 		"togetherness_groups",

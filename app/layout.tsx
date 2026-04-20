@@ -5,6 +5,8 @@ import {
   Noto_Serif_TC,
   Playfair_Display,
 } from "next/font/google";
+import { DEFAULT_HOME_PAGE_CONTENT, normalizeHomePageContent } from "@/app/home-content";
+import { getSiteContentSection } from "@/lib/site-content-server";
 import NewsletterSubscription from "./NewsletterSubscription";
 import SiteHeader from "./SiteHeader";
 import "./globals.css";
@@ -82,11 +84,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const homeContent = normalizeHomePageContent(
+    await getSiteContentSection("home_page_content", DEFAULT_HOME_PAGE_CONTENT),
+  );
+
   return (
     <html lang="zh-Hant">
       <body
@@ -144,7 +150,7 @@ export default function RootLayout({
               <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
 
                 <div>
-                  <NewsletterSubscription />
+                  <NewsletterSubscription content={homeContent.newsletter} />
                 </div>
 
                 <div className="flex flex-col justify-end gap-4 border-t border-[#e6e2da] pt-6 lg:border-none lg:pt-0">
@@ -154,14 +160,14 @@ export default function RootLayout({
                       className="text-[1.1rem] tracking-[0.01em] text-zinc-900"
                       style={{ fontFamily: "var(--font-playfair)" }}
                     >
-                      Ho-Se 好勢 ｜ Ong-Lai 旺來
+                      {homeContent.footer.brandName}
                     </p>
 
                     <p
                       className="text-[0.92rem] tracking-[0.06em] text-zinc-600"
                       style={{ fontFamily: "var(--font-noto-serif)" }}
                     >
-                      以心聚勢，以運旺來，團圓共好
+                      {homeContent.footer.tagline}
                     </p>
                   </div>
 
@@ -169,7 +175,7 @@ export default function RootLayout({
                     className="text-[0.66rem] uppercase tracking-[0.2em] text-zinc-400"
                     style={{ fontFamily: "var(--font-geist-sans)" }}
                   >
-                    Research, creative content, community, and collaborative practice
+                    {homeContent.footer.description}
                   </p>
 
                 </div>
