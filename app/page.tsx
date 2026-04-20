@@ -60,26 +60,26 @@ function groupCardHref(group: GroupItem): string {
 function getResearchImageAspectClass(index: number): string {
   switch (index % 4) {
     case 1:
-      return "aspect-[0.82]";
+      return "aspect-[0.73]";
     case 2:
-      return "aspect-[0.96]";
+      return "aspect-[0.75]";
     case 3:
-      return "aspect-[1.72]";
+      return "aspect-[1.51]";
     default:
-      return "aspect-[1.46]";
+      return "aspect-[1.58]";
   }
 }
 
 function getGalleryImageAspectClass(index: number): string {
   switch (index % 4) {
     case 1:
-      return "aspect-[0.9]";
+      return "aspect-[0.73]";
     case 2:
-      return "aspect-[1.58]";
+      return "aspect-[0.75]";
     case 3:
-      return "aspect-[1.05]";
+      return "aspect-[1.51]";
     default:
-      return "aspect-[1.36]";
+      return "aspect-[1.58]";
   }
 }
 
@@ -224,7 +224,7 @@ export default async function Home() {
                 </p>
               </div>
 
-              <div className="mx-auto mt-24 grid max-w-[1320px] items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-9">
+              <div className="mx-auto mt-24 grid max-w-[1484px] items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-[26px]">
                 {researchItems.map((video, index) => (
                   <Link
                     key={video.tag}
@@ -236,7 +236,7 @@ export default async function Home() {
                         src={video.image}
                         alt={video.title}
                         fill
-                        sizes="(min-width: 1280px) 310px, (min-width: 768px) 42vw, 100vw"
+                        sizes="(min-width: 1280px) 352px, (min-width: 768px) 42vw, 100vw"
                         className="object-cover transition duration-500 group-hover:scale-[1.03]"
                       />
                     </div>
@@ -309,7 +309,7 @@ export default async function Home() {
                 </p>
               </div>
 
-              <div className="mx-auto mt-24 grid max-w-[1320px] items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-9">
+              <div className="mx-auto mt-24 grid max-w-[1484px] items-start gap-x-8 gap-y-24 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-[26px]">
                 {galleryItems.map((group, index) => (
                   <Link
                     key={group.slug}
@@ -321,7 +321,7 @@ export default async function Home() {
                         src={group.image}
                         alt={group.title}
                         fill
-                        sizes="(min-width: 1280px) 310px, (min-width: 768px) 42vw, 100vw"
+                        sizes="(min-width: 1280px) 352px, (min-width: 768px) 42vw, 100vw"
                         className="object-cover transition duration-500 group-hover:scale-[1.03]"
                       />
                     </div>
