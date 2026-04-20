@@ -51,11 +51,11 @@ export default function HomeMobileMenu({
       {open ? (
         <div
           className={[
-            "fixed inset-0 z-50 bg-[#f7f7f2]/96 px-6 py-6 backdrop-blur-xl",
+            "fixed inset-0 z-50 bg-white/96 px-6 py-6 backdrop-blur-xl",
             overlayVisibilityClass,
           ].join(" ")}
         >
-          <div className="flex items-center justify-between">
+          <div className="mx-auto flex w-full max-w-[1020px] items-center justify-between">
             <p
               className="text-[0.68rem] uppercase tracking-[0.3em] text-zinc-500"
               style={{ fontFamily: "var(--font-geist-sans)" }}
@@ -73,7 +73,7 @@ export default function HomeMobileMenu({
             </button>
           </div>
 
-          <nav className="mt-14 space-y-6">
+          <nav className="mx-auto mt-14 w-full max-w-[1020px] space-y-6">
             {links.map((link) => (
               <Link
                 key={link.href}

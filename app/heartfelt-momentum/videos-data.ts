@@ -29,7 +29,7 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
       "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=1200&q=80",
     imageWidth: 1200,
     imageHeight: 1567,
-    homeImage: { heightClass: "h-[390px]", objectPosition: "center center" },
+    homeImage: { heightClass: "h-[360px]", objectPosition: "center center" },
   },
   {
     title: "相近情緒為何混在一起",
@@ -42,7 +42,7 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
       "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?auto=format&fit=crop&w=1200&q=80",
     imageWidth: 1200,
     imageHeight: 800,
-    homeImage: { heightClass: "h-[240px]", objectPosition: "center center" },
+    homeImage: { heightClass: "h-[280px]", objectPosition: "center center" },
   },
   {
     title: "情緒如何在團體中擴散",
@@ -55,7 +55,7 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
       "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=1200&q=80",
     imageWidth: 1200,
     imageHeight: 1200,
-    homeImage: { heightClass: "h-[320px]", objectPosition: "50% 42%" },
+    homeImage: { heightClass: "h-[330px]", objectPosition: "50% 42%" },
   },
   {
     title: "同理是怎麼發生的",
@@ -68,7 +68,7 @@ export const HEARTFELT_VIDEOS: HeartfeltVideoItem[] = [
       "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=1200&q=80",
     imageWidth: 1200,
     imageHeight: 1200,
-    homeImage: { heightClass: "h-[340px]", objectPosition: "50% 38%" },
+    homeImage: { heightClass: "h-[300px]", objectPosition: "50% 38%" },
   },
   {
     title: "為何有些感受說不出口",
