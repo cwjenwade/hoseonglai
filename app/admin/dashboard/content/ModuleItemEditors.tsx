@@ -52,6 +52,86 @@ type LeaderOption = {
   photo: string;
 };
 
+type HomeCardGroup = keyof HomePageContent["cards"];
+
+type HomePreviewFrame = {
+  width: number;
+  height: number;
+  label: string;
+  note: string;
+};
+
+const HOME_PREVIEW_FRAMES = {
+  research: [
+    {
+      width: 241,
+      height: 176,
+      label: "RESEARCH card 1",
+      note: "首頁桌機實際框：241 x 176",
+    },
+    {
+      width: 241,
+      height: 330,
+      label: "RESEARCH card 2",
+      note: "首頁桌機實際框：241 x 330",
+    },
+    {
+      width: 241,
+      height: 323,
+      label: "RESEARCH card 3",
+      note: "首頁桌機實際框：241 x 323",
+    },
+    {
+      width: 241,
+      height: 162,
+      label: "RESEARCH card 4",
+      note: "首頁桌機實際框：241 x 162",
+    },
+  ],
+  groups: [
+    {
+      width: 241,
+      height: 323,
+      label: "GROUP COUNSELING card",
+      note: "首頁桌機實際框：241 x 323",
+    },
+  ],
+  support: [
+    {
+      width: 494,
+      height: 287,
+      label: "SUPPORT US card",
+      note: "首頁桌機約略框：494 x 287",
+    },
+  ],
+} as const;
+
+const HOME_EDITOR_NAV_ITEMS = [
+  { href: "#home-brand", label: "Brand" },
+  { href: "#home-sections", label: "Sections" },
+  { href: "#home-cards", label: "Cards" },
+  { href: "#home-newsletter", label: "Newsletter" },
+  { href: "#home-footer", label: "Footer" },
+];
+
+function getHomePreviewFrame(group: HomeCardGroup, index: number): HomePreviewFrame {
+  if (group === "research") {
+    return HOME_PREVIEW_FRAMES.research[index] || HOME_PREVIEW_FRAMES.research[0];
+  }
+
+  if (group === "groups") {
+    return HOME_PREVIEW_FRAMES.groups[0];
+  }
+
+  return HOME_PREVIEW_FRAMES.support[0];
+}
+
+function getHomeGroupLabel(group: HomeCardGroup) {
+  if (group === "research") return "RESEARCH";
+  if (group === "groups") return "GROUP COUNSELING";
+  return "SUPPORT US";
+}
+
 function updateListItem<T>(list: T[], index: number, nextValue: T): T[] {
   return list.map((item, itemIndex) => (itemIndex === index ? nextValue : item));
 }
@@ -91,11 +171,13 @@ function FieldLabel({
 function ImageCropControl({
   title,
   image,
+  frame,
   uploadedUrl,
   onChange,
 }: {
   title: string;
   image: HomeImageCrop;
+  frame: HomePreviewFrame;
   uploadedUrl?: string;
   onChange: (image: HomeImageCrop) => void;
 }) {
@@ -109,59 +191,99 @@ function ImageCropControl({
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+    <div className="rounded-[24px] border border-zinc-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-zinc-900">{title}</p>
           <p className="mt-1 text-xs leading-5 text-zinc-500">
-            拖曳預覽圖調整位置；原圖不會被破壞，只儲存 scale / x / y。
+            這個預覽框使用首頁目前寫死的桌機尺寸；拖曳後看到的構圖就是首頁框內的顯示結果。
           </p>
         </div>
-        {uploadedUrl ? (
+        <div className="flex flex-wrap gap-2">
+          {uploadedUrl ? (
+            <button
+              type="button"
+              onClick={() => update({ src: uploadedUrl })}
+              className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
+            >
+              套用剛上傳圖片到這張卡片
+            </button>
+          ) : null}
           <button
             type="button"
-            onClick={() => update({ src: uploadedUrl })}
+            onClick={() => update({ scale: 1, x: 0, y: 0 })}
             className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100"
           >
-            套用剛上傳圖片
+            重設裁切
           </button>
-        ) : null}
+        </div>
       </div>
 
-      <div
-        className="relative mt-4 aspect-[1.35] cursor-move overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
-        onPointerDown={(event) => {
-          setDragging(true);
-          event.currentTarget.setPointerCapture(event.pointerId);
-        }}
-        onPointerMove={(event) => {
-          if (!dragging) return;
-          update({
-            x: Math.max(-100, Math.min(100, safeX + event.movementX)),
-            y: Math.max(-100, Math.min(100, safeY + event.movementY)),
-          });
-        }}
-        onPointerUp={() => setDragging(false)}
-        onPointerCancel={() => setDragging(false)}
-      >
-        {image.src ? (
-          <Image
-            src={image.src}
-            alt={image.alt || title}
-            fill
-            sizes="360px"
-            className="object-cover"
-            style={{
-              transform: `translate3d(${safeX}px, ${safeY}px, 0) scale(${safeScale})`,
-              transformOrigin: "center",
-            }}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-zinc-500">
-            尚未設定圖片
+      <div className="mt-4 rounded-[22px] bg-zinc-950 p-4 text-white">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-[0.65rem] uppercase tracking-[0.22em] text-white/45">
+              Homepage frame preview
+            </p>
+            <p className="mt-1 text-sm font-semibold">{frame.label}</p>
           </div>
-        )}
-        <div className="pointer-events-none absolute inset-0 border border-white/60" />
+          <div className="text-right text-xs leading-5 text-white/58">
+            <p>{frame.note}</p>
+            <p>
+              scale {safeScale.toFixed(2)} / x {Math.round(safeX)} / y{" "}
+              {Math.round(safeY)}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="mx-auto"
+          style={{
+            width: `min(100%, ${frame.width}px)`,
+          }}
+        >
+          <div
+            className="relative cursor-move overflow-hidden bg-zinc-100 ring-1 ring-white/20"
+            style={{
+              aspectRatio: `${frame.width} / ${frame.height}`,
+            }}
+            onPointerDown={(event) => {
+              setDragging(true);
+              event.currentTarget.setPointerCapture(event.pointerId);
+            }}
+            onPointerMove={(event) => {
+              if (!dragging) return;
+              update({
+                x: Math.max(-200, Math.min(200, safeX + event.movementX)),
+                y: Math.max(-200, Math.min(200, safeY + event.movementY)),
+              });
+            }}
+            onPointerUp={() => setDragging(false)}
+            onPointerCancel={() => setDragging(false)}
+          >
+            {image.src ? (
+              <Image
+                src={image.src}
+                alt={image.alt || title}
+                fill
+                sizes={`${frame.width}px`}
+                className="select-none object-cover"
+                draggable={false}
+                style={{
+                  objectPosition: "center center",
+                  translate: `${safeX}px ${safeY}px`,
+                  scale: String(safeScale),
+                  transformOrigin: "center",
+                }}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-xs text-zinc-500">
+                尚未設定圖片
+              </div>
+            )}
+            <div className="pointer-events-none absolute inset-0 border border-white/70" />
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -196,8 +318,8 @@ function ImageCropControl({
         <FieldLabel label={`X ${Math.round(safeX)}px`}>
           <input
             type="range"
-            min="-100"
-            max="100"
+            min="-200"
+            max="200"
             step="1"
             value={safeX}
             onChange={(event) => update({ x: Number(event.target.value) })}
@@ -207,8 +329,8 @@ function ImageCropControl({
         <FieldLabel label={`Y ${Math.round(safeY)}px`}>
           <input
             type="range"
-            min="-100"
-            max="100"
+            min="-200"
+            max="200"
             step="1"
             value={safeY}
             onChange={(event) => update({ y: Number(event.target.value) })}
@@ -228,7 +350,25 @@ export function HomePageEditor({
   uploadedUrl?: string;
 }) {
   const [content, setContent] = useState<HomePageContent>(initialContent);
-  const payload = useMemo(() => content, [content]);
+  const [openCardKeys, setOpenCardKeys] = useState<string[]>(() =>
+    (["research", "groups", "support"] as const)
+      .map((group) => {
+        const firstCard = initialContent.cards[group][0];
+        return firstCard ? `${group}:${firstCard.key}` : "";
+      })
+      .filter(Boolean),
+  );
+  const payload = useMemo(
+    () => ({
+      ...content,
+      sections: content.sections.map((section) => ({
+        ...section,
+        eyebrow: "",
+        description: "",
+      })),
+    }),
+    [content],
+  );
 
   function updateSection(index: number, updates: Partial<HomeSectionControl>) {
     setContent((prev) => ({
@@ -255,7 +395,7 @@ export function HomePageEditor({
   }
 
   function updateCard(
-    group: keyof HomePageContent["cards"],
+    group: HomeCardGroup,
     index: number,
     updates: Partial<HomeCardContent>,
   ) {
@@ -272,7 +412,7 @@ export function HomePageEditor({
   }
 
   function updateCardImage(
-    group: keyof HomePageContent["cards"],
+    group: HomeCardGroup,
     index: number,
     image: HomeImageCrop,
   ) {
@@ -289,7 +429,7 @@ export function HomePageEditor({
               首頁基礎內容工作台
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-white/62">
-              這裡只管理首頁目前看得到的文字、連結與圖片顯示範圍。儲存後會直接反映在首頁，不建立文章系統、不新增多語系，也不改版型結構。
+              這裡只管理首頁目前看得到的文字、連結與圖片顯示範圍。圖片預覽框已對齊首頁桌機實際尺寸，拖曳裁切時可以直接判斷回到首頁會怎麼顯示。
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <Link
@@ -314,8 +454,8 @@ export function HomePageEditor({
                 <p className="mt-2 text-2xl font-semibold">Full</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-white/42">Image crop</p>
-                <p className="mt-2 text-2xl font-semibold">Scale/X/Y</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/42">Crop preview</p>
+                <p className="mt-2 text-2xl font-semibold">Real frame</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-white/42">Publish</p>
@@ -326,10 +466,25 @@ export function HomePageEditor({
         </div>
       </section>
 
-      <EditorSection
-        title="品牌首頁主視覺"
-        description="品牌主標、副標、首頁主敘述與左側影片來源。按鈕文字與連結在 Positioning banner CTA 裡編輯。"
-      >
+      <nav className="sticky top-4 z-10 rounded-[24px] border border-zinc-200 bg-white/90 p-2 shadow-sm backdrop-blur">
+        <div className="flex flex-wrap gap-2">
+          {HOME_EDITOR_NAV_ITEMS.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="rounded-full px-4 py-2 text-xs font-medium text-zinc-600 transition hover:bg-zinc-950 hover:text-white"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+      </nav>
+
+      <div id="home-brand" className="scroll-mt-28">
+        <EditorSection
+          title="品牌首頁主視覺"
+          description="品牌主標、副標、首頁主敘述與左側影片來源。按鈕文字與連結在 Positioning banner CTA 裡編輯。"
+        >
         <div className="grid gap-4 md:grid-cols-3">
           <FieldLabel label="品牌主標">
             <input
@@ -381,12 +536,14 @@ export function HomePageEditor({
             />
           </FieldLabel>
         </div>
-      </EditorSection>
+        </EditorSection>
+      </div>
 
-      <EditorSection
-        title="Section 標題、排序與 CTA"
-        description="維持既有首頁版型與 section 順序；只改文字、連結、是否顯示與 selectedIds。"
-      >
+      <div id="home-sections" className="scroll-mt-28">
+        <EditorSection
+          title="Section 標題、排序與 CTA"
+          description="維持既有首頁版型與 section 順序；只改文字、連結、是否顯示與 selectedIds。"
+        >
         <div className="space-y-4">
           {content.sections.map((section, sectionIndex) => (
             <div key={section.key} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
@@ -433,7 +590,7 @@ export function HomePageEditor({
                 </label>
               </div>
 
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="mt-3 grid gap-3">
                 <label className="text-xs font-medium text-zinc-700">
                   Title / 區塊標題
                   <input
@@ -444,31 +601,7 @@ export function HomePageEditor({
                     className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
                   />
                 </label>
-                <label className="text-xs font-medium text-zinc-700">
-                  Eyebrow / 已不顯示但保留資料
-                  <input
-                    value={section.eyebrow}
-                    onChange={(event) =>
-                      updateSection(sectionIndex, { eyebrow: event.target.value })
-                    }
-                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
-                  />
-                </label>
               </div>
-
-              <label className="mt-3 block text-xs font-medium text-zinc-700">
-                Description / 首頁短說明
-                <textarea
-                  value={section.description}
-                  onChange={(event) =>
-                    updateSection(sectionIndex, { description: event.target.value })
-                  }
-                  className="mt-1 h-20 w-full rounded-xl border border-zinc-300 p-3 text-sm outline-none focus:border-zinc-900"
-                />
-                <span className="mt-1 block text-xs leading-5 text-zinc-500">
-                  只作為首頁導覽與定位文案，不用來存放 research / group / project 的內容本體。
-                </span>
-              </label>
 
               <label className="mt-3 block text-xs font-medium text-zinc-700">
                 selectedIds
@@ -530,92 +663,158 @@ export function HomePageEditor({
             </div>
           ))}
         </div>
-      </EditorSection>
+        </EditorSection>
+      </div>
 
-      <EditorSection
-        title="首頁卡片文字、連結與圖片裁切"
-        description="每張首頁卡片的標籤、標題、描述、meta、連結與圖片顯示範圍都在這裡改。手機與桌機共用同一組 scale / x / y。"
-      >
+      <div id="home-cards" className="scroll-mt-28">
+        <EditorSection
+          title="首頁卡片文字、連結與圖片裁切"
+          description="預覽框使用目前首頁桌機實際尺寸；手機與桌機共用同一組 scale / x / y。"
+        >
         {(["research", "groups", "support"] as const).map((group) => (
-          <div key={group} className="mt-5 first:mt-0">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                {group}
-              </h3>
+          <div key={group} className="mt-8 first:mt-0">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                  {getHomeGroupLabel(group)}
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  右側預覽框就是首頁這組卡片在桌機版的固定顯示比例。
+                </p>
+              </div>
               <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-500">
                 {content.cards[group].length} cards
               </span>
             </div>
             <div className="space-y-4">
-              {content.cards[group].map((card, cardIndex) => (
-                <div key={card.key} className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                  <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-                    <div className="space-y-3">
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <FieldLabel label="卡片 key">
-                          <input value={card.key} readOnly className={inputClassName("bg-zinc-100 text-zinc-500")} />
-                        </FieldLabel>
-                        <FieldLabel label="卡片連結 href">
-                          <input
-                            value={card.href}
-                            onChange={(event) => updateCard(group, cardIndex, { href: event.target.value })}
-                            className={inputClassName()}
-                          />
-                        </FieldLabel>
+              {content.cards[group].map((card, cardIndex) => {
+                const frame = getHomePreviewFrame(group, cardIndex);
+                const editorCardKey = `${group}:${card.key || cardIndex}`;
+
+                return (
+                  <details
+                    key={card.key}
+                    open={openCardKeys.includes(editorCardKey)}
+                    onToggle={(event) => {
+                      const isOpen = event.currentTarget.open;
+                      setOpenCardKeys((prev) => {
+                        if (isOpen) {
+                          return prev.includes(editorCardKey) ? prev : [...prev, editorCardKey];
+                        }
+
+                        return prev.filter((key) => key !== editorCardKey);
+                      });
+                    }}
+                    className="group/card rounded-[24px] border border-zinc-200 bg-zinc-50 shadow-sm"
+                  >
+                    <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 p-4 marker:hidden">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                          {getHomeGroupLabel(group)} / {card.key}
+                        </p>
+                        <h4 className="mt-1 text-base font-semibold text-zinc-950">
+                          {card.title || "未命名卡片"}
+                        </h4>
                       </div>
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <FieldLabel label="卡片標籤">
-                          <input
-                            value={card.label}
-                            onChange={(event) => updateCard(group, cardIndex, { label: event.target.value })}
-                            className={inputClassName()}
-                          />
-                        </FieldLabel>
-                        <FieldLabel label="卡片 meta">
-                          <input
-                            value={card.meta}
-                            onChange={(event) => updateCard(group, cardIndex, { meta: event.target.value })}
-                            className={inputClassName()}
-                          />
-                        </FieldLabel>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-white px-3 py-1 text-xs text-zinc-500 ring-1 ring-zinc-200">
+                          {frame.width} x {frame.height}
+                        </span>
+                        <span className="rounded-full bg-zinc-950 px-3 py-1 text-xs font-medium text-white">
+                          編輯
+                        </span>
                       </div>
-                      <FieldLabel label="卡片標題">
-                        <input
-                          value={card.title}
-                          onChange={(event) => updateCard(group, cardIndex, { title: event.target.value })}
-                          className={inputClassName()}
+                    </summary>
+
+                    <div className="border-t border-zinc-200 p-4">
+                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+                        <div className="space-y-3">
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <FieldLabel label="卡片 key">
+                              <input
+                                value={card.key}
+                                readOnly
+                                className={inputClassName("bg-zinc-100 text-zinc-500")}
+                              />
+                            </FieldLabel>
+                            <FieldLabel label="卡片連結 href">
+                              <input
+                                value={card.href}
+                                onChange={(event) =>
+                                  updateCard(group, cardIndex, { href: event.target.value })
+                                }
+                                className={inputClassName()}
+                              />
+                            </FieldLabel>
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <FieldLabel label="卡片標籤">
+                              <input
+                                value={card.label}
+                                onChange={(event) =>
+                                  updateCard(group, cardIndex, { label: event.target.value })
+                                }
+                                className={inputClassName()}
+                              />
+                            </FieldLabel>
+                            <FieldLabel label="卡片 meta">
+                              <input
+                                value={card.meta}
+                                onChange={(event) =>
+                                  updateCard(group, cardIndex, { meta: event.target.value })
+                                }
+                                className={inputClassName()}
+                              />
+                            </FieldLabel>
+                          </div>
+                          <FieldLabel label="卡片標題">
+                            <input
+                              value={card.title}
+                              onChange={(event) =>
+                                updateCard(group, cardIndex, { title: event.target.value })
+                              }
+                              className={inputClassName()}
+                            />
+                          </FieldLabel>
+                          <FieldLabel label="卡片描述">
+                            <textarea
+                              value={card.description}
+                              onChange={(event) =>
+                                updateCard(group, cardIndex, { description: event.target.value })
+                              }
+                              className={textareaClassName()}
+                            />
+                          </FieldLabel>
+                          <FieldLabel label="卡片按鈕文字（目前首頁卡片不顯示按鈕，保留給既有欄位）">
+                            <input
+                              value={card.ctaLabel}
+                              onChange={(event) =>
+                                updateCard(group, cardIndex, { ctaLabel: event.target.value })
+                              }
+                              className={inputClassName()}
+                            />
+                          </FieldLabel>
+                        </div>
+                        <ImageCropControl
+                          title={card.title || card.key}
+                          image={card.image}
+                          frame={frame}
+                          uploadedUrl={uploadedUrl}
+                          onChange={(image) => updateCardImage(group, cardIndex, image)}
                         />
-                      </FieldLabel>
-                      <FieldLabel label="卡片描述">
-                        <textarea
-                          value={card.description}
-                          onChange={(event) => updateCard(group, cardIndex, { description: event.target.value })}
-                          className={textareaClassName()}
-                        />
-                      </FieldLabel>
-                      <FieldLabel label="卡片按鈕文字（目前首頁卡片不顯示按鈕，保留給既有欄位）">
-                        <input
-                          value={card.ctaLabel}
-                          onChange={(event) => updateCard(group, cardIndex, { ctaLabel: event.target.value })}
-                          className={inputClassName()}
-                        />
-                      </FieldLabel>
+                      </div>
                     </div>
-                    <ImageCropControl
-                      title={card.title || card.key}
-                      image={card.image}
-                      uploadedUrl={uploadedUrl}
-                      onChange={(image) => updateCardImage(group, cardIndex, image)}
-                    />
-                  </div>
-                </div>
-              ))}
+                  </details>
+                );
+              })}
             </div>
           </div>
         ))}
-      </EditorSection>
+        </EditorSection>
+      </div>
 
-      <EditorSection title="電子報區塊">
+      <div id="home-newsletter" className="scroll-mt-28">
+        <EditorSection title="電子報區塊">
         <div className="grid gap-4 md:grid-cols-2">
           <FieldLabel label="電子報標題">
             <input
@@ -663,9 +862,11 @@ export function HomePageEditor({
             </FieldLabel>
           ))}
         </div>
-      </EditorSection>
+        </EditorSection>
+      </div>
 
-      <EditorSection title="頁尾文字">
+      <div id="home-footer" className="scroll-mt-28">
+        <EditorSection title="頁尾文字">
         <div className="grid gap-4 md:grid-cols-3">
           <FieldLabel label="頁尾品牌名稱">
             <input
@@ -704,7 +905,8 @@ export function HomePageEditor({
             />
           </FieldLabel>
         </div>
-      </EditorSection>
+        </EditorSection>
+      </div>
 
       <EditorSection title="管理設定">
         <GovernanceFields

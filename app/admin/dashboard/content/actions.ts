@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { enforceRateLimit, getIpFromHeaders } from "@/lib/rate-limit";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { isLocalAdminPreviewAuthenticated } from "@/app/admin/local-preview-auth";
 import {
 	getSiteContentSection,
 	saveSiteContentDocument,
@@ -60,6 +61,10 @@ async function requireAdminUser() {
 
 	if (!rateLimit.ok) {
 		redirect("/admin/dashboard/content?error=rate_limited");
+	}
+
+	if (await isLocalAdminPreviewAuthenticated()) {
+		return;
 	}
 
 	const supabase = await getSupabaseServerClient();

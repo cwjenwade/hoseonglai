@@ -99,7 +99,7 @@ export const HOME_SECTION_SELECTED_ID_HINTS: Record<HomeSectionKey, string> = {
   researchExhibitions:
     "使用 research video tag，每行一筆，例如 alexithymia。留空或找不到時，首頁會 fallback 顯示前 4 筆 research videos。",
   groupTherapyGallery:
-    "使用 group slug，每行一筆，例如 group-counseling。留空或找不到時，首頁會 fallback 顯示可見 group therapy 項目。",
+    "使用首頁實際 group slug，每行一筆；留空或找不到時，首頁會 fallback 顯示目前可見的 group therapy 項目。",
   supportUs:
     "使用 project:{project id} 指定參與研究入口，例如 project:emotion-patterns。留空或找不到時，首頁會 fallback 顯示第一筆已發布 research project。",
 };
@@ -444,8 +444,8 @@ function normalizeImageCrop(value: unknown, fallback: HomeImageCrop): HomeImageC
     src: normalizeOptionalString(candidate.src, fallback.src).trim(),
     alt: normalizeOptionalString(candidate.alt, fallback.alt).trim(),
     scale: normalizeNumberInRange(candidate.scale, fallback.scale, 0.5, 3),
-    x: normalizeNumberInRange(candidate.x, fallback.x, -100, 100),
-    y: normalizeNumberInRange(candidate.y, fallback.y, -100, 100),
+    x: normalizeNumberInRange(candidate.x, fallback.x, -200, 200),
+    y: normalizeNumberInRange(candidate.y, fallback.y, -200, 200),
   };
 }
 
@@ -467,11 +467,37 @@ function normalizeCardContent(value: unknown, fallback: HomeCardContent): HomeCa
 
 function normalizeCardList(value: unknown, fallback: HomeCardContent[]): HomeCardContent[] {
   const rawItems = Array.isArray(value) ? value : [];
+  const fallbackKeys = new Set(fallback.map((item) => item.key));
+  const extraCards = rawItems
+    .filter((item) => {
+      const key = String((item as { key?: unknown })?.key || "").trim();
+      return key && !fallbackKeys.has(key);
+    })
+    .map((item) => {
+      const candidate = item as Partial<HomeCardContent>;
+      const key = String(candidate.key || "").trim();
+      return normalizeCardContent(item, {
+        key,
+        label: "",
+        title: key,
+        description: "",
+        meta: "",
+        href: "#",
+        ctaLabel: "",
+        image: {
+          src: "",
+          alt: key,
+          scale: 1,
+          x: 0,
+          y: 0,
+        },
+      });
+    });
 
   return fallback.map((fallbackCard) => {
     const rawCard = rawItems.find((item) => String((item as { key?: unknown })?.key || "") === fallbackCard.key);
     return normalizeCardContent(rawCard, fallbackCard);
-  });
+  }).concat(extraCards);
 }
 
 function normalizeNewsletter(value: unknown): HomeNewsletterContent {

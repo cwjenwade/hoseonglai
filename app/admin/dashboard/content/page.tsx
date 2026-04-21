@@ -2,10 +2,18 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { adminLogout } from "@/app/admin/actions";
-import { DEFAULT_BRAND_PAGE_CONTENT, normalizeBrandPageContent } from "@/app/brand-philosophy/brand-content";
+import {
+	DEFAULT_BRAND_PAGE_CONTENT,
+	normalizeBrandPageContent,
+	type BrandPageContent,
+} from "@/app/brand-philosophy/brand-content";
 import {
 	DEFAULT_HOME_PAGE_CONTENT,
+	getHomeSectionControl,
+	getHomeSectionCta,
 	normalizeHomePageContent,
+	type HomeCardContent,
+	type HomePageContent,
 } from "@/app/home-content";
 import {
 	DEFAULT_PSYCHOMETRIC_SCALES,
@@ -25,13 +33,15 @@ import {
 	getResearchProjectType,
 	getResearchPublishStatusLabel,
 	normalizeResearchProjects,
+	type ResearchProject,
 } from "@/app/collaborative-prosperity/projects";
 import { LECTURES, type LectureItem } from "@/app/fortune-arrives/lectures-data";
 import { HEARTFELT_VIDEOS, type HeartfeltVideoItem } from "@/app/heartfelt-momentum/videos-data";
-import { GROUPS, type GroupItem } from "@/app/togetherness/group-data";
+import { GROUPS, isGroupVisible, type GroupItem } from "@/app/togetherness/group-data";
 import { formatAdminTimestamp, normalizeContentGovernance } from "@/lib/content-governance";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { isLocalAdminPreviewAuthenticated } from "@/app/admin/local-preview-auth";
 import {
 	saveBrandPageContent,
 	saveFortuneLectureEntry,
@@ -128,6 +138,192 @@ function getLatestUpdated(values: Array<{ updatedAt?: string }>) {
 	return latest || "";
 }
 
+function getTypedSelectedIds(selectedIds: string[], type: string): string[] {
+	const prefix = `${type}:`;
+	return selectedIds
+		.filter((id) => id.startsWith(prefix))
+		.map((id) => id.slice(prefix.length).trim())
+		.filter(Boolean);
+}
+
+function selectHomeItems<T>(
+	items: T[],
+	selectedIds: string[],
+	getId: (item: T) => string,
+	limit: number,
+	type?: string,
+): T[] {
+	const ids = type ? getTypedSelectedIds(selectedIds, type) : selectedIds;
+	const selected = ids
+		.map((id) => items.find((item) => getId(item) === id))
+		.filter((item): item is T => Boolean(item));
+
+	return (selected.length > 0 ? selected : items).slice(0, limit);
+}
+
+function researchCardHref(video: HeartfeltVideoItem): string {
+	return `/heartfelt-momentum#${encodeURIComponent(video.tag)}`;
+}
+
+function groupCardHref(group: GroupItem): string {
+	return `/togetherness/${group.slug}`;
+}
+
+function getHomeCard(
+	cards: HomeCardContent[],
+	key: string,
+	fallback: Omit<HomeCardContent, "key">,
+): HomeCardContent {
+	const card = cards.find((item) => item.key === key);
+
+	return {
+		key,
+		label: card?.label ?? fallback.label,
+		title: card?.title || fallback.title,
+		description: card?.description ?? fallback.description,
+		meta: card?.meta ?? fallback.meta,
+		href: card?.href || fallback.href,
+		ctaLabel: card?.ctaLabel ?? fallback.ctaLabel,
+		image: {
+			src: card?.image.src || fallback.image.src,
+			alt: card?.image.alt || fallback.image.alt,
+			scale: card?.image.scale ?? fallback.image.scale,
+			x: card?.image.x ?? fallback.image.x,
+			y: card?.image.y ?? fallback.image.y,
+		},
+	};
+}
+
+function buildHomeEditorContent({
+	homeContent,
+	researchVideos,
+	groups,
+	researchProjects,
+	brandContent,
+}: {
+	homeContent: HomePageContent;
+	researchVideos: HeartfeltVideoItem[];
+	groups: GroupItem[];
+	researchProjects: ResearchProject[];
+	brandContent: BrandPageContent;
+}): HomePageContent {
+	const researchControl = getHomeSectionControl(homeContent, "researchExhibitions");
+	const galleryControl = getHomeSectionControl(homeContent, "groupTherapyGallery");
+	const supportControl = getHomeSectionControl(homeContent, "supportUs");
+	const supportIdentityCta = getHomeSectionCta(supportControl, "identity");
+	const supportResearchCta = getHomeSectionCta(supportControl, "research");
+	const visibleGroups = groups.filter(isGroupVisible);
+	const publishedProjects = normalizeResearchProjects(researchProjects, RESEARCH_PROJECTS);
+	const researchItems = selectHomeItems(
+		researchVideos.length > 0 ? researchVideos : HEARTFELT_VIDEOS,
+		researchControl.selectedIds,
+		(video) => video.tag,
+		4,
+	);
+	const galleryItems = selectHomeItems(
+		visibleGroups.length > 0 ? visibleGroups : GROUPS.filter(isGroupVisible),
+		galleryControl.selectedIds,
+		(group) => group.slug,
+		4,
+	);
+	const supportProject = selectHomeItems<ResearchProject>(
+		publishedProjects.length > 0 ? publishedProjects : normalizeResearchProjects(RESEARCH_PROJECTS),
+		supportControl.selectedIds,
+		(project) => project.id,
+		1,
+		"project",
+	)[0];
+	const supportIdentityImage =
+		brandContent.director.photo || researchItems[0]?.image || HEARTFELT_VIDEOS[0].image;
+	const supportResearchImage =
+		galleryItems[0]?.image || researchItems[1]?.image || supportIdentityImage;
+
+	return {
+		...homeContent,
+		sections: homeContent.sections.map((section) => ({
+			...section,
+			selectedIds:
+				section.key === "researchExhibitions"
+					? researchItems.map((video) => video.tag)
+					: section.key === "groupTherapyGallery"
+						? galleryItems.map((group) => group.slug)
+						: section.key === "supportUs" && supportProject
+							? [`project:${supportProject.id}`]
+							: section.selectedIds,
+			eyebrow: "",
+			description: "",
+		})),
+		cards: {
+			research: researchItems.map((video) =>
+				getHomeCard(homeContent.cards.research, video.tag, {
+					label: "Research",
+					title: video.title,
+					description: video.description,
+					meta: `${video.category} · ${video.duration}`,
+					href: researchCardHref(video),
+					ctaLabel: "",
+					image: {
+						src: video.image,
+						alt: video.title,
+						scale: 1,
+						x: 0,
+						y: 0,
+					},
+				}),
+			),
+			groups: galleryItems.map((group) =>
+				getHomeCard(homeContent.cards.groups, group.slug, {
+					label: group.subtitle,
+					title: group.title,
+					description: group.description,
+					meta: "Open for inquiry",
+					href: groupCardHref(group),
+					ctaLabel: "",
+					image: {
+						src: group.image,
+						alt: group.title,
+						scale: 1,
+						x: 0,
+						y: 0,
+					},
+				}),
+			),
+			support: [
+				getHomeCard(homeContent.cards.support, "identity", {
+					label: "",
+					title: supportIdentityCta.label,
+					description: "",
+					meta: "",
+					href: supportIdentityCta.href,
+					ctaLabel: "",
+					image: {
+						src: supportIdentityImage,
+						alt: brandContent.director.nameZh,
+						scale: 1,
+						x: 0,
+						y: 0,
+					},
+				}),
+				getHomeCard(homeContent.cards.support, "research", {
+					label: "",
+					title: supportResearchCta.label,
+					description: supportProject?.researchAudiencePurpose || "",
+					meta: "",
+					href: supportResearchCta.href,
+					ctaLabel: "",
+					image: {
+						src: supportResearchImage,
+						alt: supportProject?.title || "Participate in research",
+						scale: 1,
+						x: 0,
+						y: 0,
+					},
+				}),
+			],
+		},
+	};
+}
+
 function normalizeModuleFromParams(module?: string, tab?: string): ContentModuleKey | null {
 	if (module && isContentModuleKey(module)) return module;
 	if (tab && LEGACY_TAB_MAP[tab]) return LEGACY_TAB_MAP[tab];
@@ -163,23 +359,27 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 			? resolvedSearchParams.researchTab
 			: "project";
 
-	const supabase = await getSupabaseServerClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	const localPreviewAdmin = await isLocalAdminPreviewAuthenticated();
 
-	if (!user) {
-		redirect("/admin");
-	}
+	if (!localPreviewAdmin) {
+		const supabase = await getSupabaseServerClient();
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
 
-	const { data: adminRow } = await supabase
-		.from("admin_users")
-		.select("user_id")
-		.eq("user_id", user.id)
-		.maybeSingle();
+		if (!user) {
+			redirect("/admin");
+		}
 
-	if (!adminRow) {
-		redirect("/admin/dashboard");
+		const { data: adminRow } = await supabase
+			.from("admin_users")
+			.select("user_id")
+			.eq("user_id", user.id)
+			.maybeSingle();
+
+		if (!adminRow) {
+			redirect("/admin/dashboard");
+		}
 	}
 
 	const homeContent = normalizeHomePageContent(
@@ -228,6 +428,13 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 	const researchWorkspaces = researchProjects.map((project) =>
 		buildResearchWorkspace(project, consents, psychometrics, schedulingConfigs),
 	);
+	const homeEditorContent = buildHomeEditorContent({
+		homeContent,
+		researchVideos,
+		groups,
+		researchProjects,
+		brandContent,
+	});
 
 	const leaderOptions = [
 		{
@@ -751,7 +958,7 @@ export default async function AdminContentPage({ searchParams }: PageProps) {
 								</div>
 							</section>
 							<form action={saveHomePageContent} className="space-y-5">
-								<HomePageEditor initialContent={homeContent} uploadedUrl={resolvedSearchParams.uploaded} />
+								<HomePageEditor initialContent={homeEditorContent} uploadedUrl={resolvedSearchParams.uploaded} />
 								<div className="sticky bottom-4 z-20 flex flex-wrap justify-end gap-3 rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-lg backdrop-blur">
 									<Link href="/admin/dashboard/content" className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">
 										取消

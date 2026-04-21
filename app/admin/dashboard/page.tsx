@@ -12,6 +12,7 @@ import { RESEARCH_PROJECTS, normalizeResearchProjects } from "@/app/collaborativ
 import { DEFAULT_PSYCHOMETRIC_SCALES } from "@/app/collaborative-prosperity/assessment-data";
 import { DEFAULT_RESEARCH_CONSENTS } from "@/app/collaborative-prosperity/consent-data";
 import { adminLogout } from "../actions";
+import { isLocalAdminPreviewAuthenticated } from "../local-preview-auth";
 import { deleteProjectData } from "./actions";
 
 export const metadata: Metadata = {
@@ -212,57 +213,61 @@ export default async function AdminDashboardPage({
     : "waiting_list";
 
   const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const localPreviewAdmin = await isLocalAdminPreviewAuthenticated();
 
-  if (!user) {
-    redirect("/admin");
-  }
+  if (!localPreviewAdmin) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const { data: adminRow, error: adminError } = await supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    if (!user) {
+      redirect("/admin");
+    }
 
-  if (adminError || !adminRow) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-6 py-12">
-        <div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
-          <h1 className="text-2xl font-bold text-zinc-900">管理儀表板</h1>
-          <p className="mt-3 text-sm leading-7 text-zinc-700">
-            你已登入，但尚未被授權為 admin。
-          </p>
-          <p className="mt-3 text-sm leading-7 text-zinc-600">
-            請在 Supabase 資料庫建立 admin_users 記錄後再試。
-          </p>
+    const { data: adminRow, error: adminError } = await supabase
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/"
-              className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
-            >
-              返回首頁
-            </Link>
-            <form action={adminLogout}>
-              <button
-                type="submit"
-                className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-white transition hover:bg-zinc-700"
+    if (adminError || !adminRow) {
+      return (
+        <div className="mx-auto w-full max-w-3xl px-6 py-12">
+          <div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
+            <h1 className="text-2xl font-bold text-zinc-900">管理儀表板</h1>
+            <p className="mt-3 text-sm leading-7 text-zinc-700">
+              你已登入，但尚未被授權為 admin。
+            </p>
+            <p className="mt-3 text-sm leading-7 text-zinc-600">
+              請在 Supabase 資料庫建立 admin_users 記錄後再試。
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/"
+                className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100"
               >
-                登出
-              </button>
-            </form>
-          </div>
+                返回首頁
+              </Link>
+              <form action={adminLogout}>
+                <button
+                  type="submit"
+                  className="rounded-full bg-zinc-800 px-4 py-2 text-sm text-white transition hover:bg-zinc-700"
+                >
+                  登出
+                </button>
+              </form>
+            </div>
 
-          {adminError ? (
-            <pre className="mt-6 overflow-x-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-700">
-              {safeString(adminError.message)}
-            </pre>
-          ) : null}
+            {adminError ? (
+              <pre className="mt-6 overflow-x-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-700">
+                {safeString(adminError.message)}
+              </pre>
+            ) : null}
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   const [

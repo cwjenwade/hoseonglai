@@ -22,14 +22,14 @@ export default function AdminLoginForm() {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
-          Email
+          Email / localhost username
         </label>
         <input
           id="email"
           name="email"
-          type="email"
+          type="text"
           className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-4 text-sm outline-none transition focus:border-amber-400"
-          placeholder="admin@example.com"
+          placeholder="admin@example.com / localhost: admin"
           autoComplete="username"
           required
         />
