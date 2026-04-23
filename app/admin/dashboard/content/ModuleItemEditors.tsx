@@ -5,7 +5,6 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
-  HOME_SECTION_DISPLAY_MODES,
   HOME_SECTION_SELECTED_ID_HINTS,
   type HomeCardContent,
   type HomeImageCrop,
@@ -570,24 +569,13 @@ export function HomePageEditor({
                     className="mt-1 h-11 w-full rounded-xl border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
                   />
                 </label>
-                <label className="text-xs font-medium text-zinc-700 md:col-span-2">
-                  Display mode
-                  <select
-                    value={section.displayMode}
-                    onChange={(event) =>
-                      updateSection(sectionIndex, {
-                        displayMode: event.target.value as HomeSectionControl["displayMode"],
-                      })
-                    }
-                    className="mt-1 h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-900"
-                  >
-                    {HOME_SECTION_DISPLAY_MODES.map((mode) => (
-                      <option key={mode} value={mode}>
-                        {mode}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="rounded-xl border border-zinc-200 bg-white px-3 py-3 md:col-span-2">
+                  <p className="text-xs font-medium text-zinc-500">Display mode</p>
+                  <p className="mt-1 text-sm text-zinc-800">{section.displayMode}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                    前台依 section key 套用既有首頁版型；這裡只顯示目前資料狀態。
+                  </p>
+                </div>
               </div>
 
               <div className="mt-3 grid gap-3">

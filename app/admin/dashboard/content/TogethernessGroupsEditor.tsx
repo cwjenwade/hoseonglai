@@ -79,7 +79,7 @@ export default function TogethernessGroupsEditor({
                     )
                   }
                   className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm outline-none focus:border-amber-400"
-                  placeholder="group-counseling"
+                  placeholder="group-mnt7r4p6"
                 />
               </label>
 
