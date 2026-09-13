@@ -13,13 +13,6 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
 
-    // Standalone Node scripts (not part of Next.js app bundle)
-    "create-tables.js",
-    "diagnose-rls.js",
-    "setup-database.js",
-    "test-connection.js",
-    "show-sql.js",
-
     // Utility scripts folder
     "scripts/**",
   ]),
