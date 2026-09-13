@@ -1,0 +1,4 @@
+backups/
+.codegraph/
+supabase/.temp/
+.env*

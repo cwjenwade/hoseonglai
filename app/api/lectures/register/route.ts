@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { sendLectureRegistrationEmail } from "@/lib/email";
 import { enforceRateLimit, getRequestIp } from "@/lib/rate-limit";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 type RegisterPayload = {
   lectureId: string;
@@ -13,6 +13,8 @@ type RegisterPayload = {
   time?: string;
   location?: string;
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,25 +50,24 @@ export async function POST(req: NextRequest) {
       location,
     } = body;
 
-    if (!lectureId || !lectureTitle || !name?.trim() || !email?.trim() || !phone?.trim()) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedName = String(name || "").trim();
+    const normalizedPhone = String(phone || "").trim();
+    if (!lectureId || !lectureTitle || !normalizedName || !normalizedPhone || !EMAIL_PATTERN.test(normalizedEmail)) {
       return NextResponse.json({ message: "缺少必要欄位" }, { status: 400 });
     }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json({ message: "Supabase 環境變數未設定" }, { status: 500 });
+    if (String(lectureId).length > 120 || String(lectureTitle).length > 200 || normalizedName.length > 120 || normalizedEmail.length > 254 || normalizedPhone.length > 40) {
+      return NextResponse.json({ message: "欄位長度不正確" }, { status: 400 });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = getSupabaseAdminClient();
 
     const { error: insertError } = await supabase.from("lecture_registrations").insert({
       lecture_id: lectureId,
       lecture_title: lectureTitle,
-      user_name: name.trim(),
-      user_email: email.trim().toLowerCase(),
-      user_phone: phone.trim(),
+      user_name: normalizedName,
+      user_email: normalizedEmail,
+      user_phone: normalizedPhone,
     });
 
     if (insertError) {
@@ -76,8 +77,8 @@ export async function POST(req: NextRequest) {
 
     try {
       await sendLectureRegistrationEmail({
-        to: email.trim().toLowerCase(),
-        name: name.trim(),
+        to: normalizedEmail,
+        name: normalizedName,
         lectureTitle,
         dateLabel,
         time,

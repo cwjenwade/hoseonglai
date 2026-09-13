@@ -14,6 +14,8 @@ type GroupRegisterPayload = {
   availabilitySlots: string[];
 };
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(req: NextRequest) {
   try {
     const ip = getRequestIp(req);
@@ -48,8 +50,15 @@ export async function POST(req: NextRequest) {
       availabilitySlots,
     } = body;
 
-    if (!groupSlug || !groupTitle || !name?.trim() || !email?.trim() || !phone?.trim()) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedName = String(name || "").trim();
+    const normalizedPhone = String(phone || "").trim();
+    const normalizedNote = String(note || "").trim();
+    if (!groupSlug || !groupTitle || !normalizedName || !normalizedPhone || !EMAIL_PATTERN.test(normalizedEmail)) {
       return NextResponse.json({ message: "缺少必要欄位" }, { status: 400 });
+    }
+    if (String(groupSlug).length > 120 || String(groupTitle).length > 200 || normalizedName.length > 120 || normalizedEmail.length > 254 || normalizedPhone.length > 40 || normalizedNote.length > 4000) {
+      return NextResponse.json({ message: "欄位長度不正確" }, { status: 400 });
     }
 
     if (!Array.isArray(consultationSlots) || consultationSlots.length < 2 || consultationSlots.length > 4) {
@@ -65,10 +74,10 @@ export async function POST(req: NextRequest) {
     const { error } = await supabase.from("group_registrations").insert({
       group_slug: groupSlug,
       group_title: groupTitle,
-      user_name: name.trim(),
-      user_email: email.trim().toLowerCase(),
-      user_phone: phone.trim(),
-      note: note?.trim() || null,
+      user_name: normalizedName,
+      user_email: normalizedEmail,
+      user_phone: normalizedPhone,
+      note: normalizedNote || null,
       consultation_slots: consultationSlots,
       availability_slots: availabilitySlots,
     });
@@ -80,8 +89,8 @@ export async function POST(req: NextRequest) {
 
     try {
       await sendGroupRegistrationEmail({
-        to: email.trim().toLowerCase(),
-        name: name.trim(),
+        to: normalizedEmail,
+        name: normalizedName,
         groupTitle,
         consultationSlots,
         availabilitySlots,

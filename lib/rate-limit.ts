@@ -10,11 +10,6 @@ type RateLimitOptions = {
   windowMs: number;
 };
 
-type RateLimitRecord = {
-  id: string;
-  count: number;
-};
-
 export type RateLimitResult = {
   ok: boolean;
   remaining: number;
@@ -32,28 +27,6 @@ export function getIpFromHeaders(requestHeaders: Headers): string {
   if (realIp) return realIp;
 
   return "unknown";
-}
-
-function shouldFailOpen(message: string): boolean {
-  const normalized = message.toLowerCase();
-  return (
-    normalized.includes("request_rate_limits") &&
-    (normalized.includes("schema cache") ||
-      normalized.includes("relation") ||
-      normalized.includes("does not exist") ||
-      normalized.includes("could not find the table"))
-  );
-}
-
-function buildFailOpenResult(
-  maxRequests: number,
-  retryAfterSeconds: number
-): RateLimitResult {
-  return {
-    ok: true,
-    remaining: Math.max(0, maxRequests - 1),
-    retryAfterSeconds,
-  };
 }
 
 function getWindowStart(windowMs: number): string {
@@ -75,81 +48,26 @@ export async function enforceRateLimit({
   const windowStart = getWindowStart(windowMs);
   const retryAfterSeconds = Math.max(1, Math.ceil(windowMs / 1000));
 
-  const { data: existing, error: readError } = await supabase
-    .from("request_rate_limits")
-    .select("id, count")
-    .eq("scope", scope)
-    .eq("identifier", identifier)
-    .eq("window_start", windowStart)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("consume_rate_limit", {
+    p_scope: scope,
+    p_identifier: identifier,
+    p_window_start: windowStart,
+    p_expires_at: new Date(Date.parse(windowStart) + windowMs).toISOString(),
+    p_max_requests: maxRequests,
+  });
 
-  if (readError) {
-    if (shouldFailOpen(readError.message)) {
-      console.warn(`RATE_LIMIT_DISABLED:${readError.message}`);
-      return buildFailOpenResult(maxRequests, retryAfterSeconds);
-    }
-
-    throw new Error(`RATE_LIMIT_READ_FAILED:${readError.message}`);
+  if (error) {
+    throw new Error(`RATE_LIMIT_RPC_FAILED:${error.message}`);
   }
 
-  const row = existing as RateLimitRecord | null;
-
-  if (!row) {
-    const { error: insertError } = await supabase
-      .from("request_rate_limits")
-      .insert({
-        scope,
-        identifier,
-        window_start: windowStart,
-        count: 1,
-        expires_at: new Date(Date.parse(windowStart) + windowMs).toISOString(),
-      });
-
-    if (insertError) {
-      if (shouldFailOpen(insertError.message)) {
-        console.warn(`RATE_LIMIT_DISABLED:${insertError.message}`);
-        return buildFailOpenResult(maxRequests, retryAfterSeconds);
-      }
-
-      throw new Error(`RATE_LIMIT_INSERT_FAILED:${insertError.message}`);
-    }
-
-    return {
-      ok: true,
-      remaining: Math.max(0, maxRequests - 1),
-      retryAfterSeconds,
-    };
-  }
-
-  if (row.count >= maxRequests) {
-    return {
-      ok: false,
-      remaining: 0,
-      retryAfterSeconds,
-    };
-  }
-
-  const nextCount = row.count + 1;
-  const { error: updateError } = await supabase
-    .from("request_rate_limits")
-    .update({
-      count: nextCount,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", row.id);
-
-  if (updateError) {
-    if (shouldFailOpen(updateError.message)) {
-      console.warn(`RATE_LIMIT_DISABLED:${updateError.message}`);
-      return buildFailOpenResult(maxRequests, retryAfterSeconds);
-    }
-
-    throw new Error(`RATE_LIMIT_UPDATE_FAILED:${updateError.message}`);
+  const result = Array.isArray(data) ? data[0] : null;
+  if (!result || typeof result.allowed !== "boolean") {
+    throw new Error("RATE_LIMIT_RPC_INVALID_RESPONSE");
   }
 
   return {
-    ok: true,
-    remaining: Math.max(0, maxRequests - nextCount),
+    ok: result.allowed,
+    remaining: Math.max(0, Number(result.remaining) || 0),
     retryAfterSeconds,
   };
 }

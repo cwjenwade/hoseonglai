@@ -134,7 +134,7 @@ export default async function RootLayout({
                 },
                 description:
                   "提供個別諮商與團體諮商服務，專注心理健康與團體治療。",
-                url: "https://你的網站/therapist/ren",
+                url: siteUrl,
               }),
             }}
           />

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { HomeNewsletterContent } from "@/app/home-content";
-import { getSupabaseClient } from "@/lib/supabase";
 
 type NewsletterSubscriptionProps = {
   content: HomeNewsletterContent;
@@ -25,14 +24,13 @@ export default function NewsletterSubscription({ content }: NewsletterSubscripti
     setLoading(true);
 
     try {
-      const supabase = getSupabaseClient();
-
-      const { error } = await supabase.from("newsletter_subscribers").insert({
-        email: email,
-        name: name.trim() || null,
+      const response = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name }),
       });
-
-      if (error) throw error;
+      const data = await response.json() as { message?: string };
+      if (!response.ok) throw new Error(data.message || "訂閱失敗");
 
       setSubmitted(true);
       setEmail("");
