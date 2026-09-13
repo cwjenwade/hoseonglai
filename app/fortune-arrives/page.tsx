@@ -2,6 +2,7 @@ import LectureIndexClient from "./LectureIndexClient";
 import { LECTURES, type LectureItem } from "./lectures-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import type { Metadata } from "next";
+import { LECTURE_REGISTRATION_FORM_URL } from "@/app/google-form-links";
 
 function getLectureSortTimestamp(lecture: LectureItem): number {
   if (lecture.dateMode === "month") {
@@ -51,5 +52,5 @@ export default async function LectureIndexPage() {
   const lectures = sortLecturesByTime(
     await getSiteContentSection("fortune_arrives_lectures", LECTURES),
   );
-  return <LectureIndexClient lectures={lectures} />;
+  return <LectureIndexClient lectures={lectures} registrationUrl={LECTURE_REGISTRATION_FORM_URL} />;
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
   Noto_Serif_TC,
   Geist,
@@ -48,9 +47,10 @@ function getApproxMonthLabel(lecture: LectureItem): string {
 
 type LectureIndexClientProps = {
   lectures: LectureItem[];
+  registrationUrl: string;
 };
 
-export default function LectureIndexClient({ lectures }: LectureIndexClientProps) {
+export default function LectureIndexClient({ lectures, registrationUrl }: LectureIndexClientProps) {
   const [activeFilter, setActiveFilter] = useState<LectureCategory>("All");
 
   const fontGeistOnly = "var(--font-geist)";
@@ -239,13 +239,15 @@ export default function LectureIndexClient({ lectures }: LectureIndexClientProps
                       </div>
 
                       <div className="pt-8 text-center md:text-left">
-                        <Link
-                          href={lecture.href}
+                        <a
+                          href={registrationUrl}
+                          target="_blank"
+                          rel="noreferrer"
                           className="group inline-flex items-center gap-2 text-[14px] text-[#1a1a1a] transition-opacity duration-200 hover:opacity-70"
                           style={{ fontFamily: fontGeistOnly }}
                         >
-                          <span>View details</span>
-                        </Link>
+                          <span>Register</span>
+                        </a>
                       </div>
                     </div>
                   </div>

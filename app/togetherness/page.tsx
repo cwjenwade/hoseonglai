@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { GROUPS, isGroupVisible } from "./group-data";
 import { getSiteContentSection } from "@/lib/site-content-server";
+import { GROUP_WAITLIST_FORM_URL } from "@/app/google-form-links";
 
 export const metadata: Metadata = {
   title: "團團圓圓｜Group Therapy",
@@ -104,8 +104,10 @@ export default async function TogethernessPage({ searchParams }: TogethernessPag
         <section className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-10 xl:gap-y-20">
           {groups.map((group) => (
             <article key={group.slug} className="group relative z-0">
-              <Link
-                href={`/togetherness/${group.slug}`}
+              <a
+                href={GROUP_WAITLIST_FORM_URL}
+                target="_blank"
+                rel="noreferrer"
                 className="relative block p-0 text-left transition-[padding,transform,box-shadow] duration-300 ease-out hover:z-20 hover:-translate-y-2 hover:p-5 hover:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:z-20 focus-visible:-translate-y-2 focus-visible:p-5 focus-visible:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:outline-none"
               >
                 <div className="relative aspect-[4/5] overflow-hidden bg-neutral-200">
@@ -144,10 +146,10 @@ export default async function TogethernessPage({ searchParams }: TogethernessPag
                     className="mt-5 inline-block border-b border-neutral-700 pb-[2px] text-[13px] text-neutral-700 transition-opacity duration-200 group-hover:opacity-60"
                     style={{ fontFamily: "var(--font-geist-sans)" }}
                   >
-                    View detail / Register
+                    View Detail &amp; Register
                   </span>
                 </div>
-              </Link>
+              </a>
             </article>
           ))}
         </section>

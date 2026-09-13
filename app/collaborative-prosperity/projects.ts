@@ -1,4 +1,5 @@
 import type { ContentGovernanceFields } from "@/lib/content-governance";
+import { RESEARCH_REGISTRATION_FORM_URL } from "@/app/google-form-links";
 
 export const RESEARCH_PROJECT_STATUSES = [
   "preparing",
@@ -299,7 +300,7 @@ export const RESEARCH_PROJECTS: ResearchProject[] = [
     researchAudiencePurpose:
       "以年滿 18 歲成人為對象，探討日常情緒感受、調節方式與心理狀態之間的關聯。",
     testUrl: "/collaborative-prosperity/tests/emotion-patterns",
-    googleFormUrl: "",
+    googleFormUrl: RESEARCH_REGISTRATION_FORM_URL,
     assessmentSourceProjectId: "",
     consentSourceProjectId: "",
     contactVisibility: "admin_only",

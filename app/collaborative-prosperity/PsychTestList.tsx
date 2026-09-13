@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSiteContentSection } from "@/lib/site-content-server";
 import {
   RESEARCH_PROJECTS,
+  getResearchProjectGoogleFormUrl,
   getProjectStatusLabel,
   normalizeResearchProjects,
 } from "./projects";
@@ -82,6 +83,17 @@ export default async function PsychTestList() {
             </div>
 
             <div className="mt-10">
+              {getResearchProjectGoogleFormUrl(project) ? (
+              <a
+                href={getResearchProjectGoogleFormUrl(project)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-11 items-center justify-center border border-neutral-900 px-6 text-[0.72rem] uppercase tracking-[0.22em] text-neutral-900 transition hover:bg-neutral-900 hover:text-[#f3f3f2]"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                前往研究登記
+              </a>
+              ) : (
               <Link
                 href={`/collaborative-prosperity/${encodeURIComponent(project.id)}`}
                 className="inline-flex min-h-11 items-center justify-center border border-neutral-900 px-6 text-[0.72rem] uppercase tracking-[0.22em] text-neutral-900 transition hover:bg-neutral-900 hover:text-[#f3f3f2]"
@@ -89,6 +101,7 @@ export default async function PsychTestList() {
               >
                 查看研究內容
               </Link>
+              )}
             </div>
           </div>
         </article>
