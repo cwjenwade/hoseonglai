@@ -109,7 +109,6 @@ const HOME_EDITOR_NAV_ITEMS = [
   { href: "#home-brand", label: "Brand" },
   { href: "#home-sections", label: "Sections" },
   { href: "#home-cards", label: "Cards" },
-  { href: "#home-newsletter", label: "Newsletter" },
   { href: "#home-footer", label: "Footer" },
 ];
 
@@ -798,58 +797,6 @@ export function HomePageEditor({
             </div>
           </div>
         ))}
-        </EditorSection>
-      </div>
-
-      <div id="home-newsletter" className="scroll-mt-28">
-        <EditorSection title="電子報區塊">
-        <div className="grid gap-4 md:grid-cols-2">
-          <FieldLabel label="電子報標題">
-            <input
-              value={content.newsletter.title}
-              onChange={(event) =>
-                setContent((prev) => ({
-                  ...prev,
-                  newsletter: { ...prev.newsletter, title: event.target.value },
-                }))
-              }
-              className={inputClassName()}
-            />
-          </FieldLabel>
-          <FieldLabel label="電子報說明文字">
-            <input
-              value={content.newsletter.description}
-              onChange={(event) =>
-                setContent((prev) => ({
-                  ...prev,
-                  newsletter: { ...prev.newsletter, description: event.target.value },
-                }))
-              }
-              className={inputClassName()}
-            />
-          </FieldLabel>
-          {([
-            ["namePlaceholder", "姓名欄 placeholder"],
-            ["emailPlaceholder", "Email 欄 placeholder"],
-            ["buttonLabel", "按鈕文字"],
-            ["loadingLabel", "送出中按鈕文字"],
-            ["successTitle", "成功標題"],
-            ["successDescription", "成功說明"],
-          ] as const).map(([key, label]) => (
-            <FieldLabel key={key} label={label}>
-              <input
-                value={content.newsletter[key]}
-                onChange={(event) =>
-                  setContent((prev) => ({
-                    ...prev,
-                    newsletter: { ...prev.newsletter, [key]: event.target.value },
-                  }))
-                }
-                className={inputClassName()}
-              />
-            </FieldLabel>
-          ))}
-        </div>
         </EditorSection>
       </div>
 

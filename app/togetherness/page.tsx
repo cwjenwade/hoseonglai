@@ -104,12 +104,7 @@ export default async function TogethernessPage({ searchParams }: TogethernessPag
         <section className="grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-10 xl:gap-y-20">
           {groups.map((group) => (
             <article key={group.slug} className="group relative z-0">
-              <a
-                href={GROUP_WAITLIST_FORM_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="relative block p-0 text-left transition-[padding,transform,box-shadow] duration-300 ease-out hover:z-20 hover:-translate-y-2 hover:p-5 hover:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:z-20 focus-visible:-translate-y-2 focus-visible:p-5 focus-visible:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:outline-none"
-              >
+              <div className="relative block p-0 text-left">
                 <div className="relative aspect-[4/5] overflow-hidden bg-neutral-200">
                   <Image
                     src={group.image}
@@ -141,17 +136,36 @@ export default async function TogethernessPage({ searchParams }: TogethernessPag
                   >
                     {group.description}
                   </p>
-
-                  <span
-                    className="mt-5 inline-block border-b border-neutral-700 pb-[2px] text-[13px] text-neutral-700 transition-opacity duration-200 group-hover:opacity-60"
-                    style={{ fontFamily: "var(--font-geist-sans)" }}
-                  >
-                    View Detail &amp; Register
-                  </span>
                 </div>
-              </a>
+              </div>
             </article>
           ))}
+
+          <article className="group relative z-0">
+            <a
+              href={GROUP_WAITLIST_FORM_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="relative block p-0 text-left transition-[padding,transform,box-shadow] duration-300 ease-out hover:z-20 hover:-translate-y-2 hover:p-5 hover:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:z-20 focus-visible:-translate-y-2 focus-visible:p-5 focus-visible:shadow-[0_22px_44px_-28px_rgba(0,0,0,0.55)] focus-visible:outline-none"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#e7efed]">
+                <Image
+                  src="/images/group-waitlist-card.png"
+                  alt="View Detail & Register"
+                  fill
+                  sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 100vw"
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                />
+              </div>
+
+              <p
+                className="mt-5 max-w-[32ch] text-[15px] leading-[1.75] text-neutral-700"
+                style={{ fontFamily: "var(--font-noto-serif)" }}
+              >
+                留下基本資訊，待團體開設時聯繫。
+              </p>
+            </a>
+          </article>
         </section>
       </div>
     </main>

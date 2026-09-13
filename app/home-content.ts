@@ -49,17 +49,6 @@ export type HomeCardContent = {
   image: HomeImageCrop;
 };
 
-export type HomeNewsletterContent = {
-  title: string;
-  description: string;
-  namePlaceholder: string;
-  emailPlaceholder: string;
-  buttonLabel: string;
-  loadingLabel: string;
-  successTitle: string;
-  successDescription: string;
-};
-
 export type HomeFooterContent = {
   brandName: string;
   tagline: string;
@@ -90,7 +79,6 @@ export type HomePageContent = ContentGovernanceFields & {
     groups: HomeCardContent[];
     support: HomeCardContent[];
   };
-  newsletter: HomeNewsletterContent;
   footer: HomeFooterContent;
 };
 
@@ -379,16 +367,6 @@ export const DEFAULT_HOME_PAGE_CONTENT: HomePageContent = {
       },
     ],
   },
-  newsletter: {
-    title: "訂閱電子報",
-    description: "第一時間收到最新講座、研究與心理資源資訊",
-    namePlaceholder: "你的名字（選填）",
-    emailPlaceholder: "你的 Email",
-    buttonLabel: "訂閱",
-    loadingLabel: "訂閱中...",
-    successTitle: "訂閱成功！",
-    successDescription: "感謝你的訂閱，我們會定期寄送資訊給你。",
-  },
   footer: {
     brandName: "Ho-Se 好勢 ｜ Ong-Lai 旺來",
     tagline: "以心聚勢，以運旺來，團圓共好",
@@ -519,23 +497,6 @@ function normalizeCardList(value: unknown, fallback: HomeCardContent[]): HomeCar
   }).concat(extraCards);
 }
 
-function normalizeNewsletter(value: unknown): HomeNewsletterContent {
-  const fallback = DEFAULT_HOME_PAGE_CONTENT.newsletter;
-  const candidate =
-    value && typeof value === "object" ? (value as Partial<HomeNewsletterContent>) : {};
-
-  return {
-    title: normalizeString(candidate.title, fallback.title),
-    description: normalizeOptionalString(candidate.description, fallback.description),
-    namePlaceholder: normalizeString(candidate.namePlaceholder, fallback.namePlaceholder),
-    emailPlaceholder: normalizeString(candidate.emailPlaceholder, fallback.emailPlaceholder),
-    buttonLabel: normalizeString(candidate.buttonLabel, fallback.buttonLabel),
-    loadingLabel: normalizeString(candidate.loadingLabel, fallback.loadingLabel),
-    successTitle: normalizeString(candidate.successTitle, fallback.successTitle),
-    successDescription: normalizeOptionalString(candidate.successDescription, fallback.successDescription),
-  };
-}
-
 function normalizeFooter(value: unknown): HomeFooterContent {
   const fallback = DEFAULT_HOME_PAGE_CONTENT.footer;
   const candidate =
@@ -653,7 +614,6 @@ export function normalizeHomePageContent(
       groups: normalizeCardList(value?.cards?.groups, DEFAULT_HOME_PAGE_CONTENT.cards.groups),
       support: normalizeCardList(value?.cards?.support, DEFAULT_HOME_PAGE_CONTENT.cards.support),
     },
-    newsletter: normalizeNewsletter(value?.newsletter),
     footer: normalizeFooter(value?.footer),
   };
 }

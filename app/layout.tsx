@@ -7,7 +7,6 @@ import {
 } from "next/font/google";
 import { DEFAULT_HOME_PAGE_CONTENT, normalizeHomePageContent } from "@/app/home-content";
 import { getSiteContentSection } from "@/lib/site-content-server";
-import NewsletterSubscription from "./NewsletterSubscription";
 import SiteHeader from "./SiteHeader";
 import "./globals.css";
 
@@ -146,40 +145,29 @@ export default async function RootLayout({
 
           {/* FOOTER */}
           <footer className="border-t border-[#e6e2da]">
-            <div className="w-full px-6 py-10 lg:px-12 lg:py-14">
-              <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
+            <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 px-6 py-10 text-center lg:px-12 lg:py-14">
+              <div className="space-y-2">
+                <p
+                  className="text-[1.1rem] tracking-[0.01em] text-zinc-900"
+                  style={{ fontFamily: "var(--font-playfair)" }}
+                >
+                  {homeContent.footer.brandName}
+                </p>
 
-                <div>
-                  <NewsletterSubscription content={homeContent.newsletter} />
-                </div>
-
-                <div className="flex flex-col justify-end gap-4 border-t border-[#e6e2da] pt-6 lg:border-none lg:pt-0">
-
-                  <div className="space-y-2">
-                    <p
-                      className="text-[1.1rem] tracking-[0.01em] text-zinc-900"
-                      style={{ fontFamily: "var(--font-playfair)" }}
-                    >
-                      {homeContent.footer.brandName}
-                    </p>
-
-                    <p
-                      className="text-[0.92rem] tracking-[0.06em] text-zinc-600"
-                      style={{ fontFamily: "var(--font-noto-serif)" }}
-                    >
-                      {homeContent.footer.tagline}
-                    </p>
-                  </div>
-
-                  <p
-                    className="text-[0.66rem] uppercase tracking-[0.2em] text-zinc-400"
-                    style={{ fontFamily: "var(--font-geist-sans)" }}
-                  >
-                    {homeContent.footer.description}
-                  </p>
-
-                </div>
+                <p
+                  className="text-[0.92rem] tracking-[0.06em] text-zinc-600"
+                  style={{ fontFamily: "var(--font-noto-serif)" }}
+                >
+                  {homeContent.footer.tagline}
+                </p>
               </div>
+
+              <p
+                className="text-[0.66rem] uppercase tracking-[0.2em] text-zinc-400"
+                style={{ fontFamily: "var(--font-geist-sans)" }}
+              >
+                {homeContent.footer.description}
+              </p>
             </div>
           </footer>
 
